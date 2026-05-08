@@ -1,0 +1,362 @@
+{
+  "common": {
+    "back": "पछाडि",
+    "continue": "जारी रखनुहोस्",
+    "submit": "पेश गर्नुहोस्",
+    "apply": "आवेदन गर्नुहोस्",
+    "cancel": "रद्द गर्नुहोस्",
+    "save": "सुरक्षित गर्नुहोस्",
+    "signOut": "बाहिर निस्कनुहोस्",
+    "edit": "सम्पादन",
+    "view": "हेर्नुहोस्",
+    "approve": "अनुमोदन",
+    "reject": "अस्वीकार",
+    "loading": "लोड हुँदैछ...",
+    "noResults": "कुनै परिणाम फेला परेन",
+    "search": "खोज्नुहोस्",
+    "done": "सम्पन्न",
+    "confirm": "पुष्टि गर्नुहोस्",
+    "yes": "हो",
+    "no": "होइन",
+    "ok": "ठीक",
+    "close": "बन्द गर्नुहोस्"
+  },
+  "login": {
+    "title": "धम्म AT",
+    "subtitle": "विपस्सना शिक्षक अनुसूचक",
+    "roleTeacher": "सहायक शिक्षक",
+    "roleAdmin": "प्रशासक",
+    "email": "इमेल वा आमन्त्रण कोड",
+    "password": "पासवर्ड",
+    "signIn": "साइन इन",
+    "selectRole": "जारी राख्न आफ्नो भूमिका छान्नुहोस्",
+    "sadhu": "साधु 🙏"
+  },
+  "home": {
+    "greeting": "नमस्ते",
+    "subtitle": "सहायक शिक्षक",
+    "upcomingCourses": "आगामी पाठ्यक्रमहरू",
+    "bestMatches": "उत्तम मिलान",
+    "restPeriod": "विश्राम अवधि",
+    "restComplete": "विश्राम अवधि पूर्ण",
+    "lastCourse": "आखिरी पाठ्यक्रम",
+    "noUpcoming": "कुनै आगामी पाठ्यक्रम छैन",
+    "browseAll": "सबै पाठ्यक्रम हेर्नुहोस्",
+    "eligible": "सेवा गर्ने योग्य"
+  },
+  "courses": {
+    "title": "खुला पाठ्यक्रमहरू",
+    "search": "पाठ्यक्रम खोज्नुहोस्...",
+    "allTypes": "सबै",
+    "noResults": "कुनै पाठ्यक्रम मेल खाएन",
+    "matchScore": "मिलान",
+    "available": "उपलब्ध",
+    "needed": "चाहिएको",
+    "apply": "आवेदन",
+    "applied": "आवेदन गरियो",
+    "assigned": "नियुक्त",
+    "detail": "पाठ्यक्रम विवरण"
+  },
+  "courseDetail": {
+    "eligibility": "योग्यता जाँच",
+    "eligible": "आवेदन दिन योग्य",
+    "applyNow": "यस पाठ्यक्रमका लागि आवेदन दिनुहोस्",
+    "alreadyApplied": "आवेदन पेश गरियो",
+    "assigned": "तपाईं नियुक्त हुनुभएको छ",
+    "coTeacher": "सह-शिक्षक",
+    "lookingFor": "खोजिएको",
+    "coordinator": "समन्वयक",
+    "students": "विद्यार्थी",
+    "arrival": "आगमन",
+    "transport": "यातायात",
+    "altitude": "उचाइ",
+    "languages": "भाषाहरू",
+    "applicationSubmitted": "आवेदन पेश गरियो!",
+    "reviewMessage": "एडमिनले समीक्षा गरी सूचित गर्नेछन्। साधु! 🙏",
+    "shareProfile": "तपाईंको प्रोफाइल केन्द्र समन्वयकसँग साझा गरिनेछ",
+    "checkItems": {
+      "authorization": "पाठ्यक्रम अनुमति",
+      "language": "भाषा उपयुक्तता",
+      "availability": "मिति उपलब्धता",
+      "restGap": "विश्राम अवधि पूर्ण",
+      "gender": "लिङ्ग आवश्यकता"
+    }
+  },
+  "applications": {
+    "title": "मेरा आवेदनहरू",
+    "tabs": {
+      "all": "सबै",
+      "pending": "प्रतीक्षा",
+      "approved": "अनुमोदित",
+      "rejected": "अस्वीकृत"
+    },
+    "noApplications": "अहिलेसम्म कुनै आवेदन छैन",
+    "browseMessage": "खुला पाठ्यक्रमहरू हेर्नुहोस् र पढाउन आवेदन दिनुहोस्",
+    "viewBrief": "पाठ्यक्रम ब्रीफ हेर्नुहोस्",
+    "rejectionReason": "कारण",
+    "appliedOn": "आवेदन मिति",
+    "source": {
+      "applied": "आवेदन गरेको",
+      "assigned": "नियुक्त"
+    }
+  },
+  "brief": {
+    "title": "पाठ्यक्रम ब्रीफ",
+    "confirmed": "पुष्टि भयो",
+    "arrivalInfo": "आगमन जानकारी",
+    "arriveBy": "सम्म आउनुहोस्",
+    "coordinator": "समन्वयक",
+    "coTeacher": "सह-शिक्षक",
+    "students": "विद्यार्थीहरू",
+    "whatToBring": "के ल्याउने",
+    "transport": "यातायात",
+    "notes": "नोटहरू",
+    "stepDown": "यस पाठ्यक्रमबाट पछि हट्नुहोस्",
+    "stepDownConfirm": "के तपाईं निश्चित हुनुहुन्छ? एडमिनलाई सूचित गरिनेछ।",
+    "stepDownWarning": "पछि हट्नु भएमा एडमिनलाई सूचित गरिनेछ",
+    "checklist": {
+      "dhamma": "धम्म कपडा (सेतो)",
+      "toiletries": "व्यक्तिगत सरसफाइ सामग्री",
+      "medicine": "आवश्यक औषधिहरू",
+      "phone": "फोन (आपत्कालको लागि मात्र)",
+      "notebook": "नोटबुक र कलम",
+      "warm": "न्यानो कपडा (साँझको लागि)",
+      "cash": "सानो नगद (आपत्कालको लागि)"
+    }
+  },
+  "profile": {
+    "title": "मेरो प्रोफाइल",
+    "edit": "प्रोफाइल सम्पादन",
+    "eligibility": "योग्यता स्थिति",
+    "eligible": "सेवा गर्ने योग्य",
+    "ineligible": "योग्य छैन",
+    "availability": "उपलब्धता",
+    "languages": "भाषाहरू",
+    "authorizations": "पाठ्यक्रम अनुमतिहरू",
+    "regions": "प्राथमिक क्षेत्रहरू",
+    "history": "शिक्षण इतिहास",
+    "note": "व्यक्तिगत नोट",
+    "totalCourses": "पाठ्यक्रम",
+    "centersServed": "केन्द्रहरू",
+    "thisYear": "यस वर्ष",
+    "since": "देखि",
+    "primary": "प्राथमिक",
+    "secondary": "माध्यमिक"
+  },
+  "editProfile": {
+    "title": "प्रोफाइल सम्पादन",
+    "contact": "सम्पर्क",
+    "phone": "फोन नम्बर",
+    "email": "इमेल ठेगाना",
+    "languages": "भाषाहरू",
+    "languageHint": "साइकल गर्न ट्याप गर्नुहोस्: प्राथमिक → माध्यमिक → बन्द",
+    "regions": "प्राथमिक क्षेत्रहरू",
+    "availability": "मासिक उपलब्धता",
+    "availabilityHint": "ट्याप गर्नुहोस्: उपलब्ध → उत्सव → अनुपलब्ध",
+    "note": "व्यक्तिगत नोट",
+    "notePlaceholder": "तपाईंको उपलब्धता सम्बन्धी कुनै प्राथमिकता वा जानकारी साझा गर्नुहोस्...",
+    "saveChanges": "परिवर्तन सुरक्षित गर्नुहोस्",
+    "lockedFields": "नाम, लिङ्ग र पाठ्यक्रम अनुमतिहरू एडमिनद्वारा व्यवस्थापन गरिन्छ।"
+  },
+  "notifications": {
+    "title": "सूचनाहरू",
+    "noNotifications": "कुनै सूचना छैन",
+    "markRead": "पढिएको मार्क गर्नुहोस्",
+    "accept": "स्वीकार गर्नुहोस्",
+    "decline": "अस्वीकार गर्नुहोस्",
+    "declineReason": "कारण (वैकल्पिक)",
+    "declinePlaceholder": "तपाईं किन सेवा गर्न असमर्थ हुनुहुन्छ?",
+    "types": {
+      "invite": "आमन्त्रण",
+      "assignment": "नियुक्ति",
+      "reminder": "सम्झना",
+      "update": "अपडेट",
+      "approval": "अनुमोदित",
+      "rejection": "अस्वीकृत"
+    }
+  },
+  "onboarding": {
+    "teacher": {
+      "step1": {
+        "title": "धम्म AT मा\nस्वागत छ",
+        "subtitle": "नेपालभरका पाठ्यक्रमहरूसँग मिलाउन आफ्नो शिक्षक प्रोफाइल सेट अप गर्नुहोस्।"
+      },
+      "step2": {
+        "title": "भाषाहरू",
+        "subtitle": "तपाईं कुन भाषाहरूमा पढाउन सक्नुहुन्छ?",
+        "hint": "प्राथमिकका लागि एक पटक, माध्यमिकका लागि दुई पटक ट्याप गर्नुहोस्"
+      },
+      "step3": {
+        "title": "प्राथमिक क्षेत्रहरू",
+        "subtitle": "नेपालको कुन क्षेत्रहरूमा तपाईं जान इच्छुक हुनुहुन्छ?"
+      },
+      "step4": {
+        "title": "उपलब्धता",
+        "subtitle": "आफ्नो उपलब्धता चिन्ह लगाउन प्रत्येक महिना ट्याप गर्नुहोस्।",
+        "available": "उपलब्ध",
+        "festival": "उत्सव/एकान्त",
+        "unavailable": "अनुपलब्ध"
+      },
+      "step5": {
+        "title": "व्यक्तिगत नोट",
+        "subtitle": "पाठ्यक्रम समन्वयकहरूका लागि कुनै थप जानकारी साझा गर्नुहोस्।",
+        "placeholder": "जस्तै, अक्टोबर–मे उपलब्ध, काठमाडौं क्षेत्र पाठ्यक्रम पसन्द..."
+      },
+      "summary": {
+        "title": "प्रोफाइल तयार छ",
+        "subtitle": "तपाईंको प्रोफाइल सेट अप गरिएको छ। तपाईं जुनसुकै बेला अपडेट गर्न सक्नुहुन्छ।",
+        "goToDashboard": "ड्यासबोर्डमा जानुहोस्"
+      }
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "एडमिन",
+      "center": "धम्म श्रृंग नेपाल",
+      "applications": "आवेदनहरू",
+      "pending": "विचाराधीन",
+      "unscheduled": "अनुसूचित छैन",
+      "activeATs": "सक्रिय AT",
+      "urgentCourses": "अत्यावश्यक — AT चाहिन्छ",
+      "recentApplications": "हालका आवेदनहरू",
+      "settings": "सेटिङ",
+      "showCoTeacher": "AT लाई सह-शिक्षक जानकारी देखाउनुहोस्"
+    },
+    "inbox": {
+      "title": "आवेदनहरू",
+      "reviewAll": "सबै समीक्षा गर्नुहोस्",
+      "quickApprove": "स्वीकृत",
+      "quickReject": "अस्वीकार",
+      "review": "समीक्षा",
+      "match": "मिलान",
+      "courses": "पाठ्यक्रम पढाइयो"
+    },
+    "review": {
+      "title": "आवेदन समीक्षा",
+      "eligibility": "योग्यता जाँच",
+      "matchScore": "मिलान स्कोर",
+      "adminNotes": "एडमिन नोट",
+      "notesPlaceholder": "यो आवेदनबारे नोट थप्नुहोस्...",
+      "approveConfirm": "आवेदन स्वीकृत गर्नुहोस्",
+      "rejectConfirm": "आवेदन अस्वीकार गर्नुहोस्",
+      "rejectReason": "अस्वीकारको कारण",
+      "rejectPlaceholder": "अस्वीकारको कारण...",
+      "decision": "निर्णय",
+      "approved": "स्वीकृत ✓",
+      "rejected": "अस्वीकार"
+    },
+    "directory": {
+      "title": "शिक्षक निर्देशिका",
+      "search": "शिक्षक खोज्नुहोस्...",
+      "allLanguages": "सबै",
+      "available": "उपलब्ध",
+      "unavailable": "अनुपलब्ध",
+      "assign": "तोक्नुहोस्",
+      "viewProfile": "प्रोफाइल",
+      "addTeacher": "शिक्षक थप्नुहोस्"
+    },
+    "addTeacher": {
+      "title": "नयाँ शिक्षक थप्नुहोस्",
+      "name": "पूरा नाम",
+      "namePlaceholder": "शिक्षकको पूरा नाम",
+      "gender": "लिङ्ग",
+      "male": "पुरुष",
+      "female": "महिला",
+      "yearAuthorized": "अनुमति वर्ष",
+      "homeRegion": "गृह क्षेत्र",
+      "authorizations": "पाठ्यक्रम अनुमतिहरू",
+      "inviteMethod": "निमन्त्रणा विधि",
+      "inviteEmail": "इमेल",
+      "invitePhone": "फोन",
+      "sendInvite": "सिर्जना गरी निमन्त्रणा पठाउनुहोस्",
+      "inviteCode": "निमन्त्रणा कोड",
+      "inviteSuccess": "शिक्षक सफलतापूर्वक आमन्त्रित",
+      "copyCode": "कोड कपी गर्नुहोस्"
+    },
+    "schedule": {
+      "title": "स्वत: तालिका",
+      "criteria": "मिलान मापदण्ड",
+      "confidence": {
+        "high": "उच्च",
+        "review": "समीक्षा",
+        "none": "अनिर्धारित"
+      },
+      "finalizeAll": "अन्तिम रूप दिनुहोस् र सूचित गर्नुहोस्",
+      "changeTeacher": "शिक्षक परिवर्तन गर्नुहोस्",
+      "changeReason": "परिवर्तनको कारण",
+      "reassignConfirm": "पुन: तोक्नुहोस्"
+    },
+    "calendar": {
+      "title": "पाठ्यक्रम क्यालेन्डर"
+    },
+    "notifications": {
+      "title": "सूचनाहरू",
+      "compose": "लेख्नुहोस्",
+      "emailPreview": "इमेल पूर्वावलोकन",
+      "copyEmail": "कपी",
+      "resend": "पुन: पठाउनुहोस्"
+    }
+  },
+  "months": {
+    "jan": "जन", "feb": "फेब", "mar": "मार्च", "apr": "अप्रिल",
+    "may": "मे", "jun": "जुन", "jul": "जुलाई", "aug": "अग",
+    "sep": "सेप", "oct": "अक्ट", "nov": "नोभ", "dec": "डिस"
+  },
+  "courseTypes": {
+    "10-Day": "१०-दिन",
+    "20-Day": "२०-दिन",
+    "30-Day": "३०-दिन",
+    "1-Day": "१-दिन",
+    "Satipatthana Sutta": "सतिपट्ठान",
+    "Children's Anapana": "बाल",
+    "Teen Course": "किशोर",
+    "Executive": "कार्यकारी"
+  },
+  "regions": {
+    "kathmandu": "काठमाडौं उपत्यका",
+    "pokhara": "पोखरा र गण्डकी",
+    "lumbini": "लुम्बिनी र तराई",
+    "koshi": "कोशी",
+    "madhesh": "मधेश",
+    "international": "अन्तर्राष्ट्रिय"
+  },
+  "server": {
+    "home": {
+      "greeting": "नमस्ते",
+      "subtitle": "धम्म सेवक",
+      "upcomingService": "मेरो आगामी सेवा",
+      "openOpportunities": "खुला अवसरहरू",
+      "seeAll": "सबै हेर्नुहोस्",
+      "eligible": "सेवा गर्न योग्य",
+      "eligibleBody": "तपाईंले आवश्यक पाठ्यक्रम र विश्राम अवधि पूरा गर्नुभएको छ।"
+    },
+    "opportunities": {
+      "title": "पाठ्यक्रममा सेवा गर्नुहोस्",
+      "subtitle": "नेपाल विपस्सना केन्द्रहरू",
+      "openSlots": "खुला स्थानहरू",
+      "viewDetails": "विवरण हेर्नुहोस् →",
+      "filled": "भरिएको",
+      "open": "खुला",
+      "full": "पूर्ण",
+      "days": "दिन",
+      "slots": "स्थान"
+    },
+    "applications": {
+      "title": "मेरा आवेदनहरू",
+      "noApplications": "यस श्रेणीमा कुनै आवेदन छैन।",
+      "partial": "आंशिक",
+      "arriveBy": "आइपुग्ने समय",
+      "coordinator": "समन्वयकर्ता",
+      "reason": "कारण"
+    },
+    "profile": {
+      "title": "मेरो प्रोफाइल",
+      "role": "धम्म सेवक",
+      "coursesServed": "सेवा गरेका पाठ्यक्रम",
+      "centers": "केन्द्रहरू",
+      "since": "देखि",
+      "serviceHistory": "सेवा इतिहास",
+      "eligible": "सेवा गर्न योग्य"
+    }
+  }
+}

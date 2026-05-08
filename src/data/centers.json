@@ -1,0 +1,50 @@
+[
+  {
+    "id": "dhamma-shringa",
+    "name": "Dhamma Shringa",
+    "nameNe": "धम्म श्रृंग",
+    "city": "Budhanilkantha",
+    "region": "Kathmandu Valley",
+    "country": "NP",
+    "flag": "🇳🇵",
+    "altitude": 1337,
+    "lat": 27.77,
+    "lng": 85.36
+  },
+  {
+    "id": "dhamma-pokhara",
+    "name": "Dhamma Pokhara",
+    "nameNe": "धम्म पोखरा",
+    "city": "Pokhara",
+    "region": "Pokhara & Gandaki",
+    "country": "NP",
+    "flag": "🇳🇵",
+    "altitude": 827,
+    "lat": 28.21,
+    "lng": 83.99
+  },
+  {
+    "id": "dhamma-adhara",
+    "name": "Dhamma Adhara",
+    "nameNe": "धम्म आधार",
+    "city": "Lumbini",
+    "region": "Lumbini & Terai",
+    "country": "NP",
+    "flag": "🇳🇵",
+    "altitude": 95,
+    "lat": 27.48,
+    "lng": 83.27
+  },
+  {
+    "id": "dhamma-janani",
+    "name": "Dhamma Janani",
+    "nameNe": "धम्म जननी",
+    "city": "Chitwan",
+    "region": "Lumbini & Terai",
+    "country": "NP",
+    "flag": "🇳🇵",
+    "altitude": 210,
+    "lat": 27.63,
+    "lng": 84.43
+  }
+]

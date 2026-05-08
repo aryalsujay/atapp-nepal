@@ -1,0 +1,48 @@
+[
+  {
+    "id": 1,
+    "courseId": 1,
+    "center": "Dhamma Shringa",
+    "type": "10-Day",
+    "dates": "Jul 7–18, 2026",
+    "status": "approved",
+    "areas": ["kitchen", "dining"],
+    "partial": false,
+    "days": null,
+    "applied": "Apr 20",
+    "coordinator": "Ramesh Adhikari",
+    "coordPhone": "+977 9801••456",
+    "arriveBy": "Jul 6, 7:00 AM"
+  },
+  {
+    "id": 2,
+    "courseId": 2,
+    "center": "Dhamma Pokhara",
+    "type": "10-Day",
+    "dates": "Jul 15–26, 2026",
+    "status": "pending",
+    "areas": ["dhamma"],
+    "partial": true,
+    "days": "Day 3–8",
+    "applied": "Apr 22",
+    "coordinator": "Bina Gurung",
+    "coordPhone": "+977 9803••711",
+    "arriveBy": "Jul 14, 7:00 AM"
+  },
+  {
+    "id": 3,
+    "courseId": 3,
+    "center": "Dhamma Adhara",
+    "type": "10-Day",
+    "dates": "Aug 2–13, 2026",
+    "status": "rejected",
+    "areas": ["compound"],
+    "partial": true,
+    "days": "Day 1–5",
+    "applied": "Apr 18",
+    "coordinator": "Suresh Pradhan",
+    "coordPhone": "+977 9800••220",
+    "arriveBy": "Aug 1, 7:00 AM",
+    "reason": "Compound area is fully booked for this course."
+  }
+]

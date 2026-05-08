@@ -1,0 +1,396 @@
+{
+  "common": {
+    "back": "Back",
+    "continue": "Continue",
+    "submit": "Submit",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "save": "Save",
+    "signOut": "Sign Out",
+    "edit": "Edit",
+    "view": "View",
+    "approve": "Approve",
+    "reject": "Reject",
+    "loading": "Loading...",
+    "noResults": "No results found",
+    "search": "Search",
+    "done": "Done",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "close": "Close"
+  },
+  "login": {
+    "title": "Dhamma AT",
+    "subtitle": "Vipassana Teacher Scheduling",
+    "roleTeacher": "Assistant Teacher",
+    "roleAdmin": "Admin",
+    "roleServer": "Server",
+    "email": "Email or Invite Code",
+    "password": "Password",
+    "signIn": "Sign In",
+    "selectRole": "Select your role to continue",
+    "sadhu": "Sadhu 🙏"
+  },
+  "home": {
+    "greeting": "Namaste",
+    "subtitle": "Assistant Teacher",
+    "upcomingCourses": "Upcoming Courses",
+    "bestMatches": "Best Matches",
+    "restPeriod": "Rest Period",
+    "restComplete": "Rest period complete",
+    "lastCourse": "Last course",
+    "noUpcoming": "No upcoming courses",
+    "browseAll": "Browse All Courses",
+    "eligible": "Eligible to Serve"
+  },
+  "courses": {
+    "title": "Open Courses",
+    "search": "Search courses...",
+    "allTypes": "All",
+    "noResults": "No courses match your filters",
+    "matchScore": "Match",
+    "available": "available",
+    "needed": "needed",
+    "apply": "Apply",
+    "applied": "Applied",
+    "assigned": "Assigned",
+    "detail": "Course Detail"
+  },
+  "courseDetail": {
+    "eligibility": "Your Eligibility Check",
+    "eligible": "Eligible to apply",
+    "applyNow": "Apply for this Course",
+    "alreadyApplied": "Application Submitted",
+    "assigned": "You are assigned",
+    "coTeacher": "Co-Teacher",
+    "lookingFor": "Looking for",
+    "coordinator": "Coordinator",
+    "students": "Students",
+    "arrival": "Arrival",
+    "transport": "Transport",
+    "altitude": "Altitude",
+    "languages": "Languages",
+    "applicationSubmitted": "Application Submitted!",
+    "reviewMessage": "The admin will review and notify you. Sadhu! 🙏",
+    "shareProfile": "Your profile will be shared with the center coordinator",
+    "checkItems": {
+      "authorization": "Course authorization",
+      "language": "Language compatibility",
+      "availability": "Available for dates",
+      "restGap": "Rest period complete",
+      "gender": "Gender requirement"
+    }
+  },
+  "applications": {
+    "title": "My Applications",
+    "tabs": {
+      "all": "All",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "noApplications": "No applications yet",
+    "browseMessage": "Browse open courses and apply to teach",
+    "viewBrief": "View Course Brief",
+    "rejectionReason": "Reason",
+    "appliedOn": "Applied",
+    "source": {
+      "applied": "Applied",
+      "assigned": "Assigned"
+    }
+  },
+  "brief": {
+    "title": "Course Brief",
+    "confirmed": "Confirmed",
+    "arrivalInfo": "Arrival Information",
+    "arriveBy": "Arrive by",
+    "coordinator": "Coordinator",
+    "coTeacher": "Co-Teacher",
+    "students": "Students",
+    "whatToBring": "What to Bring",
+    "transport": "Transport",
+    "notes": "Notes",
+    "stepDown": "Step Down from this Course",
+    "stepDownConfirm": "Are you sure? Admin will be notified.",
+    "stepDownWarning": "Stepping down will notify admin",
+    "checklist": {
+      "dhamma": "Dhamma clothes (white)",
+      "toiletries": "Personal toiletries",
+      "medicine": "Any medicines needed",
+      "phone": "Phone (for emergencies only)",
+      "notebook": "Notebook and pen",
+      "warm": "Warm layer (evenings)",
+      "cash": "Small cash for emergencies"
+    }
+  },
+  "profile": {
+    "title": "My Profile",
+    "edit": "Edit Profile",
+    "eligibility": "Eligibility Status",
+    "eligible": "Eligible to Serve",
+    "ineligible": "Not Eligible",
+    "availability": "Availability",
+    "languages": "Languages",
+    "authorizations": "Course Authorizations",
+    "regions": "Preferred Regions",
+    "history": "Teaching History",
+    "note": "Personal Note",
+    "totalCourses": "Courses",
+    "centersServed": "Centers",
+    "thisYear": "This Year",
+    "since": "Since",
+    "primary": "Primary",
+    "secondary": "Secondary"
+  },
+  "editProfile": {
+    "title": "Edit Profile",
+    "contact": "Contact",
+    "phone": "Phone Number",
+    "email": "Email Address",
+    "languages": "Languages",
+    "languageHint": "Tap to cycle: Primary → Secondary → Off",
+    "regions": "Preferred Regions",
+    "availability": "Monthly Availability",
+    "availabilityHint": "Tap to toggle: Available → Festival → Unavailable",
+    "note": "Personal Note",
+    "notePlaceholder": "Share any preferences or information relevant to your availability...",
+    "saveChanges": "Save Changes",
+    "lockedFields": "Name, gender, and course authorizations are managed by admin."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "noNotifications": "No notifications",
+    "markRead": "Mark as Read",
+    "accept": "Accept",
+    "decline": "Decline",
+    "declineReason": "Reason (optional)",
+    "declinePlaceholder": "Why are you unable to serve?",
+    "types": {
+      "invite": "Invitation",
+      "assignment": "Assignment",
+      "reminder": "Reminder",
+      "update": "Update",
+      "approval": "Approved",
+      "rejection": "Rejected"
+    },
+    "timeAgo": {
+      "now": "Just now",
+      "minutes": "{{count}} min ago",
+      "hours": "{{count}} hr ago",
+      "days": "{{count}} days ago"
+    }
+  },
+  "onboarding": {
+    "teacher": {
+      "step1": {
+        "title": "Welcome to\nDhamma AT",
+        "subtitle": "Set up your teacher profile to get matched with courses across Nepal."
+      },
+      "step2": {
+        "title": "Languages",
+        "subtitle": "Which languages can you teach in?",
+        "hint": "Tap once for Primary, twice for Secondary, three times to remove"
+      },
+      "step3": {
+        "title": "Preferred Regions",
+        "subtitle": "Which regions of Nepal are you willing to travel to?"
+      },
+      "step4": {
+        "title": "Availability",
+        "subtitle": "Tap each month to mark your availability.",
+        "available": "Available",
+        "festival": "Festival/Retreat",
+        "unavailable": "Unavailable"
+      },
+      "step5": {
+        "title": "Personal Note",
+        "subtitle": "Share any additional information for course coordinators.",
+        "placeholder": "E.g., available Oct–May, prefer Kathmandu area courses..."
+      },
+      "summary": {
+        "title": "Profile Ready",
+        "subtitle": "Your profile has been set up. You can update it anytime.",
+        "goToDashboard": "Go to Dashboard"
+      }
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Admin",
+      "center": "Dhamma Shringa Nepal",
+      "applications": "Applications",
+      "pending": "Pending",
+      "unscheduled": "Unscheduled",
+      "activeATs": "Active ATs",
+      "urgentCourses": "Urgent — Needs AT",
+      "recentApplications": "Recent Applications",
+      "settings": "Settings",
+      "showCoTeacher": "Show Co-Teacher Info to ATs"
+    },
+    "inbox": {
+      "title": "Applications",
+      "reviewAll": "Review All",
+      "quickApprove": "Approve",
+      "quickReject": "Reject",
+      "review": "Review",
+      "match": "Match",
+      "courses": "courses taught"
+    },
+    "review": {
+      "title": "Application Review",
+      "eligibility": "Eligibility Check",
+      "matchScore": "Match Score",
+      "adminNotes": "Admin Notes",
+      "notesPlaceholder": "Add notes about this application...",
+      "approveConfirm": "Approve Application",
+      "rejectConfirm": "Reject Application",
+      "rejectReason": "Rejection Reason",
+      "rejectPlaceholder": "Reason for rejection...",
+      "decision": "Decision",
+      "approved": "Approved ✓",
+      "rejected": "Rejected"
+    },
+    "directory": {
+      "title": "Teacher Directory",
+      "search": "Search teachers...",
+      "allLanguages": "All",
+      "available": "Available",
+      "unavailable": "Unavailable",
+      "assign": "Assign",
+      "viewProfile": "Profile",
+      "addTeacher": "Add Teacher"
+    },
+    "addTeacher": {
+      "title": "Add New Teacher",
+      "name": "Full Name",
+      "namePlaceholder": "Teacher's full name",
+      "gender": "Gender",
+      "male": "Male",
+      "female": "Female",
+      "yearAuthorized": "Year Authorized",
+      "homeRegion": "Home Region",
+      "authorizations": "Course Authorizations",
+      "inviteMethod": "Invite Method",
+      "inviteEmail": "Email",
+      "invitePhone": "Phone",
+      "sendInvite": "Create & Send Invite",
+      "inviteCode": "Invite Code",
+      "inviteSuccess": "Teacher invited successfully",
+      "copyCode": "Copy Code"
+    },
+    "schedule": {
+      "title": "Auto-Schedule",
+      "criteria": "Matching Criteria",
+      "confidence": {
+        "high": "High",
+        "review": "Review",
+        "none": "Unassigned"
+      },
+      "finalizeAll": "Finalize & Notify All",
+      "changeTeacher": "Change Teacher",
+      "changeReason": "Reason for change",
+      "reassignConfirm": "Reassign"
+    },
+    "calendar": {
+      "title": "Course Calendar"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "compose": "Compose",
+      "emailPreview": "Email Preview",
+      "copyEmail": "Copy",
+      "resend": "Resend"
+    }
+  },
+  "server": {
+    "home": {
+      "greeting": "Namaste",
+      "subtitle": "Dhamma Server",
+      "upcomingService": "My Upcoming Service",
+      "openOpportunities": "Open Opportunities",
+      "seeAll": "See All",
+      "eligible": "Eligible to Serve",
+      "eligibleBody": "You have completed the required courses and rest period."
+    },
+    "opportunities": {
+      "title": "Serve a Course",
+      "subtitle": "Nepal Vipassana Centers",
+      "openSlots": "open slots",
+      "viewDetails": "View Details →",
+      "filled": "filled",
+      "open": "open",
+      "full": "Full",
+      "days": "days",
+      "slots": "slots"
+    },
+    "detail": {
+      "selectAreas": "Select Service Areas",
+      "selectAreasHint": "Tap to select the areas you want to serve in.",
+      "partialAvailability": "Partial Availability",
+      "partialHint": "Serve only certain days of the course.",
+      "applyToServe": "Apply to Serve",
+      "selectAreaFirst": "Select an area to apply",
+      "successTitle": "Application Submitted!",
+      "successBody": "Your application has been sent. The coordinator will review and notify you. Sadhu!"
+    },
+    "applications": {
+      "title": "My Applications",
+      "tabs": {
+        "all": "All",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "noApplications": "No applications in this category.",
+      "partial": "Partial",
+      "arriveBy": "Arrive by",
+      "coordinator": "Coordinator",
+      "reason": "Reason"
+    },
+    "profile": {
+      "title": "My Profile",
+      "role": "Dhamma Server · सेवक",
+      "coursesServed": "Courses Served",
+      "centers": "Centers",
+      "since": "Since",
+      "serviceHistory": "Service History",
+      "eligible": "Eligible to Serve",
+      "eligibleBody": "You have completed the required Vipassana courses and rest period."
+    }
+  },
+  "matching": {
+    "score": "{{score}}% Match",
+    "reasons": {
+      "language": "Language match",
+      "region": "Location preference",
+      "availability": "Available for dates",
+      "authorization": "Course authorization",
+      "restGap": "Rest gap sufficient"
+    }
+  },
+  "months": {
+    "jan": "Jan", "feb": "Feb", "mar": "Mar", "apr": "Apr",
+    "may": "May", "jun": "Jun", "jul": "Jul", "aug": "Aug",
+    "sep": "Sep", "oct": "Oct", "nov": "Nov", "dec": "Dec"
+  },
+  "courseTypes": {
+    "10-Day": "10-Day",
+    "20-Day": "20-Day",
+    "30-Day": "30-Day",
+    "1-Day": "1-Day",
+    "Satipatthana Sutta": "Satipatthana",
+    "Children's Anapana": "Children's",
+    "Teen Course": "Teen",
+    "Executive": "Executive"
+  },
+  "regions": {
+    "kathmandu": "Kathmandu Valley",
+    "pokhara": "Pokhara & Gandaki",
+    "lumbini": "Lumbini & Terai",
+    "koshi": "Koshi",
+    "madhesh": "Madhesh",
+    "international": "International"
+  }
+}

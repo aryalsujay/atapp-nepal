@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "courseId": 1,
+    "teacherId": "teacher-001",
+    "status": "approved",
+    "appliedDate": "Mar 28, 2026",
+    "source": "applied",
+    "rejectionReason": null
+  },
+  {
+    "id": 2,
+    "courseId": 3,
+    "teacherId": "teacher-001",
+    "status": "pending",
+    "appliedDate": "Apr 15, 2026",
+    "source": "applied",
+    "rejectionReason": null
+  },
+  {
+    "id": 3,
+    "courseId": 5,
+    "teacherId": "teacher-001",
+    "status": "rejected",
+    "appliedDate": "Apr 2, 2026",
+    "source": "applied",
+    "rejectionReason": "Another AT was confirmed before your application could be reviewed."
+  }
+]

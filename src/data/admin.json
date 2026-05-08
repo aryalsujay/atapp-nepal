@@ -1,0 +1,10 @@
+{
+  "id": "admin-001",
+  "username": "admin",
+  "password": "dhamma2026",
+  "name": "Dhamma AT Admin",
+  "centerName": "Dhamma Shringa Nepal",
+  "settings": {
+    "showCoTeacher": false
+  }
+}
