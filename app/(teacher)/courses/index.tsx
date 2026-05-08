@@ -15,14 +15,16 @@ import { SectionHeader } from '../../../src/components/layout/SectionHeader';
 import { useCoursesStore } from '../../../src/store/coursesStore';
 import { Course } from '../../../src/types';
 import { enrichCoursesWithMatch } from '../../../src/utils/matching';
+import centresData from '../../../src/data/centers.json';
 
 const TYPE_OPTIONS = ['All', '10-Day', 'Satipatthana', '20-Day', "Children's", '1-Day'];
 
-function centerShortName(center: string): string {
-  // "Dhamma Shringa" → "Shringa"
-  const parts = center.split(' ');
-  return parts.length > 1 ? parts.slice(1).join(' ') : center;
-}
+// centreId → region lookup
+const CENTRE_REGION: Record<string, string> = Object.fromEntries(
+  (centresData as any[]).map((c) => [c.id, c.region as string])
+);
+
+const REGION_OPTIONS = ['All Nepal', 'Kathmandu Valley', 'Pokhara & Gandaki', 'Lumbini & Terai'];
 
 export default function CoursesScreen() {
   const { t } = useTranslation();
@@ -33,7 +35,7 @@ export default function CoursesScreen() {
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
-  const [locationFilter, setLocationFilter] = useState('All');
+  const [regionFilter, setRegionFilter] = useState('All Nepal');
 
   useEffect(() => {
     loadProfile(userId);
@@ -42,12 +44,6 @@ export default function CoursesScreen() {
 
   const courses = useCoursesStore((s) => s.courses) as Course[];
   const enriched = profile ? enrichCoursesWithMatch(courses, profile) : courses;
-
-  // Build unique center short names for location filter
-  const locationOptions = [
-    'All',
-    ...Array.from(new Set(courses.map((c) => centerShortName(c.center)))).sort(),
-  ];
 
   const filtered = enriched.filter((c) => {
     const matchesSearch =
@@ -62,11 +58,11 @@ export default function CoursesScreen() {
       (filter === 'Satipatthana' && c.type === 'Satipatthana Sutta') ||
       (filter === "Children's" && c.type === "Children's Anapana");
 
-    const matchesLocation =
-      locationFilter === 'All' ||
-      centerShortName(c.center) === locationFilter;
+    const courseRegion = CENTRE_REGION[c.centerId] ?? '';
+    const matchesRegion =
+      regionFilter === 'All Nepal' || courseRegion === regionFilter;
 
-    return matchesSearch && matchesFilter && matchesLocation;
+    return matchesSearch && matchesFilter && matchesRegion;
   });
 
   const appliedIds = new Set(applications.map((a) => a.courseId));
@@ -96,14 +92,14 @@ export default function CoursesScreen() {
         activeColor={Colors.sf}
       />
 
-      {/* Location filter */}
+      {/* Region filter */}
       <View style={styles.locationRow}>
-        <Text style={styles.locationLabel}>📍</Text>
+        <Text style={styles.locationLabel}>🗺</Text>
         <FilterRow
-          options={locationOptions}
-          active={locationFilter}
-          onSelect={setLocationFilter}
-          activeColor={Colors.sf}
+          options={REGION_OPTIONS}
+          active={regionFilter}
+          onSelect={setRegionFilter}
+          activeColor={Colors.bl}
         />
       </View>
 

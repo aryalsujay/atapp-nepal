@@ -1,7 +1,7 @@
 export type Language = 'en' | 'ne';
 export type Role = 'teacher' | 'admin';
 export type Gender = 'M' | 'F';
-export type Status = 'pending' | 'approved' | 'rejected';
+export type Status = 'pending' | 'approved' | 'rejected' | 'withdrawal_requested';
 export type AvailabilityState = 0 | 1 | 'f'; // 0=unavailable, 1=available, f=festival
 
 export type CourseType =

@@ -14,7 +14,7 @@ import { Button } from '../../../src/components/ui/Button';
 import coursesData from '../../../src/data/courses.json';
 import { Course, Application } from '../../../src/types';
 
-type TabKey = 'all' | 'pending' | 'approved' | 'rejected';
+type TabKey = 'all' | 'pending' | 'approved' | 'rejected' | 'withdrawal_requested';
 
 export default function ApplicationsScreen() {
   const { t } = useTranslation();
@@ -34,8 +34,9 @@ export default function ApplicationsScreen() {
     t('applications.tabs.pending'),
     t('applications.tabs.approved'),
     t('applications.tabs.rejected'),
+    'Step Down',
   ];
-  const tabKeys: TabKey[] = ['all', 'pending', 'approved', 'rejected'];
+  const tabKeys: TabKey[] = ['all', 'pending', 'approved', 'rejected', 'withdrawal_requested'];
 
   const filtered =
     tab === 'all' ? applications : applications.filter((a) => a.status === tab);
@@ -74,7 +75,7 @@ export default function ApplicationsScreen() {
                 application={item}
                 course={course}
                 onViewBrief={
-                  item.status === 'approved'
+                  (item.status === 'approved' || item.status === 'withdrawal_requested')
                     ? () => router.push(`/(teacher)/applications/brief/${item.id}`)
                     : undefined
                 }

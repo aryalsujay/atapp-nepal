@@ -1,0 +1,54 @@
+[
+  {
+    "id": "shringa-main",
+    "centreId": "dhamma-shringa",
+    "name": "Main Dhamma Hall",
+    "teacherSlots": 2,
+    "genderRequired": "Any",
+    "notes": "Fluent Nepali required"
+  },
+  {
+    "id": "shringa-old-students",
+    "centreId": "dhamma-shringa",
+    "name": "Old Students Hall",
+    "teacherSlots": 1,
+    "genderRequired": "Any"
+  },
+  {
+    "id": "pokhara-main",
+    "centreId": "dhamma-pokhara",
+    "name": "Main Dhamma Hall",
+    "teacherSlots": 1,
+    "genderRequired": "Any"
+  },
+  {
+    "id": "pokhara-female",
+    "centreId": "dhamma-pokhara",
+    "name": "Female Hall",
+    "teacherSlots": 1,
+    "genderRequired": "F"
+  },
+  {
+    "id": "adhara-main",
+    "centreId": "dhamma-adhara",
+    "name": "Main Dhamma Hall",
+    "teacherSlots": 1,
+    "genderRequired": "Any",
+    "notes": "High altitude area — acclimatization needed"
+  },
+  {
+    "id": "janani-main",
+    "centreId": "dhamma-janani",
+    "name": "Main Dhamma Hall",
+    "teacherSlots": 1,
+    "genderRequired": "Any"
+  },
+  {
+    "id": "janani-teen",
+    "centreId": "dhamma-janani",
+    "name": "Teen Course Hall",
+    "teacherSlots": 2,
+    "genderRequired": "Any",
+    "notes": "Teen course only — must be authorized for Children's/Teen programmes"
+  }
+]

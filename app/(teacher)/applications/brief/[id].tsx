@@ -4,6 +4,7 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  TextInput,
   StyleSheet,
   Alert,
 } from 'react-native';
@@ -12,7 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../../../src/store/authStore';
 import { useApplicationsStore } from '../../../../src/store/applicationsStore';
 import { useNotificationsStore } from '../../../../src/store/notificationsStore';
-import { Colors, Gradients } from '../../../../src/theme/colors';
+import { useTeachersStore } from '../../../../src/store/teachersStore';
+import { Colors } from '../../../../src/theme/colors';
 import { FontSize, FontWeight } from '../../../../src/theme/typography';
 import { Radius, Layout, Spacing } from '../../../../src/theme/spacing';
 import { Shadows } from '../../../../src/theme/shadows';
@@ -37,14 +39,24 @@ export default function CourseBriefScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const userId = useAuthStore((s) => s.userId)!;
-  const { applications, withdrawApplication } = useApplicationsStore();
+  const { applications, requestWithdrawal, getCoTeachersForCourse } = useApplicationsStore();
   const { addNotification } = useNotificationsStore();
-  const [steppedDown, setSteppedDown] = useState(false);
+  const { findTeacher } = useTeachersStore();
+  const [requestSent, setRequestSent] = useState(false);
+  const [withdrawNote, setWithdrawNote] = useState('');
+  const [showWithdrawInput, setShowWithdrawInput] = useState(false);
+  const [coTeacherIds, setCoTeacherIds] = useState<string[]>([]);
 
   const application = applications.find((a) => a.id === Number(id));
   const course = application
     ? (coursesData as Course[]).find((c) => c.id === application.courseId)
     : null;
+
+  useEffect(() => {
+    if (application && course) {
+      getCoTeachersForCourse(course.id, userId).then(setCoTeacherIds);
+    }
+  }, [application?.id]);
 
   if (!course || !application) {
     return (
@@ -54,51 +66,59 @@ export default function CourseBriefScreen() {
     );
   }
 
+  const isWithdrawalPending = application.status === 'withdrawal_requested';
+
   const handleStepDown = () => {
-    Alert.alert(
-      t('brief.stepDown'),
-      t('brief.stepDownConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: 'Step Down',
-          style: 'destructive',
-          onPress: async () => {
-            await withdrawApplication(application.id, userId);
-            await addNotification({
-              targetUserId: 'admin',
-              type: 'update',
-              center: course!.center,
-              course: `${course!.center} — ${course!.type}`,
-              courseId: course!.id,
-              subjectEn: 'Teacher stepped down from assignment',
-              bodyEn: `A teacher has stepped down from the ${course!.type} course at ${course!.center} (${course!.dates}). Please reassign.`,
-              bodyNe: `एक शिक्षकले ${course!.center}को ${course!.type} पाठ्यक्रमबाट पछि हटेका छन्। कृपया पुनः नियुक्त गर्नुहोस्।`,
-            });
-            setSteppedDown(true);
+    if (showWithdrawInput) {
+      Alert.alert(
+        t('brief.stepDown'),
+        t('brief.stepDownConfirm'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: 'Send Request',
+            style: 'destructive',
+            onPress: async () => {
+              await requestWithdrawal(application.id, userId, withdrawNote.trim() || undefined);
+              await addNotification({
+                targetUserId: 'admin',
+                type: 'update',
+                center: course.center,
+                course: `${course.center} — ${course.type}`,
+                courseId: course.id,
+                subjectEn: 'Teacher requested step-down',
+                bodyEn: `A teacher has requested to step down from the ${course.type} course at ${course.center} (${course.dates}).${withdrawNote.trim() ? '\n\nReason: ' + withdrawNote.trim() : ''}\n\nPlease review and approve or reject this request.`,
+                bodyNe: `एक शिक्षकले ${course.center}को ${course.type} पाठ्यक्रमबाट पछि हट्न अनुरोध गरेका छन्। कृपया समीक्षा गर्नुहोस्।`,
+              });
+              setRequestSent(true);
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    } else {
+      setShowWithdrawInput(true);
+    }
   };
 
-  if (steppedDown) {
+  if (requestSent) {
     return (
       <View style={{ flex: 1, backgroundColor: Colors.cr, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
         <Text style={{ fontSize: 48, marginBottom: 16 }}>🙏</Text>
         <Text style={{ fontSize: FontSize.xl, fontWeight: FontWeight.bold, color: Colors.tx, textAlign: 'center', marginBottom: 8 }}>
-          Step-down noted
+          Request Sent
         </Text>
         <Text style={{ fontSize: FontSize.smPlus, color: Colors.tx3, textAlign: 'center', marginBottom: 32 }}>
-          Admin has been notified. We wish you well.
+          Your step-down request has been sent to admin for approval.
         </Text>
-        <Button label="Back to Dashboard" variant="primary" onPress={() => router.replace('/(teacher)/home')} />
+        <Button label="Back to Applications" variant="primary" onPress={() => router.replace('/(teacher)/applications')} />
       </View>
     );
   }
 
   const langLabel = (code: string) =>
     code === 'ne' ? 'Nepali' : code === 'en' ? 'English' : code === 'hi' ? 'Hindi' : code;
+
+  const coTeachers = coTeacherIds.map((tid) => findTeacher(tid)).filter(Boolean);
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.cr }}>
@@ -111,12 +131,23 @@ export default function CourseBriefScreen() {
           onBack={() => router.back()}
           badge={
             <View style={styles.confirmedBadge}>
-              <Text style={styles.confirmedText}>✓ {t('brief.confirmed')}</Text>
+              <Text style={styles.confirmedText}>
+                {isWithdrawalPending ? '⏸ Step-down Pending' : `✓ ${t('brief.confirmed')}`}
+              </Text>
             </View>
           }
         >
           <Text style={styles.heroDates}>📅 {course.dates}</Text>
         </HeroSection>
+
+        {/* Withdrawal pending banner */}
+        {isWithdrawalPending && (
+          <View style={styles.withdrawalBanner}>
+            <Text style={styles.withdrawalBannerText}>
+              ⏸ Your step-down request is awaiting admin approval. You are still assigned until approved.
+            </Text>
+          </View>
+        )}
 
         {/* Arrival Info */}
         <View style={styles.section}>
@@ -144,7 +175,7 @@ export default function CourseBriefScreen() {
           </View>
         </View>
 
-        {/* Co-teacher */}
+        {/* Co-teacher from data */}
         {course.coTeacher && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('brief.coTeacher')}</Text>
@@ -169,6 +200,37 @@ export default function CourseBriefScreen() {
           </View>
         )}
 
+        {/* Co-teachers from applications store */}
+        {coTeachers.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              {coTeachers.length === 1 ? 'Your Co-Teacher' : 'Your Co-Teachers'}
+            </Text>
+            {coTeachers.map((ct) => ct && (
+              <View key={ct.id} style={styles.contactCard}>
+                <View style={[styles.contactAvatar, { backgroundColor: Colors.sfl }]}>
+                  <Text style={[styles.contactAvatarText, { color: Colors.sf }]}>
+                    {ct.name.charAt(0)}
+                  </Text>
+                </View>
+                <View style={styles.contactInfo}>
+                  <Text style={styles.contactName}>{ct.name}</Text>
+                  <Text style={styles.contactRole}>
+                    {ct.gender === 'F' ? '👩 Female AT' : '👨 Male AT'} · {ct.totalCourses} courses
+                  </Text>
+                  <View style={styles.langRow}>
+                    {Object.entries(ct.languages)
+                      .filter(([, v]) => v !== 'off')
+                      .map(([lang, level]) => (
+                        <Chip key={lang} label={lang} variant={level === 'primary' ? 'orange' : 'gray'} />
+                      ))}
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* What to bring */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('brief.whatToBring')}</Text>
@@ -189,15 +251,37 @@ export default function CourseBriefScreen() {
         ) : null}
 
         {/* Step down */}
-        <View style={styles.stepDownSection}>
-          <Text style={styles.stepDownWarning}>⚠️ {t('brief.stepDownWarning')}</Text>
-          <Button
-            label={t('brief.stepDown')}
-            variant="danger"
-            fullWidth
-            onPress={handleStepDown}
-          />
-        </View>
+        {!isWithdrawalPending && (
+          <View style={styles.stepDownSection}>
+            <Text style={styles.stepDownWarning}>⚠️ {t('brief.stepDownWarning')}</Text>
+
+            {showWithdrawInput && (
+              <TextInput
+                value={withdrawNote}
+                onChangeText={setWithdrawNote}
+                style={styles.withdrawInput}
+                placeholder="Reason for stepping down (optional)"
+                placeholderTextColor={Colors.tx3}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            )}
+
+            <Button
+              label={showWithdrawInput ? 'Send Step-Down Request' : t('brief.stepDown')}
+              variant="danger"
+              fullWidth
+              onPress={handleStepDown}
+            />
+
+            {showWithdrawInput && (
+              <TouchableOpacity onPress={() => setShowWithdrawInput(false)}>
+                <Text style={styles.cancelLink}>Cancel</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -228,6 +312,21 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.85)',
     fontSize: FontSize.sm,
     marginTop: 6,
+  },
+
+  withdrawalBanner: {
+    backgroundColor: '#EDE9FE',
+    marginHorizontal: Layout.horizontalPad,
+    marginTop: Spacing.md,
+    borderRadius: Radius.md,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#C4B5FD',
+  },
+  withdrawalBannerText: {
+    fontSize: FontSize.sm,
+    color: '#7C3AED',
+    lineHeight: FontSize.sm * 1.5,
   },
 
   section: {
@@ -347,5 +446,21 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     color: Colors.tx3,
     textAlign: 'center',
+  },
+  withdrawInput: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    borderColor: '#C4B5FD',
+    padding: 12,
+    fontSize: FontSize.smPlus,
+    color: Colors.tx,
+    minHeight: 80,
+  },
+  cancelLink: {
+    textAlign: 'center',
+    color: Colors.tx3,
+    fontSize: FontSize.sm,
+    paddingTop: 4,
   },
 });

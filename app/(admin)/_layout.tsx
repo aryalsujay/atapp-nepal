@@ -89,9 +89,11 @@ export default function AdminLayout() {
         options={{ tabBarIcon: ({ focused }) => <ServersTab focused={focused} /> }}
       />
       {/* Hidden screens — no tab */}
-      <Tabs.Screen name="inbox/[id]"    options={{ href: null }} />
-      <Tabs.Screen name="notifications" options={{ href: null }} />
-      <Tabs.Screen name="server/inbox"  options={{ href: null }} />
+      <Tabs.Screen name="inbox/[id]"      options={{ href: null }} />
+      <Tabs.Screen name="notifications"   options={{ href: null }} />
+      <Tabs.Screen name="server/inbox"    options={{ href: null }} />
+      <Tabs.Screen name="centres/index"   options={{ href: null }} />
+      <Tabs.Screen name="centres/[id]"    options={{ href: null }} />
     </Tabs>
   );
 }

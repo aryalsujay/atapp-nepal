@@ -8,6 +8,7 @@ interface SectionHeaderProps {
   title: string;
   action?: string;
   onAction?: () => void;
+  onBack?: () => void;
   style?: ViewStyle;
 }
 
@@ -15,10 +16,16 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   title,
   action,
   onAction,
+  onBack,
   style,
 }) => (
   <View style={[styles.container, style]}>
-    <Text style={styles.title}>{title}</Text>
+    {onBack && (
+      <TouchableOpacity onPress={onBack} activeOpacity={0.7} style={styles.backBtn}>
+        <Text style={styles.backArrow}>‹</Text>
+      </TouchableOpacity>
+    )}
+    <Text style={[styles.title, onBack && { flex: 1 }]}>{title}</Text>
     {action && onAction && (
       <TouchableOpacity onPress={onAction} activeOpacity={0.7}>
         <Text style={styles.action}>{action}</Text>
@@ -46,5 +53,15 @@ const styles = StyleSheet.create({
     fontSize: FontSize.smPlus,
     fontWeight: FontWeight.semibold,
     color: Colors.sf,
+  },
+  backBtn: {
+    marginRight: 6,
+    padding: 2,
+  },
+  backArrow: {
+    fontSize: 28,
+    color: Colors.tx2,
+    lineHeight: 28,
+    fontWeight: FontWeight.bold,
   },
 });

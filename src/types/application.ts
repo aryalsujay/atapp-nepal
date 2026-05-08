@@ -8,4 +8,6 @@ export interface Application {
   appliedDate: string;
   source: 'applied' | 'assigned';
   rejectionReason?: string;
+  queuePosition?: number;
+  withdrawalNote?: string;
 }

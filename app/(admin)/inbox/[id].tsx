@@ -33,7 +33,7 @@ export default function AdminReviewScreen() {
   const [rejectReason, setRejectReason] = useState('');
   const [decided, setDecided] = useState<'approved' | 'rejected' | null>(null);
 
-  const { applications, loadAllApplications, updateStatus } = useApplicationsStore();
+  const { applications, loadAllApplications, updateStatus, getApprovedCountForCourse } = useApplicationsStore();
   const { addNotification } = useNotificationsStore();
 
   useEffect(() => {
@@ -85,6 +85,24 @@ export default function AdminReviewScreen() {
     if (action === 'rejected' && !rejectReason.trim()) {
       Alert.alert('Rejection Reason Required', 'Please provide a reason for rejection.');
       return;
+    }
+
+    if (action === 'approved') {
+      const approvedCount = await getApprovedCountForCourse(app.courseId);
+      const needCount = course.needCount ?? 1;
+      if (approvedCount >= needCount) {
+        const proceed = await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Course Already Filled',
+            `This course already has ${approvedCount} approved teacher(s) and only needs ${needCount}. Approve anyway?`,
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Approve Anyway', onPress: () => resolve(true) },
+            ]
+          );
+        });
+        if (!proceed) return;
+      }
     }
 
     await updateStatus(app.id, action, action === 'rejected' ? rejectReason : undefined);
