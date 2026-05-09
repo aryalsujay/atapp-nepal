@@ -25,13 +25,14 @@ import { Button } from '../../../src/components/ui/Button';
 import coursesData from '../../../src/data/courses.json';
 import { Course, Application } from '../../../src/types';
 import { calculateMatch } from '../../../src/utils/matching';
+import { buildEligibilityChecks, langLabel as fmtLang } from '../../../src/utils/eligibility';
 
 export default function CourseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const userId = useAuthStore((s) => s.userId)!;
+  const userId = useAuthStore((s) => s.userId);
   const { profile, loadProfile } = useProfileStore();
   const { applications, loadApplications, submitApplication } = useApplicationsStore();
 
@@ -39,6 +40,7 @@ export default function CourseDetailScreen() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
+    if (!userId) return;
     loadProfile(userId);
     loadApplications(userId);
   }, [userId]);
@@ -53,41 +55,18 @@ export default function CourseDetailScreen() {
   const matchResult = profile ? calculateMatch(profile, course) : null;
   const matchScore = matchResult?.score ?? course.match ?? 0;
 
-  // Eligibility checks
   const checks = profile
-    ? [
-        {
-          label: t('courseDetail.checkItems.authorization'),
-          passed: profile.authorizations.includes(course.type as any),
-        },
-        {
-          label: t('courseDetail.checkItems.language'),
-          sublabel: course.languages.map((l) => (l === 'ne' ? 'Nepali' : l === 'en' ? 'English' : l)).join(', '),
-          passed: course.languages.some(
-            (lc) =>
-              profile.languages['Nepali'] === 'primary' && lc === 'ne' ||
-              profile.languages['English'] === 'primary' && lc === 'en' ||
-              profile.languages['Hindi'] === 'primary' && lc === 'hi'
-          ),
-        },
-        {
-          label: t('courseDetail.checkItems.availability'),
-          sublabel: course.dates,
-          passed: profile.monthlyAvailability[new Date(course.startDate).getMonth()] === 1,
-        },
-        {
-          label: t('courseDetail.checkItems.restGap'),
-          passed: true, // simplified for pilot
-        },
-        {
-          label: t('courseDetail.checkItems.gender'),
-          sublabel: course.genderRequired !== 'Any' ? `${course.genderRequired} AT required` : 'Any gender',
-          passed: course.genderRequired === 'Any' || course.genderRequired === profile.gender,
-        },
-      ]
+    ? buildEligibilityChecks(profile, course, {
+        authorization: t('courseDetail.checkItems.authorization'),
+        language: t('courseDetail.checkItems.language'),
+        availability: t('courseDetail.checkItems.availability'),
+        restGap: t('courseDetail.checkItems.restGap'),
+        gender: t('courseDetail.checkItems.gender'),
+      })
     : [];
 
   const handleApply = async () => {
+    if (!userId) return;
     setApplying(true);
     try {
       await submitApplication(course.id, userId);

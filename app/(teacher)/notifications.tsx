@@ -29,7 +29,7 @@ const TYPE_CONFIG: Record<string, { emoji: string; bg: string; label: string }> 
 export default function NotificationsScreen() {
   const { t } = useTranslation();
   const { language } = useSettingsStore();
-  const userId = useAuthStore((s) => s.userId)!;
+  const userId = useAuthStore((s) => s.userId) ?? '';
   const { getForUser, markRead, respondToInvite, loaded } = useNotificationsStore();
 
   const [expanded, setExpanded] = useState<number | null>(null);

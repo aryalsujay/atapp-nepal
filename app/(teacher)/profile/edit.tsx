@@ -49,7 +49,7 @@ export default function EditProfileScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const userId = useAuthStore((s) => s.userId)!;
+  const userId = useAuthStore((s) => s.userId) ?? '';
   const { profile, loadProfile, updateProfile } = useProfileStore();
 
   const [phone, setPhone] = useState('');

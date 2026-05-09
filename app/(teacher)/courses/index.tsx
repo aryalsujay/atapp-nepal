@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, FlatList, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -29,7 +29,7 @@ const REGION_OPTIONS = ['All Nepal', 'Kathmandu Valley', 'Pokhara & Gandaki', 'L
 export default function CoursesScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const userId = useAuthStore((s) => s.userId)!;
+  const userId = useAuthStore((s) => s.userId) ?? '';
   const { profile, loadProfile } = useProfileStore();
   const { applications, loadApplications } = useApplicationsStore();
 
@@ -43,7 +43,14 @@ export default function CoursesScreen() {
   }, [userId]);
 
   const courses = useCoursesStore((s) => s.courses) as Course[];
-  const enriched = profile ? enrichCoursesWithMatch(courses, profile) : courses;
+  const visibleCourses = useMemo(
+    () => courses.filter((c) => (c.needCount ?? 1) > 0),
+    [courses]
+  );
+  const enriched = useMemo(
+    () => (profile ? enrichCoursesWithMatch(visibleCourses, profile) : visibleCourses),
+    [visibleCourses, profile]
+  );
 
   const filtered = enriched.filter((c) => {
     const matchesSearch =

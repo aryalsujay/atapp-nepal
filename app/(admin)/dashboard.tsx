@@ -11,8 +11,12 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../../src/store/authStore';
 import { useSettingsStore } from '../../src/store/settingsStore';
+import { useApplicationsStore } from '../../src/store/applicationsStore';
+import { useNotificationsStore } from '../../src/store/notificationsStore';
+import { useTeachersStore } from '../../src/store/teachersStore';
 import { LotusHero, MountainSilhouette } from '../../src/components/ui/HeroDecorations';
 import { FadeInView } from '../../src/components/ui/FadeInView';
 import { Colors, Gradients } from '../../src/theme/colors';
@@ -33,6 +37,30 @@ export default function AdminDashboard() {
   const signOut = useAuthStore((s) => s.signOut);
   const { showCoTeacher, toggleCoTeacher } = useSettingsStore();
   const { courses, lastSyncAt, syncing, syncCourses } = useCoursesStore();
+  const reloadAllApps = useApplicationsStore((s) => s.loadAllApplications);
+  const reloadNotifs = useNotificationsStore((s) => s.loadNotifications);
+  const reloadTeachers = useTeachersStore((s) => s.loadTeachers);
+
+  const handleResetDemo = () => {
+    Alert.alert(
+      'Reset Demo Data',
+      'Clear all stored applications, notifications, profiles, and synced courses, then reload seed data. This is for demo purposes only.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            const keys = await AsyncStorage.getAllKeys();
+            const dhammaKeys = keys.filter((k) => k.startsWith('@dhamma_'));
+            await AsyncStorage.multiRemove(dhammaKeys);
+            await Promise.all([reloadAllApps(), reloadNotifs(), reloadTeachers()]);
+            Alert.alert('Demo Reset', 'Local data cleared. Sign out and back in to refresh your session.');
+          },
+        },
+      ]
+    );
+  };
 
   const pendingApps = (applicationsData as any[]).filter((a) => a.status === 'pending').length;
   const totalTeachers = (teachersData as any[]).length;
@@ -196,6 +224,20 @@ export default function AdminDashboard() {
             <Text style={styles.settingDesc}>Show co-teacher contact info to assigned ATs</Text>
           </View>
           <Toggle value={showCoTeacher} onToggle={toggleCoTeacher} />
+        </View>
+      </View>
+
+      {/* Demo controls */}
+      <SectionHeader title="🧪 Demo" />
+      <View style={styles.settingsCard}>
+        <View style={styles.settingRow}>
+          <View style={styles.settingInfo}>
+            <Text style={styles.settingLabel}>Reset demo data</Text>
+            <Text style={styles.settingDesc}>Wipe local AsyncStorage and reload seed JSON</Text>
+          </View>
+          <TouchableOpacity onPress={handleResetDemo} style={[styles.syncBtn, { backgroundColor: Colors.url }]}>
+            <Text style={[styles.syncBtnText, { color: Colors.ur }]}>Reset</Text>
+          </TouchableOpacity>
         </View>
       </View>
 

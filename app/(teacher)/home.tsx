@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -61,7 +61,7 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const userId = useAuthStore((s) => s.userId)!;
+  const userId = useAuthStore((s) => s.userId) ?? '';
   const { profile, loadProfile } = useProfileStore();
   const { applications, loadApplications } = useApplicationsStore();
   const { language, setLanguage } = useSettingsStore();
@@ -72,10 +72,18 @@ export default function HomeScreen() {
   }, [userId]);
 
   const courses = useCoursesStore((s) => s.courses) as Course[];
-  const enriched = profile ? enrichCoursesWithMatch(courses, profile) : courses;
-  const topMatches = enriched
-    .filter((c) => (c as any).match >= 83)
-    .slice(0, 5);
+  const visibleCourses = useMemo(
+    () => courses.filter((c) => (c.needCount ?? 1) > 0),
+    [courses]
+  );
+  const enriched = useMemo(
+    () => (profile ? enrichCoursesWithMatch(visibleCourses, profile) : visibleCourses),
+    [visibleCourses, profile]
+  );
+  const topMatches = useMemo(
+    () => enriched.filter((c) => (c as any).match >= 83).slice(0, 5),
+    [enriched]
+  );
 
   const approvedApps = applications.filter((a) => a.status === 'approved');
   const approvedCourses = approvedApps

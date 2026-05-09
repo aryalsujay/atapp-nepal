@@ -54,7 +54,7 @@ export default function OnboardingStep() {
   const step = parseInt(stepStr ?? '1', 10);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const userId = useAuthStore((s) => s.userId)!;
+  const userId = useAuthStore((s) => s.userId) ?? '';
   const setOnboarded = useAuthStore((s) => s.setOnboarded);
   const signOut = useAuthStore((s) => s.signOut);
   const { loadProfile, updateProfile } = useProfileStore();

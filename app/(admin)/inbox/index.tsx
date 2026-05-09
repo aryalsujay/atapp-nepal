@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   StyleSheet,
   Alert,
@@ -42,13 +41,28 @@ export default function AdminInbox() {
   const tabOptions = ['All', 'Pending', 'Step Down', 'Approved', 'Rejected'];
   const tabKeys: TabKey[] = ['all', 'pending', 'withdrawal_requested', 'approved', 'rejected'];
 
-  const filtered = tab === 'all' ? applications : applications.filter((a) => a.status === tab);
+  const filtered = useMemo(
+    () => (tab === 'all' ? applications : applications.filter((a) => a.status === tab)),
+    [tab, applications]
+  );
+
+  // Pre-compute teacher/course/match per row so re-renders don't redo it
+  const rows = useMemo(
+    () =>
+      filtered.map((app) => {
+        const teacher = (teachersData as any[]).find((t) => t.id === app.teacherId);
+        const course = (coursesData as any[]).find((c) => c.id === app.courseId);
+        const matchScore = teacher && course ? calculateMatch(teacher as any, course as any).score : 0;
+        return { app, teacher, course, matchScore };
+      }),
+    [filtered]
+  );
 
   // Courses with zero applications — need teacher invites
-  const allCourseIds = new Set(applications.map((a) => a.courseId));
-  const coursesNeedingTeachers = (coursesData as any[])
-    .filter((c) => !allCourseIds.has(c.id))
-    .slice(0, 3);
+  const coursesNeedingTeachers = useMemo(() => {
+    const allCourseIds = new Set(applications.map((a) => a.courseId));
+    return (coursesData as any[]).filter((c) => !allCourseIds.has(c.id)).slice(0, 3);
+  }, [applications]);
 
   const handleQuickAction = async (appId: number, teacherId: string, courseId: number, action: 'approved' | 'rejected') => {
     const teacher = (teachersData as any[]).find((t) => t.id === teacherId);
@@ -225,16 +239,16 @@ export default function AdminInbox() {
         activeColor={tab === 'withdrawal_requested' ? '#7C3AED' : Colors.bl}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
-        {filtered.map((app) => {
-          const teacher = (teachersData as any[]).find((t) => t.id === app.teacherId);
-          const course = (coursesData as any[]).find((c) => c.id === app.courseId);
-          const matchScore = teacher && course ? calculateMatch(teacher as any, course as any).score : 0;
+      <FlatList
+        data={rows}
+        keyExtractor={(row) => String(row.app.id)}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.list}
+        renderItem={({ item }) => {
+          const { app, teacher, course, matchScore } = item;
           const isWithdrawal = app.status === 'withdrawal_requested';
-
           return (
-            <View key={app.id} style={[styles.card, isWithdrawal && styles.withdrawalCard]}>
-              {/* Header */}
+            <View style={[styles.card, isWithdrawal && styles.withdrawalCard]}>
               <View style={styles.cardHeader}>
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>{teacher?.name?.charAt(0) ?? '?'}</Text>
@@ -249,14 +263,12 @@ export default function AdminInbox() {
                 <StatusPill status={app.status} />
               </View>
 
-              {/* Course */}
               <View style={styles.courseRow}>
                 <Text style={styles.courseName}>{course?.center ?? 'Unknown'} — {course?.type}</Text>
                 {matchScore > 0 && <MatchBadge score={matchScore} />}
               </View>
               <Text style={styles.courseDates}>📅 {course?.dates} · Applied {app.appliedDate}</Text>
 
-              {/* Withdrawal note */}
               {isWithdrawal && app.withdrawalNote && (
                 <View style={styles.withdrawalNote}>
                   <Text style={styles.withdrawalNoteLabel}>Teacher's reason:</Text>
@@ -264,7 +276,6 @@ export default function AdminInbox() {
                 </View>
               )}
 
-              {/* Actions */}
               {app.status === 'pending' && (
                 <View style={styles.actions}>
                   <TouchableOpacity
@@ -320,22 +331,24 @@ export default function AdminInbox() {
               )}
             </View>
           );
-        })}
-
-        {filtered.length === 0 && (
+        }}
+        ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>No {tab === 'all' ? '' : tab.replace('_', ' ')} applications</Text>
+            <Text style={styles.emptyEmoji}>📭</Text>
+            <Text style={styles.emptyText}>
+              No {tab === 'all' ? '' : tab.replace('_', ' ')} applications
+            </Text>
           </View>
-        )}
-
-        {/* Manage Centres link */}
-        <TouchableOpacity
-          style={styles.centresLink}
-          onPress={() => router.push('/(admin)/centres')}
-        >
-          <Text style={styles.centresLinkText}>🏛 Manage Centres & Halls →</Text>
-        </TouchableOpacity>
-      </ScrollView>
+        }
+        ListFooterComponent={
+          <TouchableOpacity
+            style={styles.centresLink}
+            onPress={() => router.push('/(admin)/centres')}
+          >
+            <Text style={styles.centresLinkText}>🏛 Manage Centres & Halls →</Text>
+          </TouchableOpacity>
+        }
+      />
 
       {/* Invite Modal */}
       <Modal visible={!!inviteModal} transparent animationType="slide" onRequestClose={() => setInviteModal(null)}>
@@ -575,6 +588,10 @@ const styles = StyleSheet.create({
   empty: {
     alignItems: 'center',
     padding: 40,
+    gap: Spacing.sm,
+  },
+  emptyEmoji: {
+    fontSize: 36,
   },
   emptyText: {
     fontSize: FontSize.md,

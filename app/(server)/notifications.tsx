@@ -27,7 +27,7 @@ const TYPE_CONFIG: Record<string, { emoji: string; color: string }> = {
 export default function ServerNotificationsScreen() {
   const insets = useSafeAreaInsets();
   const { language } = useSettingsStore();
-  const userId = useAuthStore((s) => s.userId)!;
+  const userId = useAuthStore((s) => s.userId) ?? '';
   const { getForUser, markRead, loaded } = useNotificationsStore();
   const [expanded, setExpanded] = useState<number | null>(null);
 

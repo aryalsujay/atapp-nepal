@@ -30,11 +30,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   setOnboarded: async (value) => {
-    set((state) => {
-      const data = { role: state.role, userId: state.userId, isOnboarded: value };
-      AsyncStorage.setItem(AUTH_KEY, JSON.stringify(data));
-      return { isOnboarded: value };
-    });
+    const { role, userId } = useAuthStore.getState();
+    const data = { role, userId, isOnboarded: value };
+    await AsyncStorage.setItem(AUTH_KEY, JSON.stringify(data));
+    set({ isOnboarded: value });
   },
 
   restoreSession: async () => {

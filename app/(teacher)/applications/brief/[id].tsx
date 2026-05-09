@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../../../src/store/authStore';
 import { useApplicationsStore } from '../../../../src/store/applicationsStore';
@@ -38,7 +38,7 @@ export default function CourseBriefScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const router = useRouter();
-  const userId = useAuthStore((s) => s.userId)!;
+  const userId = useAuthStore((s) => s.userId);
   const { applications, requestWithdrawal, getCoTeachersForCourse } = useApplicationsStore();
   const { addNotification } = useNotificationsStore();
   const { findTeacher } = useTeachersStore();
@@ -52,11 +52,13 @@ export default function CourseBriefScreen() {
     ? (coursesData as Course[]).find((c) => c.id === application.courseId)
     : null;
 
-  useEffect(() => {
-    if (application && course) {
-      getCoTeachersForCourse(course.id, userId).then(setCoTeacherIds);
-    }
-  }, [application?.id]);
+  useFocusEffect(
+    useCallback(() => {
+      if (application && course && userId) {
+        getCoTeachersForCourse(course.id, userId).then(setCoTeacherIds);
+      }
+    }, [application?.id, course?.id, userId])
+  );
 
   if (!course || !application) {
     return (
@@ -69,6 +71,7 @@ export default function CourseBriefScreen() {
   const isWithdrawalPending = application.status === 'withdrawal_requested';
 
   const handleStepDown = () => {
+    if (!userId) return;
     if (showWithdrawInput) {
       Alert.alert(
         t('brief.stepDown'),
@@ -118,7 +121,10 @@ export default function CourseBriefScreen() {
   const langLabel = (code: string) =>
     code === 'ne' ? 'Nepali' : code === 'en' ? 'English' : code === 'hi' ? 'Hindi' : code;
 
-  const coTeachers = coTeacherIds.map((tid) => findTeacher(tid)).filter(Boolean);
+  const coTeachers = useMemo(
+    () => coTeacherIds.map((tid) => findTeacher(tid)).filter(Boolean),
+    [coTeacherIds, findTeacher]
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.cr }}>
@@ -175,8 +181,8 @@ export default function CourseBriefScreen() {
           </View>
         </View>
 
-        {/* Co-teacher from data */}
-        {course.coTeacher && (
+        {/* Static co-teacher (only when no dynamic co-teachers from approvals) */}
+        {course.coTeacher && coTeachers.length === 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('brief.coTeacher')}</Text>
             <View style={styles.contactCard}>

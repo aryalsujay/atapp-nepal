@@ -19,7 +19,7 @@ type TabKey = 'all' | 'pending' | 'approved' | 'rejected' | 'withdrawal_requeste
 export default function ApplicationsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const userId = useAuthStore((s) => s.userId)!;
+  const userId = useAuthStore((s) => s.userId) ?? '';
   const { applications, loadApplications } = useApplicationsStore();
   const [tab, setTab] = useState<TabKey>('all');
 

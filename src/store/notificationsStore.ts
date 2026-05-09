@@ -12,6 +12,7 @@ interface NotificationsState {
   markAllRead: (userId: string) => Promise<void>;
   respondToInvite: (id: number, response: 'accepted' | 'declined', reason?: string) => Promise<void>;
   getUnreadCount: (userId: string) => number;
+  removeForApplication: (teacherId: string, courseId: number) => Promise<void>;
 }
 
 const NOTIFS_KEY = '@dhamma_notifications';
@@ -206,4 +207,12 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
 
   getUnreadCount: (userId) =>
     get().notifications.filter((n) => n.targetUserId === userId && !n.read).length,
+
+  removeForApplication: async (teacherId, courseId) => {
+    const updated = get().notifications.filter(
+      (n) => !(n.targetUserId === teacherId && n.courseId === courseId)
+    );
+    await saveAll(updated);
+    set({ notifications: updated });
+  },
 }));

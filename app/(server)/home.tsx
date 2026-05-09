@@ -48,7 +48,7 @@ export default function ServerHomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { language, setLanguage } = useSettingsStore();
-  const userId = useAuthStore((s) => s.userId)!;
+  const userId = useAuthStore((s) => s.userId) ?? '';
   const findTeacher = useTeachersStore((s) => s.findTeacher);
   const user = findTeacher(userId);
 

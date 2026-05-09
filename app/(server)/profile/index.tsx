@@ -39,7 +39,7 @@ export default function ServerProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const signOut = useAuthStore((s) => s.signOut);
-  const userId = useAuthStore((s) => s.userId)!;
+  const userId = useAuthStore((s) => s.userId) ?? '';
   const findTeacher = useTeachersStore((s) => s.findTeacher);
   const user = findTeacher(userId);
 

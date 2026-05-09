@@ -23,6 +23,7 @@ import { useNotificationsStore } from '../../../src/store/notificationsStore';
 import coursesData from '../../../src/data/courses.json';
 import teachersData from '../../../src/data/teachers.json';
 import { calculateMatch } from '../../../src/utils/matching';
+import { buildEligibilityChecks } from '../../../src/utils/eligibility';
 
 export default function AdminReviewScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -40,9 +41,7 @@ export default function AdminReviewScreen() {
     if (applications.length === 0) loadAllApplications();
   }, []);
 
-  const app = applications.find((a) => a.id === Number(id))
-    ?? (coursesData as any[]).find(() => false); // fallback triggers not-found
-
+  const app = applications.find((a) => a.id === Number(id));
   const teacher = app ? (teachersData as any[]).find((t) => t.id === app.teacherId) : null;
   const course = app ? (coursesData as any[]).find((c) => c.id === app.courseId) : null;
 
@@ -58,28 +57,13 @@ export default function AdminReviewScreen() {
   const activeLangs = Object.entries(teacher.languages as Record<string, string>)
     .filter(([, v]) => v !== 'off');
 
-  const checks = [
-    {
-      label: t('courseDetail.checkItems.authorization'),
-      passed: (teacher.authorizations as string[]).includes(course.type),
-    },
-    {
-      label: t('courseDetail.checkItems.language'),
-      sublabel: course.languages.map((l: string) => l === 'ne' ? 'Nepali' : l === 'en' ? 'English' : l).join(', '),
-      passed: course.languages.some((lc: string) =>
-        (teacher.languages['Nepali'] === 'primary' && lc === 'ne') ||
-        (teacher.languages['English'] === 'primary' && lc === 'en')
-      ),
-    },
-    {
-      label: t('courseDetail.checkItems.availability'),
-      passed: teacher.monthlyAvailability[new Date(course.startDate).getMonth()] === 1,
-    },
-    {
-      label: t('courseDetail.checkItems.restGap'),
-      passed: true,
-    },
-  ];
+  const checks = buildEligibilityChecks(teacher, course, {
+    authorization: t('courseDetail.checkItems.authorization'),
+    language: t('courseDetail.checkItems.language'),
+    availability: t('courseDetail.checkItems.availability'),
+    restGap: t('courseDetail.checkItems.restGap'),
+    gender: t('courseDetail.checkItems.gender'),
+  });
 
   const handleDecision = async (action: 'approved' | 'rejected') => {
     if (action === 'rejected' && !rejectReason.trim()) {

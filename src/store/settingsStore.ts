@@ -9,7 +9,7 @@ interface SettingsState {
   showCoTeacher: boolean;
 
   setLanguage: (lang: Language) => Promise<void>;
-  toggleCoTeacher: () => void;
+  toggleCoTeacher: () => Promise<void>;
   restoreSettings: () => Promise<void>;
 }
 
@@ -27,13 +27,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...current, language: lang }));
   },
 
-  toggleCoTeacher: () => {
+  toggleCoTeacher: async () => {
     const next = !get().showCoTeacher;
     set({ showCoTeacher: next });
-    AsyncStorage.getItem(SETTINGS_KEY).then((raw) => {
+    try {
+      const raw = await AsyncStorage.getItem(SETTINGS_KEY);
       const current = raw ? JSON.parse(raw) : {};
-      AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...current, showCoTeacher: next }));
-    });
+      await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...current, showCoTeacher: next }));
+    } catch {}
   },
 
   restoreSettings: async () => {

@@ -32,7 +32,7 @@ export default function ProfileScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const userId = useAuthStore((s) => s.userId)!;
+  const userId = useAuthStore((s) => s.userId) ?? '';
   const signOut = useAuthStore((s) => s.signOut);
   const { profile, loadProfile } = useProfileStore();
 
