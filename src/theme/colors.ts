@@ -110,7 +110,7 @@ export const ServiceAreaColors: Record<string, string> = {
   dhamma: '#7B5EA6',
   compound: '#4A7A58',
   reception: '#2A6496',
-  at_assistant: '#8B4A00',
+  at_assist: '#8B4A00',
   manager: '#5A3A8A',
   residence: '#3A7A6A',
 };

@@ -1,9 +1,9 @@
-# Spec: 01 — Login
+# Spec: 01 — Login (v2)
 
-> **Status:** 🔨 `code_in_progress` — awaiting user verification on device/simulator
+> **Status:** 🔨 `code_in_progress` — Login v2 implementation on branch `screen/01-login-v2`
 > **Owner of approval:** Bhushan
 > **Last updated:** 2026-05-13
-> **Pilot:** This is the first screen migrated under the spec-first workflow. The workflow itself is being validated here.
+> **Pilot:** First screen migrated under the spec-first workflow. **v2 extends the prototype with production features:** email-or-phone identifier, save-password toggle, demo auto-login on role tap, local GIF logo, and +2 px font baseline.
 
 ---
 
@@ -305,17 +305,41 @@ None — all values now reference tokens.
 
 ---
 
-## 12. Intentional Deltas from Prototype
+## 12. Intentional Deltas from Prototype (v2)
 
-| Delta | Prototype | Our app | Why |
+All v1 deltas still apply. v2 adds the following production features that **intentionally depart from the prototype**:
+
+| Delta | Prototype | Our app v2 | Why |
 |---|---|---|---|
-| Strings are i18n-managed, not hardcoded | hardcoded EN for most labels; only `lg_invite_only` translated | every string has a key in `en.json`/`ne.json` | Production app must support full NE; we promote the prototype's inconsistency to a uniform i18n model. |
-| Password field is empty | `defaultValue="••••••••"` (visual only) | empty controlled `''` | Real auth requires the user to type their password. Bullets in the prototype were a screenshot prop. |
-| Auth is real, not stubbed | `onClick={()=>nav(target)}` (no validation) | validates against `admin.json` + `teachersStore` | Current app already has working auth; we keep it. The button's behavior is the only "logic" we don't strictly mirror. |
-| Forgot-password shows an alert | `onClick` not wired in prototype | `Alert.alert` with instruction | Tappable elements must do something or they confuse users; reset flow is a future spec. |
-| No language toggle on login | not present in prototype | currently present top-right; will be **removed** for pilot | The prototype's design intent is a single first-impression hero; the language switch lives in profile/settings instead. ⚠️ This is the call most likely to be reversed — see §13. |
-| Eye-icon password toggle | not present in prototype | currently present | Optional UX improvement on mobile. Remove for pilot to match prototype strictly. |
-| Sign-out from logged-in screens routes to `/(auth)/login` | prototype `nav("login")` | same | no change needed |
+| **Email-or-phone identifier** | email only | unified `identifier` field accepts email, phone, or invite code; auto-classifies based on input | Nepali users frequently sign in by phone. The field icon (✉️ / 📱 / 🔑) updates as they type. |
+| **Save password** | not present | checkbox below password; persists `{role, identifier, password}` to `expo-secure-store` on success; restored on next launch | Standard mobile UX. Storage is encrypted (iOS Keychain / Android Keystore). User can opt out per session. |
+| **Demo auto-login on role tap** | not present | tapping a role tab fills the demo creds and auto-submits 250 ms later | Lets reviewers/testers cycle roles fast without retyping. Production users tap, then type their own creds — auto-submit only fires when the tap happens to fill creds. |
+| **Eye icon password toggle** | not present in prototype | present — `👁️/🙈` toggle | Standard mobile UX; small enough not to clash with prototype's visual feel. |
+| **Bigger fonts** | 11–14 px body | +2 px baseline (13–16 px); title 30 → 32, CTA 15 → 17, etc. | Older teachers and Devanagari readers struggle with 11 px. New scale documented in `_design-tokens.md`. |
+| **Local GIF logo** | network GIF from `dhamma.org` | bundled `assets/logo-dhamma.gif` via `expo-image` | No network flash on cold start; works offline; encrypted at rest with the rest of the bundle. |
+| Strings are i18n-managed, not hardcoded | hardcoded EN for most labels | every string in `en.json`/`ne.json` | Production app must support full NE. |
+| Password field is empty | `defaultValue="••••••••"` (visual only) | empty controlled `''` | Real auth requires the user to type their password. |
+| Auth is real, not stubbed | `onClick={()=>nav(target)}` | validates against `admin.json` + `teachersStore` | Current app has working auth. |
+| Forgot-password shows a toast | `onClick` not wired | `toast.info(...)` | Tappable elements must do something. Reset flow is a future spec. |
+| No language toggle on login | not present | not present in v2 | Matches prototype intent; switcher lives in settings. |
+| Sign-out routes back here | prototype `nav("login")` | `router.replace(Routes.login)` | Same intent. |
+
+### Key identifier classification
+
+| Input pattern | Type | Storage lookup |
+|---|---|---|
+| contains `@` | email | `teachersStore.findTeacher(identifier)` matches by `email` |
+| starts with digit or `+` | phone | normalized (strip spaces/dashes/parens), matched by `email` (until phone field added to seed) |
+| anything else (admin mode only) | username | exact match against `admin.json:username` |
+
+> Phone-number lookup currently falls through to `email` matching because seed teachers don't have phone numbers yet. Once we add `phone` to the teachers table (post-SQLite Phase D), the repository can look up by either column.
+
+### Save password persistence
+
+- Storage key: `dhamma.savedCreds.v1`
+- Backend: `expo-secure-store` (iOS Keychain / Android Keystore)
+- Payload: `{ role: 'teacher'|'server'|'admin', identifier: string, password: string }`
+- Restored on mount; user can unset by unchecking the box and signing in again.
 
 ---
 
