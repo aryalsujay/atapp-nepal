@@ -1,30 +1,36 @@
 /**
- * Login screen — implements `specs/01-login.md`.
+ * Login screen v2 — implements `specs/01-login.md`.
  *
- * Prototype reference: `VipassanaTeacherApp/app.html` lines 891–937.
- * Any visible change must update the spec first.
+ * Differences from v1 (prototype):
+ *   • Accepts email OR phone OR invite code as identifier.
+ *   • "Save password" toggle persists creds to `expo-secure-store`.
+ *   • Tapping a role tab auto-logs the demo user for that role (demo only).
+ *   • Bigger fonts (+2 baseline) for production readability.
+ *   • Local Dhamma Wheel GIF via `expo-image` instead of network fetch.
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
+  Animated,
+  Easing,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  StatusBar,
-  Image,
-  Animated,
-  Easing,
+  View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Routes, routeTo } from '@/routes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import * as SecureStore from 'expo-secure-store';
+
+import { Routes, routeTo } from '@/routes';
 import { useAuthStore } from '@/store/authStore';
 import { useTeachersStore } from '@/store/teachersStore';
 import { Colors, Gradients, GradientDirection } from '@/theme/colors';
@@ -35,13 +41,14 @@ import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
 import { FadeInView } from '@/components/ui/FadeInView';
 import { useToast } from '@/components/ui/Toast';
 import adminData from '@/data/admin.json';
+import { logger } from '@/utils/logger';
 
 type Role = 'teacher' | 'server' | 'admin';
 
-const DEMO_EMAIL: Record<Role, string> = {
-  teacher: 'ananda@dhamma.org.np',
-  server: 'priya@dhamma.org.np',
-  admin: 'admin@dhamma.org.np',
+const DEMO_CREDS: Record<Role, { identifier: string; password: string }> = {
+  teacher: { identifier: 'ananda@dhamma.org.np', password: 'demo123' },
+  server: { identifier: 'priya@dhamma.org.np', password: 'demo123' },
+  admin: { identifier: 'admin', password: 'dhamma2026' },
 };
 
 const HERO_GRADIENT: Record<Role, readonly [string, string, ...string[]]> = {
@@ -50,9 +57,28 @@ const HERO_GRADIENT: Record<Role, readonly [string, string, ...string[]]> = {
   admin: Gradients.admin,
 };
 
-// Bundled Dhamma Wheel logo (PNG converted from the original GIF at
-// dhamma.org/np). Local asset avoids network flash on cold start.
-const DHAMMA_LOGO = require('../../assets/logo-dhamma.png');
+const SECURE_KEY = 'dhamma.savedCreds.v1';
+
+const DHAMMA_LOGO = require('../../assets/logo-dhamma.gif');
+
+interface SavedCreds {
+  role: Role;
+  identifier: string;
+  password: string;
+}
+
+/** Classify a user-typed identifier — drives field icon and validation. */
+function classifyIdentifier(value: string): 'email' | 'phone' | 'code' | 'empty' {
+  const trimmed = value.trim();
+  if (!trimmed) return 'empty';
+  if (trimmed.includes('@')) return 'email';
+  if (/^\+?\d[\d\s\-()]{4,}$/.test(trimmed)) return 'phone';
+  return 'code';
+}
+
+function normalizePhone(value: string): string {
+  return value.replace(/[\s\-()]/g, '');
+}
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -63,17 +89,54 @@ export default function LoginScreen() {
   const findTeacher = useTeachersStore((s) => s.findTeacher);
 
   const [mode, setMode] = useState<Role>('teacher');
-  const [identifier, setIdentifier] = useState(DEMO_EMAIL.teacher);
+  const [identifier, setIdentifier] = useState(DEMO_CREDS.teacher.identifier);
   const [password, setPassword] = useState('');
+  const [savePassword, setSavePassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [pwFocused, setPwFocused] = useState(false);
 
-  // Swap pre-filled demo email when role changes — matches prototype `defaultEmail`.
+  // Track whether the next mode change is from a user tap (auto-login) vs
+  // restoring saved creds (no auto-login).
+  const autoLoginRequested = useRef(false);
+
+  // Restore saved creds on mount (if user previously checked "Save password").
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await SecureStore.getItemAsync(SECURE_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw) as SavedCreds;
+        setMode(saved.role);
+        setIdentifier(saved.identifier);
+        setPassword(saved.password);
+        setSavePassword(true);
+      } catch (err) {
+        logger.warn('[login] failed to restore saved creds', err);
+      }
+    })();
+  }, []);
+
   const handleSelectMode = (next: Role) => {
     setMode(next);
-    setIdentifier(DEMO_EMAIL[next]);
+    setIdentifier(DEMO_CREDS[next].identifier);
+    setPassword(DEMO_CREDS[next].password);
+    autoLoginRequested.current = true;
   };
+
+  // When `autoLoginRequested` is set by a role tap, fire sign-in once the new
+  // values have propagated.
+  useEffect(() => {
+    if (!autoLoginRequested.current) return;
+    autoLoginRequested.current = false;
+    // Slight delay so the gradient crossfade is visible and the form re-renders.
+    const t = setTimeout(() => {
+      handleSignIn();
+    }, 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   const ctaLabel = useMemo(() => {
     if (loading) return t('login.cta_loading');
@@ -82,8 +145,31 @@ export default function LoginScreen() {
     return t('login.cta_admin');
   }, [mode, loading, t]);
 
+  const idKind = classifyIdentifier(identifier);
+  const idLabel = useMemo(() => {
+    if (mode === 'admin') return t('login.email_label'); // admin uses username
+    return t('login.identifier_label');
+  }, [mode, t]);
+  const idPlaceholder = useMemo(() => {
+    if (mode === 'admin') return 'admin';
+    return t('login.identifier_placeholder');
+  }, [mode, t]);
+
   const handleForgot = () => {
     toast.info(t('login.forgot_alert_body'), t('login.forgot_alert_title'));
+  };
+
+  const persistCreds = async () => {
+    try {
+      if (savePassword) {
+        const payload: SavedCreds = { role: mode, identifier, password };
+        await SecureStore.setItemAsync(SECURE_KEY, JSON.stringify(payload));
+      } else {
+        await SecureStore.deleteItemAsync(SECURE_KEY);
+      }
+    } catch (err) {
+      logger.warn('[login] failed to persist creds', err);
+    }
   };
 
   const handleSignIn = async () => {
@@ -96,6 +182,7 @@ export default function LoginScreen() {
       if (mode === 'admin') {
         if (identifier === adminData.username && password === adminData.password) {
           await setAuth('admin', adminData.id, true);
+          await persistCreds();
           router.replace(Routes.adminDashboard);
         } else {
           toast.error(t('login.error_invalid_admin'), t('login.error_invalid_title'));
@@ -103,8 +190,11 @@ export default function LoginScreen() {
         return;
       }
 
+      // For teacher + server, accept email, phone, or invite code.
+      const lookupId = idKind === 'phone' ? normalizePhone(identifier) : identifier.trim();
+      const found = findTeacher(lookupId);
+
       if (mode === 'server') {
-        const found = findTeacher(identifier.trim());
         const serverUser =
           found?.passwordHash === password && found.role === 'server' ? found : null;
         if (!serverUser) {
@@ -112,18 +202,18 @@ export default function LoginScreen() {
           return;
         }
         await setAuth('server', serverUser.id, serverUser.isOnboarded ?? false);
+        await persistCreds();
         router.replace(serverUser.isOnboarded ? Routes.serverHome : Routes.serverOnboarding);
         return;
       }
 
-      // teacher
-      const found = findTeacher(identifier.trim());
       const teacher = found?.passwordHash === password ? found : null;
       if (!teacher) {
         toast.error(t('login.error_invalid_teacher'), t('login.error_invalid_title'));
         return;
       }
       await setAuth('teacher', teacher.id, teacher.isOnboarded ?? false);
+      await persistCreds();
       router.replace(teacher.isOnboarded ? Routes.teacherHome : routeTo.onboardingTeacher(1));
     } finally {
       setLoading(false);
@@ -131,6 +221,7 @@ export default function LoginScreen() {
   };
 
   const heroPadTop = Math.max(58, insets.top + 11);
+  const showInviteNotice = mode === 'teacher';
 
   return (
     <KeyboardAvoidingView
@@ -150,7 +241,7 @@ export default function LoginScreen() {
           <MountainSilhouette color="rgba(255,255,255,0.07)" />
 
           <View style={styles.logoWrap}>
-            <Image source={DHAMMA_LOGO} style={styles.logo} resizeMode="contain" />
+            <Image source={DHAMMA_LOGO} style={styles.logo} contentFit="contain" />
           </View>
           <Text style={styles.title}>{t('login.title')}</Text>
           <Text style={styles.subtitleNe}>{t('login.subtitle_ne')}</Text>
@@ -178,50 +269,80 @@ export default function LoginScreen() {
             />
           </View>
 
-          {/* Email field */}
+          {/* Identifier field — email OR phone OR username (for admin) */}
           <View style={styles.fieldGroupEmail}>
-            <Text style={styles.fieldLabel}>{t('login.email_label')}</Text>
-            <TextInput
-              value={identifier}
-              onChangeText={setIdentifier}
-              onFocus={() => setEmailFocused(true)}
-              onBlur={() => setEmailFocused(false)}
-              placeholder={t('login.email_placeholder')}
-              placeholderTextColor={Colors.tx3}
-              style={[styles.input, emailFocused && styles.inputFocused]}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="email-address"
-            />
+            <Text style={styles.fieldLabel}>{idLabel}</Text>
+            <View style={styles.inputWrap}>
+              <TextInput
+                value={identifier}
+                onChangeText={setIdentifier}
+                onFocus={() => setEmailFocused(true)}
+                onBlur={() => setEmailFocused(false)}
+                placeholder={idPlaceholder}
+                placeholderTextColor={Colors.tx3}
+                style={[styles.input, emailFocused && styles.inputFocused]}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType={idKind === 'phone' ? 'phone-pad' : 'email-address'}
+              />
+              {idKind !== 'empty' && mode !== 'admin' && (
+                <View style={styles.inputBadge}>
+                  <Text style={styles.inputBadgeText}>
+                    {idKind === 'email' ? '✉️' : idKind === 'phone' ? '📱' : '🔑'}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
 
           {/* Password field */}
           <View style={styles.fieldGroupPassword}>
             <Text style={styles.fieldLabel}>{t('login.password_label')}</Text>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              onFocus={() => setPwFocused(true)}
-              onBlur={() => setPwFocused(false)}
-              placeholder="••••••••"
-              placeholderTextColor={Colors.tx3}
-              style={[styles.input, pwFocused && styles.inputFocused]}
-              secureTextEntry
-              autoCapitalize="none"
-            />
+            <View style={styles.inputWrap}>
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                onFocus={() => setPwFocused(true)}
+                onBlur={() => setPwFocused(false)}
+                placeholder="••••••••"
+                placeholderTextColor={Colors.tx3}
+                style={[styles.input, styles.inputWithEye, pwFocused && styles.inputFocused]}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword((v) => !v)}
+                style={styles.eyeBtn}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          {/* Forgot password */}
-          <TouchableOpacity
-            onPress={handleForgot}
-            style={styles.forgotWrap}
-            activeOpacity={0.6}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text style={styles.forgotText}>{t('login.forgot')}</Text>
-          </TouchableOpacity>
+          {/* Save password + Forgot password row */}
+          <View style={styles.optionsRow}>
+            <TouchableOpacity
+              onPress={() => setSavePassword((v) => !v)}
+              style={styles.saveToggle}
+              activeOpacity={0.7}
+              hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+            >
+              <View style={[styles.checkbox, savePassword && styles.checkboxOn]}>
+                {savePassword && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <Text style={styles.saveLabel}>{t('login.save_password')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleForgot}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              activeOpacity={0.6}
+            >
+              <Text style={styles.forgotText}>{t('login.forgot')}</Text>
+            </TouchableOpacity>
+          </View>
 
-          {/* Primary CTA — gradient, label per mode */}
+          {/* Primary CTA */}
           <PressScale onPress={handleSignIn} disabled={loading}>
             <LinearGradient
               colors={Gradients.primaryCta as unknown as [string, string, ...string[]]}
@@ -234,7 +355,7 @@ export default function LoginScreen() {
           </PressScale>
 
           {/* Invite-only notice — teacher mode only */}
-          {mode === 'teacher' && (
+          {showInviteNotice && (
             <View style={styles.inviteNotice}>
               <Text style={styles.inviteIcon}>🔒</Text>
               <Text style={styles.inviteText}>{t('login.invite_only')}</Text>
@@ -247,7 +368,7 @@ export default function LoginScreen() {
             <Text style={styles.footerBrand}>{t('login.footer_brand')}</Text>
           </Text>
 
-          <View style={{ height: 20 }} />
+          <View style={{ height: 24 }} />
         </FadeInView>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -255,7 +376,7 @@ export default function LoginScreen() {
 }
 
 /**
- * Crossfades two `LinearGradient`s on mode change to match the prototype's
+ * Crossfades two gradients on mode change to match the prototype's
  * `transition: background .3s` on the hero block (`app.html:904`).
  */
 function HeroGradient({
@@ -315,7 +436,6 @@ function HeroGradient({
   );
 }
 
-/** Role-tab segmented control button — matches prototype tab style. */
 function RoleTab({
   label,
   active,
@@ -336,11 +456,7 @@ function RoleTab({
   );
 }
 
-/**
- * Press-scale wrapper — matches prototype `.btn:active{transform:scale(.96)}`.
- * Used here for the primary CTA. Extract to `src/components/ui/` when a second
- * screen needs it.
- */
+/** Spring-scale press feedback for primary CTAs (prototype `.btn:active{scale .96}`). */
 function PressScale({
   onPress,
   disabled,
@@ -377,54 +493,53 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flexGrow: 1, backgroundColor: Colors.cr },
 
-  // Hero — padding: 58px top (overridden per insets), 24px horizontal, 36px bottom
+  // Hero
   hero: {
     paddingHorizontal: 24,
     paddingBottom: 36,
     overflow: 'hidden',
     position: 'relative',
   },
-  logoWrap: { marginBottom: 10 },
-  logo: { width: 56, height: 56 },
+  logoWrap: { marginBottom: 12 },
+  logo: { width: 64, height: 64 },
   title: {
-    fontSize: 30,
+    fontSize: 32, // was 30
     fontWeight: '800',
     color: Colors.white,
-    lineHeight: 33, // 30 × 1.1
-    letterSpacing: 0,
+    lineHeight: 36,
   },
   subtitleNe: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 5,
+    fontSize: 16, // was 14
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 6,
     fontFamily: FontFamily.devanagari,
   },
   subtitleEn: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.6)',
-    marginTop: 2,
+    fontSize: 14, // was 12
+    color: 'rgba(255,255,255,0.65)',
+    marginTop: 3,
   },
 
-  // Form area — padding: 20px top, 18px horizontal, 0 bottom
+  // Form area
   formArea: {
     paddingHorizontal: 18,
-    paddingTop: 20,
+    paddingTop: 22,
     flex: 1,
   },
 
-  // Role pill container
+  // Role pill
   rolePill: {
     backgroundColor: Colors.cr2,
-    borderRadius: 13,
+    borderRadius: 14,
     padding: 4,
     flexDirection: 'row',
-    marginBottom: 20,
+    marginBottom: 22,
   },
   roleTab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 9,
+    paddingVertical: 11, // was 9
     paddingHorizontal: 4,
     borderRadius: 10,
   },
@@ -433,7 +548,7 @@ const styles = StyleSheet.create({
     ...Shadows.card,
   },
   roleTabLabel: {
-    fontSize: 12.5,
+    fontSize: 14.5, // was 12.5
     fontWeight: '700',
     color: Colors.tx2,
   },
@@ -441,40 +556,92 @@ const styles = StyleSheet.create({
     color: Colors.sfd,
   },
 
-  // Email + password field groups
-  fieldGroupEmail: { marginBottom: 14 },
-  fieldGroupPassword: { marginBottom: 16 },
+  // Fields
+  fieldGroupEmail: { marginBottom: 16 },
+  fieldGroupPassword: { marginBottom: 14 },
   fieldLabel: {
-    fontSize: 11,
+    fontSize: 13, // was 11
     fontWeight: '700',
     color: Colors.tx2,
-    marginBottom: 5,
+    marginBottom: 6,
     textTransform: 'uppercase',
-    letterSpacing: 0.44, // 0.04em at 11px
+    letterSpacing: 0.52,
   },
+  inputWrap: { position: 'relative' },
   input: {
     width: '100%',
     backgroundColor: Colors.cr,
     borderWidth: 1.5,
     borderColor: Colors.bd,
     borderRadius: 12,
-    paddingVertical: Layout.inputPadV, // 13
-    paddingHorizontal: Layout.inputPadH, // 15
-    fontSize: 14,
+    paddingVertical: 15, // was 13
+    paddingHorizontal: Layout.inputPadH,
+    fontSize: 16, // was 14
     color: Colors.tx,
   },
   inputFocused: {
     borderColor: Colors.sf,
     backgroundColor: Colors.white,
   },
+  inputWithEye: {
+    paddingRight: 48,
+  },
+  inputBadge: {
+    position: 'absolute',
+    right: 14,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
+  inputBadgeText: { fontSize: 18 },
+  eyeBtn: {
+    position: 'absolute',
+    right: 14,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
+  eyeIcon: { fontSize: 20 },
 
-  // Forgot password
-  forgotWrap: {
-    alignSelf: 'flex-end',
-    marginBottom: 20,
+  // Options row (save + forgot)
+  optionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 22,
+  },
+  saveToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: Colors.bd2,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxOn: {
+    backgroundColor: Colors.sf,
+    borderColor: Colors.sf,
+  },
+  checkmark: {
+    color: Colors.white,
+    fontSize: 13,
+    fontWeight: '800',
+    lineHeight: 14,
+  },
+  saveLabel: {
+    fontSize: 14, // was 13
+    color: Colors.tx2,
+    fontWeight: '600',
   },
   forgotText: {
-    fontSize: 13,
+    fontSize: 15, // was 13
     fontWeight: '600',
     color: Colors.sf,
   },
@@ -482,9 +649,9 @@ const styles = StyleSheet.create({
   // Primary CTA
   ctaBtn: {
     width: '100%',
-    paddingVertical: Layout.buttonPadV, // 15
-    paddingHorizontal: Layout.buttonPadH, // 22
-    borderRadius: 13,
+    paddingVertical: 17, // was 15
+    paddingHorizontal: Layout.buttonPadH,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.primaryCta,
@@ -492,42 +659,43 @@ const styles = StyleSheet.create({
   ctaDisabled: { opacity: 0.6 },
   ctaText: {
     color: Colors.white,
-    fontSize: 15,
+    fontSize: 17, // was 15
     fontWeight: '700',
   },
 
-  // Invite-only notice — teacher only
+  // Invite-only notice
   inviteNotice: {
-    marginTop: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     backgroundColor: Colors.bll,
     borderWidth: 1,
     borderColor: Colors.bld,
-    borderRadius: 11,
+    borderRadius: 12,
     flexDirection: 'row',
-    gap: 9,
+    gap: 10,
     alignItems: 'flex-start',
   },
   inviteIcon: {
-    fontSize: 14,
+    fontSize: 16, // was 14
     marginTop: 1,
   },
   inviteText: {
-    fontSize: 11,
+    fontSize: 13, // was 11
     color: Colors.tx2,
-    lineHeight: 16.5, // 11 × 1.5
+    lineHeight: 20,
     flex: 1,
   },
 
-  // Footer disclaimer
+  // Footer
   footer: {
-    marginTop: 12,
+    marginTop: 14,
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: 14, // was 12
     color: Colors.tx3,
   },
   footerBrand: {
     color: Colors.sf,
+    fontWeight: '700',
   },
 });
