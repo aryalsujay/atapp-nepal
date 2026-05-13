@@ -67,12 +67,21 @@ interface SavedCreds {
   password: string;
 }
 
-/** Classify a user-typed identifier — drives field icon and validation. */
+/**
+ * Classify a user-typed identifier — drives the field icon + keyboard.
+ * Phone match accepts `+`, parens, dashes, spaces, and any number of digits
+ * (5+ total digit chars). Anything else with a letter or `-` non-digit prefix
+ * falls back to `code` so admin usernames + invite codes work.
+ */
 function classifyIdentifier(value: string): 'email' | 'phone' | 'code' | 'empty' {
   const trimmed = value.trim();
   if (!trimmed) return 'empty';
   if (trimmed.includes('@')) return 'email';
-  if (/^\+?\d[\d\s\-()]{4,}$/.test(trimmed)) return 'phone';
+  // Phone: at least 5 digits total, only `+ ( ) - space` as separators.
+  const digitsOnly = trimmed.replace(/[+\s\-()]/g, '');
+  if (digitsOnly.length >= 5 && /^\d+$/.test(digitsOnly) && /^[+(\d]/.test(trimmed)) {
+    return 'phone';
+  }
   return 'code';
 }
 
