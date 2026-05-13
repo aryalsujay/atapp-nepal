@@ -1,27 +1,24 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { DimensionValue, View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Routes, routeTo } from '@/routes';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../src/store/authStore';
-import { useTeachersStore } from '../../src/store/teachersStore';
-import { useSettingsStore } from '../../src/store/settingsStore';
-import { Colors } from '../../src/theme/colors';
-import { FontSize, FontWeight } from '../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../src/theme/spacing';
-import { Shadows } from '../../src/theme/shadows';
-import { SectionHeader } from '../../src/components/layout/SectionHeader';
-import { LotusHero, MountainSilhouette } from '../../src/components/ui/HeroDecorations';
-import { FadeInView } from '../../src/components/ui/FadeInView';
-import { SERVICE_AREAS } from '../../src/data/serviceAreas';
-import serverApplicationsData from '../../src/data/serverApplications.json';
-import serverCoursesData from '../../src/data/serverCourses.json';
+import { useAuthStore } from '@/store/authStore';
+import { useTeachersStore } from '@/store/teachersStore';
+import { useSettingsStore } from '@/store/settingsStore';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
+import { FadeInView } from '@/components/ui/FadeInView';
+import { SERVICE_AREAS } from '@/data/serviceAreas';
+import {
+  serverApplications as serverApplicationsData,
+  serverCourses as serverCoursesData,
+} from '@/data';
 
 const SV_GRADIENT: [string, string, string] = ['#5A3800', '#8B5E14', '#C8900A'];
 
@@ -30,7 +27,9 @@ function AreaChip({ areaId }: { areaId: string }) {
   if (!area) return null;
   return (
     <View style={[styles.areaChip, { backgroundColor: Colors.svl }]}>
-      <Text style={styles.areaChipText}>{area.emoji} {area.label}</Text>
+      <Text style={styles.areaChipText}>
+        {area.emoji} {area.label}
+      </Text>
     </View>
   );
 }
@@ -39,7 +38,7 @@ function ProgressBar({ filled, total }: { filled: number; total: number }) {
   const pct = total > 0 ? Math.min(filled / total, 1) : 0;
   return (
     <View style={styles.progressTrack}>
-      <View style={[styles.progressFill, { width: `${pct * 100}%` as any }]} />
+      <View style={[styles.progressFill, { width: `${pct * 100}%` as DimensionValue }]} />
     </View>
   );
 }
@@ -54,15 +53,21 @@ export default function ServerHomeScreen() {
 
   const name = user?.name ?? 'Server';
   const firstName = name.split(' ')[0];
-  const initials = name.split(' ').map((w: string) => w[0]).join('').toUpperCase();
+  const initials = name
+    .split(' ')
+    .map((w: string) => w[0])
+    .join('')
+    .toUpperCase();
 
   const approvedApp = serverApplicationsData.find((a) => a.status === 'approved');
   const openCourses = serverCoursesData.slice(0, 3);
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.cr }}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
-
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 110 }}
+      >
         {/* Hero */}
         <LinearGradient
           colors={SV_GRADIENT}
@@ -87,11 +92,13 @@ export default function ServerHomeScreen() {
                 <Text style={styles.langBtnText}>{language === 'en' ? 'NE' : 'EN'}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => router.push('/(server)/notifications')}
+                onPress={() => router.push(Routes.serverNotifications)}
                 style={styles.bellBtn}
               >
                 <Text style={styles.bellText}>🔔</Text>
-                <View style={styles.badge}><Text style={styles.badgeText}>2</Text></View>
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>2</Text>
+                </View>
               </TouchableOpacity>
             </View>
           </View>
@@ -118,11 +125,15 @@ export default function ServerHomeScreen() {
                   <View style={styles.approvedBadge}>
                     <Text style={styles.approvedBadgeText}>✓ Approved</Text>
                   </View>
-                  <Text style={styles.approvedMeta}>{approvedApp.type} · {approvedApp.dates}</Text>
+                  <Text style={styles.approvedMeta}>
+                    {approvedApp.type} · {approvedApp.dates}
+                  </Text>
                 </View>
                 <Text style={styles.approvedCenter}>{approvedApp.center}</Text>
                 <View style={styles.chipRow}>
-                  {approvedApp.areas.map((a) => <AreaChip key={a} areaId={a} />)}
+                  {approvedApp.areas.map((a) => (
+                    <AreaChip key={a} areaId={a} />
+                  ))}
                 </View>
                 <View style={styles.approvedInfoRow}>
                   <View style={styles.approvedInfoItem}>
@@ -143,7 +154,7 @@ export default function ServerHomeScreen() {
         <SectionHeader
           title="Open Opportunities"
           action="See All"
-          onAction={() => router.push('/(server)/opportunities')}
+          onAction={() => router.push(Routes.serverOpportunities)}
         />
         {openCourses.map((course, i) => {
           const open = course.total - course.filled;
@@ -153,12 +164,16 @@ export default function ServerHomeScreen() {
               <TouchableOpacity
                 style={styles.courseCard}
                 activeOpacity={0.88}
-                onPress={() => router.push(`/(server)/opportunities/${course.id}`)}
+                onPress={() => router.push(routeTo.serverOpportunityDetail(course.id))}
               >
                 <View style={styles.courseCardHeader}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.courseName}>{course.center} {course.flag}</Text>
-                    <Text style={styles.courseMeta}>{course.city} · {course.dates}</Text>
+                    <Text style={styles.courseName}>
+                      {course.center} {course.flag}
+                    </Text>
+                    <Text style={styles.courseMeta}>
+                      {course.city} · {course.dates}
+                    </Text>
                   </View>
                   <View style={styles.courseTypeBadge}>
                     <Text style={styles.courseTypeText}>{course.type}</Text>
@@ -168,18 +183,24 @@ export default function ServerHomeScreen() {
                 {/* Progress */}
                 <View style={styles.progressRow}>
                   <ProgressBar filled={course.filled} total={course.total} />
-                  <Text style={styles.progressLabel}>{course.filled}/{course.total} filled</Text>
+                  <Text style={styles.progressLabel}>
+                    {course.filled}/{course.total} filled
+                  </Text>
                 </View>
                 <View style={styles.slotRow}>
                   <View style={styles.openBadge}>
                     <Text style={styles.openText}>{open} open</Text>
                   </View>
-                  <Text style={styles.genderSlots}>{course.mServers}m + {course.fServers}f</Text>
+                  <Text style={styles.genderSlots}>
+                    {course.mServers}m + {course.fServers}f
+                  </Text>
                 </View>
 
                 {/* Area chips */}
                 <View style={styles.chipRow}>
-                  {course.areas.slice(0, 4).map((a) => <AreaChip key={a} areaId={a} />)}
+                  {course.areas.slice(0, 4).map((a) => (
+                    <AreaChip key={a} areaId={a} />
+                  ))}
                   {course.areas.length > 4 && (
                     <View style={styles.areaChip}>
                       <Text style={styles.areaChipText}>+{course.areas.length - 4}</Text>
@@ -200,12 +221,12 @@ export default function ServerHomeScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.eligibilityTitle}>Eligible to Serve</Text>
               <Text style={styles.eligibilityBody}>
-                You have completed the required courses and rest period. You may apply for upcoming service.
+                You have completed the required courses and rest period. You may apply for upcoming
+                service.
               </Text>
             </View>
           </View>
         </FadeInView>
-
       </ScrollView>
     </View>
   );

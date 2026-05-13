@@ -1,4 +1,4 @@
-import { AvailabilityState, CourseType, Gender, LanguageLevel } from './common';
+import { CourseType, Gender, LanguageLevel } from './common';
 
 export interface HistoryEntry {
   date: string;
@@ -23,7 +23,10 @@ export interface TeacherProfile {
   authorizations: CourseType[];
   languages: Record<string, LanguageLevel>;
   preferredRegions: string[];
-  monthlyAvailability: AvailabilityState[];
+  /** Months 0-11 the teacher is generally available. */
+  availableMonths: number[];
+  /** Months 0-11 the teacher has festival / personal retreat blocks. */
+  festivalMonths: number[];
   personalNote: string;
   teachingHistory: HistoryEntry[];
   inviteCode?: string;

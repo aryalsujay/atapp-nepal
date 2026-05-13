@@ -1,4 +1,11 @@
-import React, { useState } from 'react';
+/**
+ * Login screen — implements `specs/01-login.md`.
+ *
+ * Prototype reference: `VipassanaTeacherApp/app.html` lines 891–937.
+ * Any visible change must update the spec first.
+ */
+
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,105 +15,122 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   StatusBar,
+  Image,
+  Animated,
+  Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { Routes, routeTo } from '@/routes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '../../src/store/authStore';
-import { useSettingsStore } from '../../src/store/settingsStore';
-import { useTeachersStore } from '../../src/store/teachersStore';
-import { Colors, Gradients } from '../../src/theme/colors';
-import { FontSize, FontWeight } from '../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../src/theme/spacing';
-import { Shadows } from '../../src/theme/shadows';
-import { LotusHero, MountainSilhouette } from '../../src/components/ui/HeroDecorations';
-import { FadeInView } from '../../src/components/ui/FadeInView';
-import adminData from '../../src/data/admin.json';
+import { useAuthStore } from '@/store/authStore';
+import { useTeachersStore } from '@/store/teachersStore';
+import { Colors, Gradients, GradientDirection } from '@/theme/colors';
+import { Shadows } from '@/theme/shadows';
+import { Layout } from '@/theme/spacing';
+import { FontFamily } from '@/theme/typography';
+import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
+import { FadeInView } from '@/components/ui/FadeInView';
+import { useToast } from '@/components/ui/Toast';
+import adminData from '@/data/admin.json';
 
-type Role = 'teacher' | 'admin' | 'server';
+type Role = 'teacher' | 'server' | 'admin';
+
+const DEMO_EMAIL: Record<Role, string> = {
+  teacher: 'ananda@dhamma.org.np',
+  server: 'priya@dhamma.org.np',
+  admin: 'admin@dhamma.org.np',
+};
+
+const HERO_GRADIENT: Record<Role, readonly [string, string, ...string[]]> = {
+  teacher: Gradients.teacher,
+  server: Gradients.server,
+  admin: Gradients.admin,
+};
+
+// Bundled Dhamma Wheel logo (PNG converted from the original GIF at
+// dhamma.org/np). Local asset avoids network flash on cold start.
+const DHAMMA_LOGO = require('../../assets/logo-dhamma.png');
 
 export default function LoginScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const toast = useToast();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const { language, setLanguage } = useSettingsStore();
   const findTeacher = useTeachersStore((s) => s.findTeacher);
 
-  const [role, setRole] = useState<Role>('teacher');
-  const [identifier, setIdentifier] = useState('');
+  const [mode, setMode] = useState<Role>('teacher');
+  const [identifier, setIdentifier] = useState(DEMO_EMAIL.teacher);
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [pwFocused, setPwFocused] = useState(false);
+
+  // Swap pre-filled demo email when role changes — matches prototype `defaultEmail`.
+  const handleSelectMode = (next: Role) => {
+    setMode(next);
+    setIdentifier(DEMO_EMAIL[next]);
+  };
+
+  const ctaLabel = useMemo(() => {
+    if (loading) return t('login.cta_loading');
+    if (mode === 'teacher') return t('login.cta_teacher');
+    if (mode === 'server') return t('login.cta_server');
+    return t('login.cta_admin');
+  }, [mode, loading, t]);
+
+  const handleForgot = () => {
+    toast.info(t('login.forgot_alert_body'), t('login.forgot_alert_title'));
+  };
 
   const handleSignIn = async () => {
     if (!identifier.trim() || !password.trim()) {
-      Alert.alert('Missing Fields', 'Please enter your credentials.');
+      toast.error(t('login.error_missing_body'), t('login.error_missing_title'));
       return;
     }
-
     setLoading(true);
-
     try {
-      if (role === 'admin') {
+      if (mode === 'admin') {
         if (identifier === adminData.username && password === adminData.password) {
           await setAuth('admin', adminData.id, true);
-          router.replace('/(admin)/dashboard');
+          router.replace(Routes.adminDashboard);
         } else {
-          Alert.alert('Invalid Credentials', 'Incorrect username or password.');
+          toast.error(t('login.error_invalid_admin'), t('login.error_invalid_title'));
         }
         return;
       }
 
-      // Server login
-      if (role === 'server') {
+      if (mode === 'server') {
         const found = findTeacher(identifier.trim());
-        const serverUser = found?.passwordHash === password && (found as any).role === 'server' ? found : null;
+        const serverUser =
+          found?.passwordHash === password && found.role === 'server' ? found : null;
         if (!serverUser) {
-          Alert.alert('Invalid Credentials', 'Email or password is incorrect.');
+          toast.error(t('login.error_invalid_server'), t('login.error_invalid_title'));
           return;
         }
         await setAuth('server', serverUser.id, serverUser.isOnboarded ?? false);
-        if (!serverUser.isOnboarded) {
-          router.replace('/(server)/onboarding');
-        } else {
-          router.replace('/(server)/home');
-        }
+        router.replace(serverUser.isOnboarded ? Routes.serverHome : Routes.serverOnboarding);
         return;
       }
 
-      // Teacher login: search across seed + admin-created teachers
+      // teacher
       const found = findTeacher(identifier.trim());
       const teacher = found?.passwordHash === password ? found : null;
-
       if (!teacher) {
-        Alert.alert('Invalid Credentials', 'Email/code or password is incorrect.');
+        toast.error(t('login.error_invalid_teacher'), t('login.error_invalid_title'));
         return;
       }
-
       await setAuth('teacher', teacher.id, teacher.isOnboarded ?? false);
-
-      if (!teacher.isOnboarded) {
-        router.replace('/onboarding/teacher/1');
-      } else {
-        router.replace('/(teacher)/home');
-      }
+      router.replace(teacher.isOnboarded ? Routes.teacherHome : routeTo.onboardingTeacher(1));
     } finally {
       setLoading(false);
     }
   };
 
-  const gradientColors =
-    role === 'teacher' ? Gradients.teacher :
-    role === 'admin' ? Gradients.admin :
-    (['#5A3800', '#8B5E14', '#C8900A'] as const);
-  const accentColor =
-    role === 'teacher' ? Colors.sf :
-    role === 'admin' ? Colors.bl :
-    Colors.sv;
+  const heroPadTop = Math.max(58, insets.top + 11);
 
   return (
     <KeyboardAvoidingView
@@ -120,308 +144,390 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero gradient */}
-        <LinearGradient
-          colors={gradientColors as unknown as [string, string, ...string[]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.hero, { paddingTop: insets.top + 40 }]}
-        >
-          {/* Decorations */}
-          <LotusHero color="white" opacity={0.1} size={260} />
+        {/* Hero — gradient changes per mode with crossfade */}
+        <HeroGradient mode={mode} paddingTop={heroPadTop}>
+          <LotusHero color="white" opacity={0.1} size={260} right={-50} bottom={-50} />
           <MountainSilhouette color="rgba(255,255,255,0.07)" />
 
-          {/* Language switch — top right */}
+          <View style={styles.logoWrap}>
+            <Image source={DHAMMA_LOGO} style={styles.logo} resizeMode="contain" />
+          </View>
+          <Text style={styles.title}>{t('login.title')}</Text>
+          <Text style={styles.subtitleNe}>{t('login.subtitle_ne')}</Text>
+          <Text style={styles.subtitleEn}>{t('login.subtitle_en')}</Text>
+        </HeroGradient>
+
+        {/* Form */}
+        <FadeInView delay={60} style={styles.formArea}>
+          {/* Role pill */}
+          <View style={styles.rolePill}>
+            <RoleTab
+              label={t('login.tab_teacher')}
+              active={mode === 'teacher'}
+              onPress={() => handleSelectMode('teacher')}
+            />
+            <RoleTab
+              label={t('login.tab_server')}
+              active={mode === 'server'}
+              onPress={() => handleSelectMode('server')}
+            />
+            <RoleTab
+              label={t('login.tab_admin')}
+              active={mode === 'admin'}
+              onPress={() => handleSelectMode('admin')}
+            />
+          </View>
+
+          {/* Email field */}
+          <View style={styles.fieldGroupEmail}>
+            <Text style={styles.fieldLabel}>{t('login.email_label')}</Text>
+            <TextInput
+              value={identifier}
+              onChangeText={setIdentifier}
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
+              placeholder={t('login.email_placeholder')}
+              placeholderTextColor={Colors.tx3}
+              style={[styles.input, emailFocused && styles.inputFocused]}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+            />
+          </View>
+
+          {/* Password field */}
+          <View style={styles.fieldGroupPassword}>
+            <Text style={styles.fieldLabel}>{t('login.password_label')}</Text>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              onFocus={() => setPwFocused(true)}
+              onBlur={() => setPwFocused(false)}
+              placeholder="••••••••"
+              placeholderTextColor={Colors.tx3}
+              style={[styles.input, pwFocused && styles.inputFocused]}
+              secureTextEntry
+              autoCapitalize="none"
+            />
+          </View>
+
+          {/* Forgot password */}
           <TouchableOpacity
-            onPress={() => setLanguage(language === 'en' ? 'ne' : 'en')}
-            style={styles.langSwitch}
+            onPress={handleForgot}
+            style={styles.forgotWrap}
+            activeOpacity={0.6}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text style={styles.langSwitchText}>
-              {language === 'en' ? '🌐 नेपाली' : '🌐 English'}
-            </Text>
+            <Text style={styles.forgotText}>{t('login.forgot')}</Text>
           </TouchableOpacity>
 
-          <Text style={styles.appIcon}>🪷</Text>
-          <Text style={styles.appName}>{t('login.title')}</Text>
-          <Text style={styles.appSubtitle}>{t('login.subtitle')}</Text>
-          <Text style={styles.appSubtitleNe}>विपस्सना शिक्षक/सेवक अनुसूचक</Text>
-        </LinearGradient>
+          {/* Primary CTA — gradient, label per mode */}
+          <PressScale onPress={handleSignIn} disabled={loading}>
+            <LinearGradient
+              colors={Gradients.primaryCta as unknown as [string, string, ...string[]]}
+              start={GradientDirection.button.start}
+              end={GradientDirection.button.end}
+              style={[styles.ctaBtn, loading && styles.ctaDisabled]}
+            >
+              <Text style={styles.ctaText}>{ctaLabel}</Text>
+            </LinearGradient>
+          </PressScale>
 
-        {/* Form card — overlaps hero with rounded top */}
-        <FadeInView delay={80} style={styles.formCard}>
-          {/* Role tabs */}
-          <Text style={styles.selectLabel}>{t('login.selectRole')}</Text>
-          <View style={styles.roleTabs}>
-            <RoleTab
-              label={t('login.roleTeacher')}
-              emoji="🧘"
-              active={role === 'teacher'}
-              onPress={() => setRole('teacher')}
-              activeColor={Colors.sf}
-            />
-            <RoleTab
-              label={t('login.roleAdmin')}
-              emoji="📋"
-              active={role === 'admin'}
-              onPress={() => setRole('admin')}
-              activeColor={Colors.bl}
-            />
-            <RoleTab
-              label="Server"
-              emoji="🍳"
-              active={role === 'server'}
-              onPress={() => setRole('server')}
-              activeColor={Colors.sv}
-            />
-          </View>
-
-          {/* Inputs */}
-          <View style={styles.fields}>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>{t('login.email')}</Text>
-              <TextInput
-                value={identifier}
-                onChangeText={setIdentifier}
-                placeholder={role === 'teacher' ? 'your@email.com' : role === 'admin' ? 'admin' : 'priya@dhamma.np'}
-                placeholderTextColor={Colors.tx3}
-                style={[styles.input, identifier ? { borderColor: accentColor } : {}]}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-              />
+          {/* Invite-only notice — teacher mode only */}
+          {mode === 'teacher' && (
+            <View style={styles.inviteNotice}>
+              <Text style={styles.inviteIcon}>🔒</Text>
+              <Text style={styles.inviteText}>{t('login.invite_only')}</Text>
             </View>
+          )}
 
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>{t('login.password')}</Text>
-              <View style={styles.inputWrap}>
-                <TextInput
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Password"
-                  placeholderTextColor={Colors.tx3}
-                  style={[styles.input, styles.inputWithEye, password ? { borderColor: accentColor } : {}]}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword((v) => !v)}
-                  style={styles.eyeBtn}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
+          {/* Footer disclaimer */}
+          <Text style={styles.footer}>
+            {t('login.footer_prefix')}
+            <Text style={styles.footerBrand}>{t('login.footer_brand')}</Text>
+          </Text>
 
-          {/* Demo hint */}
-          <View style={[styles.hintBox, {
-            backgroundColor: role === 'teacher' ? Colors.sfl : role === 'admin' ? Colors.bll : Colors.svl,
-          }]}>
-            <Text style={[styles.hintText, { color: accentColor }]}>
-              {role === 'teacher'
-                ? '💡 Demo: ananda@dhamma.np · demo123'
-                : role === 'admin'
-                ? '💡 Demo: admin · dhamma2026'
-                : '💡 Demo: priya@dhamma.np · demo123'}
-            </Text>
-          </View>
-
-          {/* Sign in button */}
-          <TouchableOpacity
-            onPress={handleSignIn}
-            disabled={loading}
-            activeOpacity={0.85}
-            style={[
-              styles.signInBtn,
-              { backgroundColor: accentColor },
-              loading && styles.disabledBtn,
-            ]}
-          >
-            <Text style={styles.signInText}>
-              {loading ? 'Signing in...' : t('login.signIn')}
-            </Text>
-          </TouchableOpacity>
-
-          <Text style={styles.sadhu}>{t('login.sadhu')}</Text>
+          <View style={{ height: 20 }} />
         </FadeInView>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-interface RoleTabProps {
-  label: string;
-  emoji: string;
-  active: boolean;
-  onPress: () => void;
-  activeColor: string;
+/**
+ * Crossfades two `LinearGradient`s on mode change to match the prototype's
+ * `transition: background .3s` on the hero block (`app.html:904`).
+ */
+function HeroGradient({
+  mode,
+  paddingTop,
+  children,
+}: {
+  mode: Role;
+  paddingTop: number;
+  children: React.ReactNode;
+}) {
+  const prevMode = useRef<Role>(mode);
+  const fade = useRef(new Animated.Value(0)).current;
+  const [pending, setPending] = useState<Role | null>(null);
+
+  useEffect(() => {
+    if (prevMode.current === mode) return;
+    setPending(prevMode.current);
+    fade.setValue(0);
+    Animated.timing(fade, {
+      toValue: 1,
+      duration: 300,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start(() => {
+      prevMode.current = mode;
+      setPending(null);
+    });
+  }, [mode, fade]);
+
+  return (
+    <View style={[styles.hero, { paddingTop }]} pointerEvents="box-none">
+      {pending && (
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            { opacity: fade.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) },
+          ]}
+          pointerEvents="none"
+        >
+          <LinearGradient
+            colors={HERO_GRADIENT[pending] as unknown as [string, string, ...string[]]}
+            start={GradientDirection.hero.start}
+            end={GradientDirection.hero.end}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      )}
+      <LinearGradient
+        colors={HERO_GRADIENT[mode] as unknown as [string, string, ...string[]]}
+        start={GradientDirection.hero.start}
+        end={GradientDirection.hero.end}
+        style={StyleSheet.absoluteFill}
+      />
+      {children}
+    </View>
+  );
 }
 
-const RoleTab: React.FC<RoleTabProps> = ({ label, emoji, active, onPress, activeColor }) => (
-  <TouchableOpacity
-    onPress={onPress}
-    activeOpacity={0.8}
-    style={[
-      styles.roleTab,
-      active
-        ? { backgroundColor: activeColor, borderColor: activeColor }
-        : { backgroundColor: Colors.white, borderColor: Colors.bd2 },
-    ]}
-  >
-    <Text style={styles.roleEmoji}>{emoji}</Text>
-    <Text style={[styles.roleLabel, { color: active ? Colors.white : Colors.tx2 }]}>{label}</Text>
-  </TouchableOpacity>
-);
+/** Role-tab segmented control button — matches prototype tab style. */
+function RoleTab({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      style={[styles.roleTab, active && styles.roleTabActive]}
+    >
+      <Text style={[styles.roleTabLabel, active && styles.roleTabLabelActive]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+/**
+ * Press-scale wrapper — matches prototype `.btn:active{transform:scale(.96)}`.
+ * Used here for the primary CTA. Extract to `src/components/ui/` when a second
+ * screen needs it.
+ */
+function PressScale({
+  onPress,
+  disabled,
+  children,
+}: {
+  onPress: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const press = (to: number) =>
+    Animated.spring(scale, {
+      toValue: to,
+      useNativeDriver: true,
+      speed: 30,
+      bounciness: 0,
+    }).start();
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={() => !disabled && press(0.96)}
+        onPressOut={() => press(1)}
+        disabled={disabled}
+        activeOpacity={1}
+      >
+        {children}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flexGrow: 1, backgroundColor: Colors.cr },
 
+  // Hero — padding: 58px top (overridden per insets), 24px horizontal, 36px bottom
   hero: {
-    paddingHorizontal: Layout.horizontalPad,
-    paddingBottom: 50,
-    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 36,
     overflow: 'hidden',
+    position: 'relative',
   },
-  langSwitch: {
-    alignSelf: 'flex-end',
-    marginBottom: Spacing.lg,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    backgroundColor: 'rgba(0,0,0,0.18)',
-    borderRadius: Radius.full,
-  },
-  langSwitchText: {
+  logoWrap: { marginBottom: 10 },
+  logo: { width: 56, height: 56 },
+  title: {
+    fontSize: 30,
+    fontWeight: '800',
     color: Colors.white,
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
+    lineHeight: 33, // 30 × 1.1
+    letterSpacing: 0,
   },
-  appIcon: {
-    fontSize: 52,
-    marginBottom: Spacing.md,
-  },
-  appName: {
-    fontSize: FontSize.h1,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.white,
-    letterSpacing: 0.5,
-  },
-  appSubtitle: {
-    fontSize: FontSize.smPlus,
+  subtitleNe: {
+    fontSize: 14,
     color: 'rgba(255,255,255,0.8)',
-    fontWeight: FontWeight.medium,
-    marginTop: 4,
+    marginTop: 5,
+    fontFamily: FontFamily.devanagari,
   },
-  appSubtitleNe: {
-    fontSize: FontSize.sm,
+  subtitleEn: {
+    fontSize: 12,
     color: 'rgba(255,255,255,0.6)',
     marginTop: 2,
-    marginBottom: Spacing.sm,
   },
 
-  formCard: {
-    backgroundColor: Colors.cr,
-    marginTop: -22,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: Layout.horizontalPad,
-    paddingTop: 28,
+  // Form area — padding: 20px top, 18px horizontal, 0 bottom
+  formArea: {
+    paddingHorizontal: 18,
+    paddingTop: 20,
     flex: 1,
-    gap: Spacing.lg,
   },
-  selectLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx3,
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-  },
-  roleTabs: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
+
+  // Role pill container
+  rolePill: {
     backgroundColor: Colors.cr2,
-    borderRadius: Radius.lg,
+    borderRadius: 13,
     padding: 4,
+    flexDirection: 'row',
+    marginBottom: 20,
   },
   roleTab: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 7,
-    paddingVertical: 12,
-    borderRadius: Radius.md,
-    borderWidth: 0,
+    paddingVertical: 9,
+    paddingHorizontal: 4,
+    borderRadius: 10,
   },
-  roleEmoji: { fontSize: 16 },
-  roleLabel: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
+  roleTabActive: {
+    backgroundColor: Colors.white,
+    ...Shadows.card,
   },
-
-  fields: { gap: Spacing.md },
-  fieldGroup: { gap: 6 },
-  fieldLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
+  roleTabLabel: {
+    fontSize: 12.5,
+    fontWeight: '700',
     color: Colors.tx2,
   },
+  roleTabLabelActive: {
+    color: Colors.sfd,
+  },
+
+  // Email + password field groups
+  fieldGroupEmail: { marginBottom: 14 },
+  fieldGroupPassword: { marginBottom: 16 },
+  fieldLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.tx2,
+    marginBottom: 5,
+    textTransform: 'uppercase',
+    letterSpacing: 0.44, // 0.04em at 11px
+  },
   input: {
-    backgroundColor: Colors.white,
+    width: '100%',
+    backgroundColor: Colors.cr,
     borderWidth: 1.5,
     borderColor: Colors.bd,
-    borderRadius: Radius.md,
-    paddingHorizontal: Layout.inputPadH,
-    paddingVertical: Layout.inputPadV,
-    fontSize: FontSize.md,
+    borderRadius: 12,
+    paddingVertical: Layout.inputPadV, // 13
+    paddingHorizontal: Layout.inputPadH, // 15
+    fontSize: 14,
     color: Colors.tx,
   },
-  inputWrap: {
-    position: 'relative',
-  },
-  inputWithEye: {
-    paddingRight: 48,
-  },
-  eyeBtn: {
-    position: 'absolute',
-    right: 14,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-  },
-  eyeIcon: {
-    fontSize: 18,
+  inputFocused: {
+    borderColor: Colors.sf,
+    backgroundColor: Colors.white,
   },
 
-  hintBox: {
-    borderRadius: Radius.sm,
-    padding: 11,
+  // Forgot password
+  forgotWrap: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
   },
-  hintText: {
-    fontSize: FontSize.sm,
-    lineHeight: FontSize.sm * 1.5,
-    fontWeight: FontWeight.medium,
+  forgotText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.sf,
   },
 
-  signInBtn: {
-    paddingVertical: 15,
-    borderRadius: Radius.lg,
+  // Primary CTA
+  ctaBtn: {
+    width: '100%',
+    paddingVertical: Layout.buttonPadV, // 15
+    paddingHorizontal: Layout.buttonPadH, // 22
+    borderRadius: 13,
     alignItems: 'center',
-    ...Shadows.elevated,
+    justifyContent: 'center',
+    ...Shadows.primaryCta,
   },
-  disabledBtn: { opacity: 0.6 },
-  signInText: {
+  ctaDisabled: { opacity: 0.6 },
+  ctaText: {
     color: Colors.white,
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
-    letterSpacing: 0.3,
+    fontSize: 15,
+    fontWeight: '700',
   },
 
-  sadhu: {
+  // Invite-only notice — teacher only
+  inviteNotice: {
+    marginTop: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: Colors.bll,
+    borderWidth: 1,
+    borderColor: Colors.bld,
+    borderRadius: 11,
+    flexDirection: 'row',
+    gap: 9,
+    alignItems: 'flex-start',
+  },
+  inviteIcon: {
+    fontSize: 14,
+    marginTop: 1,
+  },
+  inviteText: {
+    fontSize: 11,
+    color: Colors.tx2,
+    lineHeight: 16.5, // 11 × 1.5
+    flex: 1,
+  },
+
+  // Footer disclaimer
+  footer: {
+    marginTop: 12,
     textAlign: 'center',
-    fontSize: FontSize.smPlus,
+    fontSize: 12,
     color: Colors.tx3,
-    marginTop: Spacing.sm,
+  },
+  footerBrand: {
+    color: Colors.sf,
   },
 });

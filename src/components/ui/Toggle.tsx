@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { TouchableOpacity, Animated, StyleSheet, ViewStyle } from 'react-native';
-import { Colors } from '../../theme/colors';
+import { Colors } from '@/theme/colors';
 
 interface ToggleProps {
   value: boolean;

@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { TeacherProfile } from '../types';
-import teachersData from '../data/teachers.json';
+import { TeacherProfile } from '@/types';
+import teachersData from '@/data/teachers.json';
+import { logger } from '@/utils/logger';
 
 interface ProfileState {
   profile: TeacherProfile | null;
@@ -13,11 +14,22 @@ interface ProfileState {
 
 const PROFILE_KEY = '@dhamma_profile';
 
-// Ensure monthlyAvailability has 12 entries (one per month). Pads with 0 (unavailable).
+/**
+ * Defensively coerce availability fields to typed arrays. Handles legacy
+ * payloads that may have `monthlyAvailability: (0 | 1 | 'f')[]` from earlier
+ * builds.
+ */
 function normalizeProfile(p: TeacherProfile): TeacherProfile {
-  const avail = Array.isArray(p.monthlyAvailability) ? p.monthlyAvailability.slice(0, 12) : [];
-  while (avail.length < 12) avail.push(0);
-  return { ...p, monthlyAvailability: avail };
+  const next = { ...p } as TeacherProfile & { monthlyAvailability?: unknown };
+  if (Array.isArray(next.monthlyAvailability) && (!p.availableMonths || !p.festivalMonths)) {
+    const arr = next.monthlyAvailability as (number | string)[];
+    next.availableMonths = arr.reduce<number[]>((acc, v, i) => (v === 1 ? [...acc, i] : acc), []);
+    next.festivalMonths = arr.reduce<number[]>((acc, v, i) => (v === 'f' ? [...acc, i] : acc), []);
+  }
+  next.availableMonths = Array.isArray(next.availableMonths) ? next.availableMonths : [];
+  next.festivalMonths = Array.isArray(next.festivalMonths) ? next.festivalMonths : [];
+  delete next.monthlyAvailability;
+  return next;
 }
 
 export const useProfileStore = create<ProfileState>((set, get) => ({
@@ -50,7 +62,9 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         set({ profile: normalized });
         await AsyncStorage.setItem(PROFILE_KEY + '_' + userId, JSON.stringify(normalized));
       }
-    } catch {}
+    } catch (err) {
+      logger.warn('[profileStore] loadProfile failed', err);
+    }
   },
 
   clearProfile: () => set({ profile: null }),

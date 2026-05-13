@@ -1,29 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '../../src/store/authStore';
-import { useNotificationsStore, formatNotifTime } from '../../src/store/notificationsStore';
-import { useSettingsStore } from '../../src/store/settingsStore';
-import { Colors } from '../../src/theme/colors';
-import { FontSize, FontWeight } from '../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../src/theme/spacing';
-import { Shadows } from '../../src/theme/shadows';
-import { SectionHeader } from '../../src/components/layout/SectionHeader';
+import { useAuthStore } from '@/store/authStore';
+import { useNotificationsStore, formatNotifTime } from '@/store/notificationsStore';
+import { useSettingsStore } from '@/store/settingsStore';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
 
 const TYPE_CONFIG: Record<string, { emoji: string; bg: string; label: string }> = {
-  assignment: { emoji: '📋', bg: Colors.fo + '22',    label: 'Assignment' },
-  invite:     { emoji: '📬', bg: '#5B6FA822',          label: 'Invite' },
-  rejection:  { emoji: '✗',  bg: Colors.ur + '18',    label: 'Update' },
-  reminder:   { emoji: '⏰', bg: '#9B6B1422',          label: 'Reminder' },
-  update:     { emoji: '🔄', bg: Colors.bl + '22',    label: 'Update' },
-  approval:   { emoji: '✓',  bg: Colors.fo + '22',    label: 'Approved' },
+  assignment: { emoji: '📋', bg: Colors.fo + '22', label: 'Assignment' },
+  invite: { emoji: '📬', bg: '#5B6FA822', label: 'Invite' },
+  rejection: { emoji: '✗', bg: Colors.ur + '18', label: 'Update' },
+  reminder: { emoji: '⏰', bg: '#9B6B1422', label: 'Reminder' },
+  update: { emoji: '🔄', bg: Colors.bl + '22', label: 'Update' },
+  approval: { emoji: '✓', bg: Colors.fo + '22', label: 'Approved' },
 };
 
 export default function NotificationsScreen() {
@@ -52,14 +45,19 @@ export default function NotificationsScreen() {
       contentContainerStyle={{ paddingBottom: 110 }}
     >
       <SectionHeader title={t('notifications.title')} style={styles.header} />
-      <Text style={styles.subtitle}>{unread} new · {notifs.length} total</Text>
+      <Text style={styles.subtitle}>
+        {unread} new · {notifs.length} total
+      </Text>
 
       {notifs.map((notif) => {
         const isExp = expanded === notif.id;
-        const response = localResponses[notif.id] ?? (
-          notif.status === 'approved' ? 'accepted' :
-          notif.status === 'rejected' ? 'declined' : undefined
-        );
+        const response =
+          localResponses[notif.id] ??
+          (notif.status === 'approved'
+            ? 'accepted'
+            : notif.status === 'rejected'
+              ? 'declined'
+              : undefined);
         const cfg = TYPE_CONFIG[notif.type] ?? { emoji: '🔔', bg: Colors.tx3 + '22', label: '' };
         const body = language === 'ne' ? notif.bodyNe : notif.bodyEn;
         const showDecline = showDeclineInput === notif.id;
@@ -79,32 +77,47 @@ export default function NotificationsScreen() {
 
               <View style={styles.cardBody}>
                 <View style={styles.titleRow}>
-                  <Text style={[styles.cardTitle, !notif.read && styles.cardTitleUnread]} numberOfLines={2}>
+                  <Text
+                    style={[styles.cardTitle, !notif.read && styles.cardTitleUnread]}
+                    numberOfLines={2}
+                  >
                     {notif.subjectEn}
                   </Text>
                   {!notif.read && <View style={styles.unreadDot} />}
                 </View>
-                <Text style={styles.cardMeta}>{notif.center} · {formatNotifTime(notif.timestamp)}</Text>
-                <Text style={styles.cardCourse} numberOfLines={1}>{notif.course}</Text>
+                <Text style={styles.cardMeta}>
+                  {notif.center} · {formatNotifTime(notif.timestamp)}
+                </Text>
+                <Text style={styles.cardCourse} numberOfLines={1}>
+                  {notif.course}
+                </Text>
 
                 {notif.type === 'invite' && (
-                  <View style={[
-                    styles.statusChip,
-                    response === 'accepted'
-                      ? { backgroundColor: Colors.fol }
-                      : response === 'declined'
-                      ? { backgroundColor: Colors.url }
-                      : { backgroundColor: Colors.gdl },
-                  ]}>
-                    <Text style={[
-                      styles.statusChipText,
+                  <View
+                    style={[
+                      styles.statusChip,
                       response === 'accepted'
-                        ? { color: Colors.fo }
+                        ? { backgroundColor: Colors.fol }
                         : response === 'declined'
-                        ? { color: Colors.ur }
-                        : { color: Colors.gd },
-                    ]}>
-                      {response === 'accepted' ? '✓ Accepted' : response === 'declined' ? '✗ Declined' : '⏳ Awaiting your response'}
+                          ? { backgroundColor: Colors.url }
+                          : { backgroundColor: Colors.gdl },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusChipText,
+                        response === 'accepted'
+                          ? { color: Colors.fo }
+                          : response === 'declined'
+                            ? { color: Colors.ur }
+                            : { color: Colors.gd },
+                      ]}
+                    >
+                      {response === 'accepted'
+                        ? '✓ Accepted'
+                        : response === 'declined'
+                          ? '✗ Declined'
+                          : '⏳ Awaiting your response'}
                     </Text>
                   </View>
                 )}
@@ -127,7 +140,9 @@ export default function NotificationsScreen() {
                   </View>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text style={styles.expandSubject}>{notif.subjectEn}</Text>
-                    <Text style={styles.expandMeta}>{notif.center} · {formatNotifTime(notif.timestamp)}</Text>
+                    <Text style={styles.expandMeta}>
+                      {notif.center} · {formatNotifTime(notif.timestamp)}
+                    </Text>
                   </View>
                 </View>
 
@@ -174,7 +189,15 @@ export default function NotificationsScreen() {
                         <Text style={styles.cancelBtnText}>Cancel</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={[styles.actionBtn, { flex: 1, backgroundColor: Colors.url, borderWidth: 1, borderColor: Colors.ur }]}
+                        style={[
+                          styles.actionBtn,
+                          {
+                            flex: 1,
+                            backgroundColor: Colors.url,
+                            borderWidth: 1,
+                            borderColor: Colors.ur,
+                          },
+                        ]}
                         onPress={async () => {
                           setLocalResponses((r) => ({ ...r, [notif.id]: 'declined' }));
                           await respondToInvite(notif.id, 'declined', declineReason);

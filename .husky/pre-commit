@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Run lint-staged on touched files (eslint --fix + prettier --write).
+# Full typecheck and tests live in CI to keep commits fast.
+npx lint-staged

@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, TextInput, StyleSheet, ViewStyle } from 'react-native';
-import { Colors } from '../../theme/colors';
-import { FontSize } from '../../theme/typography';
-import { Radius, Spacing } from '../../theme/spacing';
+import { Colors } from '@/theme/colors';
+import { FontSize } from '@/theme/typography';
+import { Radius, Spacing } from '@/theme/spacing';
 
 interface SearchBarProps {
   value: string;
@@ -18,9 +18,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   style,
 }) => (
   <View style={[styles.container, style]}>
-    <View style={styles.icon}>
-      {/* Search icon — simple magnifier representation */}
-    </View>
+    <View style={styles.icon}>{/* Search icon — simple magnifier representation */}</View>
     <TextInput
       value={value}
       onChangeText={onChangeText}

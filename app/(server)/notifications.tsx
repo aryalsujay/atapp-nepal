@@ -1,26 +1,20 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../src/store/authStore';
-import { useNotificationsStore, formatNotifTime } from '../../src/store/notificationsStore';
-import { useSettingsStore } from '../../src/store/settingsStore';
-import { Colors } from '../../src/theme/colors';
-import { FontSize, FontWeight } from '../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../src/theme/spacing';
-import { Shadows } from '../../src/theme/shadows';
-import { SectionHeader } from '../../src/components/layout/SectionHeader';
+import { useAuthStore } from '@/store/authStore';
+import { useNotificationsStore, formatNotifTime } from '@/store/notificationsStore';
+import { useSettingsStore } from '@/store/settingsStore';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
 
 const TYPE_CONFIG: Record<string, { emoji: string; color: string }> = {
-  approval:  { emoji: '✅', color: Colors.fo },
+  approval: { emoji: '✅', color: Colors.fo },
   rejection: { emoji: '❌', color: Colors.ur },
-  reminder:  { emoji: '🔔', color: Colors.sv },
-  update:    { emoji: 'ℹ️', color: Colors.bl },
+  reminder: { emoji: '🔔', color: Colors.sv },
+  update: { emoji: 'ℹ️', color: Colors.bl },
   assignment: { emoji: '📋', color: Colors.fo },
 };
 
@@ -67,7 +61,9 @@ export default function ServerNotificationsScreen() {
                   <Text style={[styles.cardTitle, !notif.read && { fontWeight: FontWeight.bold }]}>
                     {notif.subjectEn}
                   </Text>
-                  <Text style={styles.cardMeta}>{notif.center} · {formatNotifTime(notif.timestamp)}</Text>
+                  <Text style={styles.cardMeta}>
+                    {notif.center} · {formatNotifTime(notif.timestamp)}
+                  </Text>
                 </View>
               </View>
               {!notif.read && <View style={styles.unreadDot} />}

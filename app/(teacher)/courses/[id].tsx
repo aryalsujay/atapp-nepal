@@ -1,31 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Routes, routeTo } from '@/routes';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../../src/store/authStore';
-import { useProfileStore } from '../../../src/store/profileStore';
-import { useApplicationsStore } from '../../../src/store/applicationsStore';
-import { Colors, Gradients } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { Shadows } from '../../../src/theme/shadows';
-import { HeroSection } from '../../../src/components/layout/HeroSection';
-import { ChecklistItem } from '../../../src/components/ui/ChecklistItem';
-import { Chip } from '../../../src/components/ui/Badge';
-import { Button } from '../../../src/components/ui/Button';
-import coursesData from '../../../src/data/courses.json';
-import { Course, Application } from '../../../src/types';
-import { calculateMatch } from '../../../src/utils/matching';
-import { buildEligibilityChecks, langLabel as fmtLang } from '../../../src/utils/eligibility';
+import { useAuthStore } from '@/store/authStore';
+import { useProfileStore } from '@/store/profileStore';
+import { useApplicationsStore } from '@/store/applicationsStore';
+import { Colors, Gradients } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { HeroSection } from '@/components/layout/HeroSection';
+import { ChecklistItem } from '@/components/ui/ChecklistItem';
+import { Chip } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { courses as coursesData } from '@/data';
+import { Course, Application } from '@/types';
+import { calculateMatch } from '@/utils/matching';
+import { buildEligibilityChecks, langLabel as fmtLang } from '@/utils/eligibility';
 
 export default function CourseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -109,8 +102,14 @@ export default function CourseDetailScreen() {
           <Text style={styles.sectionTitle}>Course Information</Text>
           <InfoRow label="Type" value={course.type} />
           <InfoRow label={t('courseDetail.coordinator')} value={course.coordinator.name} />
-          <InfoRow label={t('courseDetail.coordinator') + ' Phone'} value={course.coordinator.phone} />
-          <InfoRow label={t('courseDetail.arrival')} value={`${course.arrivalDate} at ${course.arrivalTime}`} />
+          <InfoRow
+            label={t('courseDetail.coordinator') + ' Phone'}
+            value={course.coordinator.phone}
+          />
+          <InfoRow
+            label={t('courseDetail.arrival')}
+            value={`${course.arrivalDate} at ${course.arrivalTime}`}
+          />
           <InfoRow label={t('courseDetail.transport')} value={course.transport} />
           <InfoRow
             label={t('courseDetail.students')}
@@ -131,7 +130,12 @@ export default function CourseDetailScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('courseDetail.coTeacher')}</Text>
             <View style={styles.coTeacherCard}>
-              <View style={[styles.coAvatar, { backgroundColor: course.coTeacher.gender === 'F' ? '#FBE8F0' : Colors.fol }]}>
+              <View
+                style={[
+                  styles.coAvatar,
+                  { backgroundColor: course.coTeacher.gender === 'F' ? '#FBE8F0' : Colors.fol },
+                ]}
+              >
                 <Text style={styles.coAvatarText}>{course.coTeacher.name.charAt(0)}</Text>
               </View>
               <View style={styles.coInfo}>
@@ -157,7 +161,7 @@ export default function CourseDetailScreen() {
               <ChecklistItem
                 key={idx}
                 label={check.label}
-                sublabel={(check as any).sublabel}
+                sublabel={check.sublabel}
                 passed={check.passed}
               />
             ))}
@@ -178,7 +182,7 @@ export default function CourseDetailScreen() {
                 label="View Course Brief"
                 variant="forest"
                 fullWidth
-                onPress={() => router.push(`/(teacher)/applications/brief/${existingApp?.id}`)}
+                onPress={() => router.push(routeTo.teacherApplicationBrief(existingApp?.id))}
               />
             </View>
           ) : (

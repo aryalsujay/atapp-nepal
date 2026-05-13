@@ -12,17 +12,48 @@
     "totalCourses": 47,
     "centersServed": 12,
     "coursesThisYear": 3,
-    "authorizations": ["10-Day", "Satipatthana Sutta", "Children's Anapana", "Teen Course", "Executive"],
-    "languages": { "Nepali": "primary", "English": "primary", "Hindi": "primary", "Gujarati": "secondary", "German": "off" },
+    "authorizations": [
+      "10-Day",
+      "Satipatthana Sutta",
+      "Children's Anapana",
+      "Teen Course",
+      "Executive"
+    ],
+    "languages": {
+      "Nepali": "primary",
+      "English": "primary",
+      "Hindi": "primary",
+      "Gujarati": "secondary",
+      "German": "off"
+    },
     "preferredRegions": ["Kathmandu Valley", "Pokhara & Gandaki", "Lumbini & Terai"],
-    "monthlyAvailability": [0, 0, 1, 1, "f", 0, 1, 1, 0, "f", "f", 0],
     "personalNote": "Available for Nepal courses during dry season (Oct–May). Prefer teaching 10-Day and Satipatthana courses.",
     "teachingHistory": [
-      { "date": "Mar 2026", "center": "Dhamma Shringa", "country": "🇳🇵", "type": "10-Day", "students": 90 },
-      { "date": "Jan 2026", "center": "Dhamma Pokhara", "country": "🇳🇵", "type": "Satipatthana Sutta", "students": 50 },
-      { "date": "Nov 2025", "center": "Dhamma Adhara", "country": "🇳🇵", "type": "10-Day", "students": 75 }
+      {
+        "date": "Mar 2026",
+        "center": "Dhamma Shringa",
+        "country": "🇳🇵",
+        "type": "10-Day",
+        "students": 90
+      },
+      {
+        "date": "Jan 2026",
+        "center": "Dhamma Pokhara",
+        "country": "🇳🇵",
+        "type": "Satipatthana Sutta",
+        "students": 50
+      },
+      {
+        "date": "Nov 2025",
+        "center": "Dhamma Adhara",
+        "country": "🇳🇵",
+        "type": "10-Day",
+        "students": 75
+      }
     ],
-    "isOnboarded": true
+    "isOnboarded": true,
+    "availableMonths": [2, 3, 6, 7],
+    "festivalMonths": [4, 9, 10]
   },
   {
     "id": "teacher-002",
@@ -38,15 +69,32 @@
     "centersServed": 7,
     "coursesThisYear": 2,
     "authorizations": ["10-Day", "Children's Anapana"],
-    "languages": { "Nepali": "primary", "English": "primary", "Hindi": "secondary" },
+    "languages": {
+      "Nepali": "primary",
+      "English": "primary",
+      "Hindi": "secondary"
+    },
     "preferredRegions": ["Kathmandu Valley", "Pokhara & Gandaki"],
-    "monthlyAvailability": [0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0],
     "personalNote": "Available spring and autumn. Specialize in children's courses.",
     "teachingHistory": [
-      { "date": "Apr 2026", "center": "Dhamma Shringa", "country": "🇳🇵", "type": "Children's Anapana", "students": 35 },
-      { "date": "Feb 2026", "center": "Dhamma Pokhara", "country": "🇳🇵", "type": "10-Day", "students": 60 }
+      {
+        "date": "Apr 2026",
+        "center": "Dhamma Shringa",
+        "country": "🇳🇵",
+        "type": "Children's Anapana",
+        "students": 35
+      },
+      {
+        "date": "Feb 2026",
+        "center": "Dhamma Pokhara",
+        "country": "🇳🇵",
+        "type": "10-Day",
+        "students": 60
+      }
     ],
-    "isOnboarded": true
+    "isOnboarded": true,
+    "availableMonths": [1, 2, 3, 4, 7, 8, 9],
+    "festivalMonths": []
   },
   {
     "id": "teacher-003",
@@ -62,15 +110,32 @@
     "centersServed": 18,
     "coursesThisYear": 4,
     "authorizations": ["10-Day", "20-Day", "Satipatthana Sutta", "Teen Course"],
-    "languages": { "Nepali": "primary", "Hindi": "primary", "English": "secondary" },
+    "languages": {
+      "Nepali": "primary",
+      "Hindi": "primary",
+      "English": "secondary"
+    },
     "preferredRegions": ["Lumbini & Terai", "Kathmandu Valley"],
-    "monthlyAvailability": [1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1],
     "personalNote": "Senior teacher, prefer longer courses. Available monsoon and winter.",
     "teachingHistory": [
-      { "date": "May 2026", "center": "Dhamma Adhara", "country": "🇳🇵", "type": "20-Day", "students": 45 },
-      { "date": "Mar 2026", "center": "Dhamma Janani", "country": "🇳🇵", "type": "10-Day", "students": 70 }
+      {
+        "date": "May 2026",
+        "center": "Dhamma Adhara",
+        "country": "🇳🇵",
+        "type": "20-Day",
+        "students": 45
+      },
+      {
+        "date": "Mar 2026",
+        "center": "Dhamma Janani",
+        "country": "🇳🇵",
+        "type": "10-Day",
+        "students": 70
+      }
     ],
-    "isOnboarded": true
+    "isOnboarded": true,
+    "availableMonths": [0, 1, 5, 6, 9, 10, 11],
+    "festivalMonths": []
   },
   {
     "id": "teacher-004",
@@ -86,15 +151,32 @@
     "centersServed": 9,
     "coursesThisYear": 2,
     "authorizations": ["10-Day", "Children's Anapana", "Teen Course"],
-    "languages": { "Nepali": "primary", "English": "secondary", "Newari": "primary" },
+    "languages": {
+      "Nepali": "primary",
+      "English": "secondary",
+      "Newari": "primary"
+    },
     "preferredRegions": ["Kathmandu Valley"],
-    "monthlyAvailability": [1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0],
     "personalNote": "Based in Bhaktapur. Prefer Kathmandu Valley centers. Fluent in Newari for local outreach.",
     "teachingHistory": [
-      { "date": "Apr 2026", "center": "Dhamma Shringa", "country": "🇳🇵", "type": "10-Day", "students": 80 },
-      { "date": "Jan 2026", "center": "Dhamma Adhara", "country": "🇳🇵", "type": "Children's Anapana", "students": 40 }
+      {
+        "date": "Apr 2026",
+        "center": "Dhamma Shringa",
+        "country": "🇳🇵",
+        "type": "10-Day",
+        "students": 80
+      },
+      {
+        "date": "Jan 2026",
+        "center": "Dhamma Adhara",
+        "country": "🇳🇵",
+        "type": "Children's Anapana",
+        "students": 40
+      }
     ],
-    "isOnboarded": true
+    "isOnboarded": true,
+    "availableMonths": [0, 1, 2, 6, 7, 8, 9],
+    "festivalMonths": []
   },
   {
     "id": "teacher-005",
@@ -110,15 +192,32 @@
     "centersServed": 14,
     "coursesThisYear": 3,
     "authorizations": ["10-Day", "20-Day", "30-Day", "Satipatthana Sutta"],
-    "languages": { "Nepali": "primary", "English": "primary", "Gurung": "primary" },
+    "languages": {
+      "Nepali": "primary",
+      "English": "primary",
+      "Gurung": "primary"
+    },
     "preferredRegions": ["Pokhara & Gandaki", "Kathmandu Valley"],
-    "monthlyAvailability": [0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0],
     "personalNote": "Experienced in longer courses. Native of Pokhara region. Available most of the year except monsoon.",
     "teachingHistory": [
-      { "date": "May 2026", "center": "Dhamma Pokhara", "country": "🇳🇵", "type": "30-Day", "students": 30 },
-      { "date": "Feb 2026", "center": "Dhamma Shringa", "country": "🇳🇵", "type": "20-Day", "students": 45 }
+      {
+        "date": "May 2026",
+        "center": "Dhamma Pokhara",
+        "country": "🇳🇵",
+        "type": "30-Day",
+        "students": 30
+      },
+      {
+        "date": "Feb 2026",
+        "center": "Dhamma Shringa",
+        "country": "🇳🇵",
+        "type": "20-Day",
+        "students": 45
+      }
     ],
-    "isOnboarded": true
+    "isOnboarded": true,
+    "availableMonths": [1, 2, 3, 4, 8, 9, 10],
+    "festivalMonths": []
   },
   {
     "id": "teacher-006",
@@ -134,14 +233,24 @@
     "centersServed": 4,
     "coursesThisYear": 1,
     "authorizations": ["10-Day"],
-    "languages": { "Nepali": "primary", "English": "primary" },
+    "languages": {
+      "Nepali": "primary",
+      "English": "primary"
+    },
     "preferredRegions": ["Kathmandu Valley", "Koshi"],
-    "monthlyAvailability": [0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0],
     "personalNote": "New teacher — enthusiastic about serving. Can travel to eastern Nepal.",
     "teachingHistory": [
-      { "date": "Mar 2026", "center": "Dhamma Shringa", "country": "🇳🇵", "type": "10-Day", "students": 75 }
+      {
+        "date": "Mar 2026",
+        "center": "Dhamma Shringa",
+        "country": "🇳🇵",
+        "type": "10-Day",
+        "students": 75
+      }
     ],
-    "isOnboarded": true
+    "isOnboarded": true,
+    "availableMonths": [2, 3, 4, 7, 8],
+    "festivalMonths": []
   },
   {
     "id": "teacher-007",
@@ -157,15 +266,32 @@
     "centersServed": 10,
     "coursesThisYear": 2,
     "authorizations": ["10-Day", "Teen Course", "Children's Anapana"],
-    "languages": { "Nepali": "primary", "Tibetan": "primary", "English": "secondary" },
+    "languages": {
+      "Nepali": "primary",
+      "Tibetan": "primary",
+      "English": "secondary"
+    },
     "preferredRegions": ["Kathmandu Valley", "Pokhara & Gandaki", "International"],
-    "monthlyAvailability": [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1],
     "personalNote": "Bilingual in Nepali/Tibetan. Available for international courses. Flexible schedule.",
     "teachingHistory": [
-      { "date": "Apr 2026", "center": "Dhamma Pokhara", "country": "🇳🇵", "type": "Teen Course", "students": 25 },
-      { "date": "Feb 2026", "center": "Dhamma Shringa", "country": "🇳🇵", "type": "10-Day", "students": 85 }
+      {
+        "date": "Apr 2026",
+        "center": "Dhamma Pokhara",
+        "country": "🇳🇵",
+        "type": "Teen Course",
+        "students": 25
+      },
+      {
+        "date": "Feb 2026",
+        "center": "Dhamma Shringa",
+        "country": "🇳🇵",
+        "type": "10-Day",
+        "students": 85
+      }
     ],
-    "isOnboarded": true
+    "isOnboarded": true,
+    "availableMonths": [0, 1, 4, 5, 8, 9, 11],
+    "festivalMonths": []
   },
   {
     "id": "teacher-008",
@@ -181,15 +307,32 @@
     "centersServed": 8,
     "coursesThisYear": 2,
     "authorizations": ["10-Day", "Satipatthana Sutta", "Executive"],
-    "languages": { "Nepali": "primary", "English": "primary", "Hindi": "primary" },
+    "languages": {
+      "Nepali": "primary",
+      "English": "primary",
+      "Hindi": "primary"
+    },
     "preferredRegions": ["Kathmandu Valley", "Lumbini & Terai"],
-    "monthlyAvailability": [1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0],
     "personalNote": "Corporate background, best suited for Executive courses. Available Oct–May.",
     "teachingHistory": [
-      { "date": "Apr 2026", "center": "Dhamma Shringa", "country": "🇳🇵", "type": "Executive", "students": 20 },
-      { "date": "Jan 2026", "center": "Dhamma Adhara", "country": "🇳🇵", "type": "Satipatthana Sutta", "students": 50 }
+      {
+        "date": "Apr 2026",
+        "center": "Dhamma Shringa",
+        "country": "🇳🇵",
+        "type": "Executive",
+        "students": 20
+      },
+      {
+        "date": "Jan 2026",
+        "center": "Dhamma Adhara",
+        "country": "🇳🇵",
+        "type": "Satipatthana Sutta",
+        "students": 50
+      }
     ],
-    "isOnboarded": true
+    "isOnboarded": true,
+    "availableMonths": [0, 3, 4, 8, 9, 10],
+    "festivalMonths": []
   },
   {
     "id": "teacher-009",
@@ -204,17 +347,47 @@
     "totalCourses": 61,
     "centersServed": 16,
     "coursesThisYear": 4,
-    "authorizations": ["10-Day", "20-Day", "Satipatthana Sutta", "Children's Anapana", "Teen Course"],
-    "languages": { "Nepali": "primary", "English": "primary", "Hindi": "secondary", "Maithili": "primary" },
+    "authorizations": [
+      "10-Day",
+      "20-Day",
+      "Satipatthana Sutta",
+      "Children's Anapana",
+      "Teen Course"
+    ],
+    "languages": {
+      "Nepali": "primary",
+      "English": "primary",
+      "Hindi": "secondary",
+      "Maithili": "primary"
+    },
     "preferredRegions": ["Madhesh", "Lumbini & Terai", "Kathmandu Valley"],
-    "monthlyAvailability": [1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1],
     "personalNote": "From Janakpur, serve mainly Madhesh/Terai region. Fluent Maithili speaker.",
     "teachingHistory": [
-      { "date": "May 2026", "center": "Dhamma Janani", "country": "🇳🇵", "type": "10-Day", "students": 65 },
-      { "date": "Mar 2026", "center": "Dhamma Janani", "country": "🇳🇵", "type": "20-Day", "students": 40 },
-      { "date": "Dec 2025", "center": "Dhamma Shringa", "country": "🇳🇵", "type": "Satipatthana Sutta", "students": 55 }
+      {
+        "date": "May 2026",
+        "center": "Dhamma Janani",
+        "country": "🇳🇵",
+        "type": "10-Day",
+        "students": 65
+      },
+      {
+        "date": "Mar 2026",
+        "center": "Dhamma Janani",
+        "country": "🇳🇵",
+        "type": "20-Day",
+        "students": 40
+      },
+      {
+        "date": "Dec 2025",
+        "center": "Dhamma Shringa",
+        "country": "🇳🇵",
+        "type": "Satipatthana Sutta",
+        "students": 55
+      }
     ],
-    "isOnboarded": true
+    "isOnboarded": true,
+    "availableMonths": [0, 1, 2, 7, 8, 9, 10, 11],
+    "festivalMonths": []
   },
   {
     "id": "teacher-010",
@@ -230,14 +403,25 @@
     "centersServed": 3,
     "coursesThisYear": 1,
     "authorizations": ["10-Day"],
-    "languages": { "Nepali": "primary", "Rai": "primary", "English": "secondary" },
+    "languages": {
+      "Nepali": "primary",
+      "Rai": "primary",
+      "English": "secondary"
+    },
     "preferredRegions": ["Koshi"],
-    "monthlyAvailability": [0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0],
     "personalNote": "From Dhankuta. Serve eastern Nepal. Newer teacher building experience.",
     "teachingHistory": [
-      { "date": "Feb 2026", "center": "Dhamma Shringa", "country": "🇳🇵", "type": "10-Day", "students": 70 }
+      {
+        "date": "Feb 2026",
+        "center": "Dhamma Shringa",
+        "country": "🇳🇵",
+        "type": "10-Day",
+        "students": 70
+      }
     ],
-    "isOnboarded": true
+    "isOnboarded": true,
+    "availableMonths": [1, 2, 8, 9],
+    "festivalMonths": []
   },
   {
     "id": "teacher-011",
@@ -253,15 +437,32 @@
     "centersServed": 11,
     "coursesThisYear": 3,
     "authorizations": ["10-Day", "20-Day", "30-Day", "Teen Course", "Executive"],
-    "languages": { "Nepali": "primary", "English": "primary", "Hindi": "primary" },
+    "languages": {
+      "Nepali": "primary",
+      "English": "primary",
+      "Hindi": "primary"
+    },
     "preferredRegions": ["Kathmandu Valley", "Pokhara & Gandaki", "International"],
-    "monthlyAvailability": [0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0],
     "personalNote": "Retired professor. Available for long courses. Willing to travel internationally.",
     "teachingHistory": [
-      { "date": "May 2026", "center": "Dhamma Shringa", "country": "🇳🇵", "type": "30-Day", "students": 35 },
-      { "date": "Apr 2026", "center": "Dhamma Pokhara", "country": "🇳🇵", "type": "10-Day", "students": 75 }
+      {
+        "date": "May 2026",
+        "center": "Dhamma Shringa",
+        "country": "🇳🇵",
+        "type": "30-Day",
+        "students": 35
+      },
+      {
+        "date": "Apr 2026",
+        "center": "Dhamma Pokhara",
+        "country": "🇳🇵",
+        "type": "10-Day",
+        "students": 75
+      }
     ],
-    "isOnboarded": true
+    "isOnboarded": true,
+    "availableMonths": [2, 3, 4, 6, 7, 8],
+    "festivalMonths": []
   },
   {
     "id": "teacher-012",
@@ -277,14 +478,25 @@
     "centersServed": 2,
     "coursesThisYear": 1,
     "authorizations": ["10-Day", "Children's Anapana"],
-    "languages": { "Nepali": "primary", "Tamang": "primary", "English": "off" },
+    "languages": {
+      "Nepali": "primary",
+      "Tamang": "primary",
+      "English": "off"
+    },
     "preferredRegions": ["Kathmandu Valley", "Pokhara & Gandaki"],
-    "monthlyAvailability": [0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0],
     "personalNote": "Young teacher from Nuwakot. Tamang community outreach. Building experience.",
     "teachingHistory": [
-      { "date": "Apr 2026", "center": "Dhamma Shringa", "country": "🇳🇵", "type": "10-Day", "students": 80 }
+      {
+        "date": "Apr 2026",
+        "center": "Dhamma Shringa",
+        "country": "🇳🇵",
+        "type": "10-Day",
+        "students": 80
+      }
     ],
-    "isOnboarded": true
+    "isOnboarded": true,
+    "availableMonths": [3, 4, 7, 8],
+    "festivalMonths": []
   },
   {
     "id": "teacher-013",
@@ -302,10 +514,11 @@
     "authorizations": [],
     "languages": {},
     "preferredRegions": [],
-    "monthlyAvailability": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     "personalNote": "",
     "teachingHistory": [],
-    "isOnboarded": false
+    "isOnboarded": false,
+    "availableMonths": [],
+    "festivalMonths": []
   },
   {
     "id": "server-001",
@@ -321,12 +534,16 @@
     "centersServed": 8,
     "coursesThisYear": 1,
     "authorizations": [],
-    "languages": { "Nepali": "primary", "English": "secondary" },
+    "languages": {
+      "Nepali": "primary",
+      "English": "secondary"
+    },
     "preferredRegions": ["Kathmandu Valley", "Pokhara & Gandaki"],
-    "monthlyAvailability": [1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1],
     "personalNote": "Available for service during dry season.",
     "teachingHistory": [],
     "isOnboarded": true,
-    "role": "server"
+    "role": "server",
+    "availableMonths": [0, 1, 2, 3, 6, 7, 9, 10, 11],
+    "festivalMonths": []
   }
 ]

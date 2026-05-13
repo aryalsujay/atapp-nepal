@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
-import { Colors } from '../../src/theme/colors';
+import { Colors } from '@/theme/colors';
 import {
   DashboardIcon,
   AppsIcon,
@@ -9,7 +9,7 @@ import {
   CalendarIcon,
   LightningIcon,
   PersonIcon,
-} from '../../src/components/ui/TabIcons';
+} from '@/components/ui/TabIcons';
 
 interface TabIconProps {
   focused: boolean;
@@ -28,12 +28,12 @@ const makeTabIcon = (
     );
   };
 
-const DashTab    = makeTabIcon(DashboardIcon, Colors.bl, Colors.bll);
-const AppsTab    = makeTabIcon(AppsIcon,      Colors.bl, Colors.bll);
-const PeopleTab  = makeTabIcon(PeopleIcon,    Colors.bl, Colors.bll);
-const CalTab     = makeTabIcon(CalendarIcon,  Colors.bl, Colors.bll);
-const LightTab   = makeTabIcon(LightningIcon, Colors.bl, Colors.bll);
-const ServersTab = makeTabIcon(PersonIcon,    Colors.bl, Colors.bll);
+const DashTab = makeTabIcon(DashboardIcon, Colors.bl, Colors.bll);
+const AppsTab = makeTabIcon(AppsIcon, Colors.bl, Colors.bll);
+const PeopleTab = makeTabIcon(PeopleIcon, Colors.bl, Colors.bll);
+const CalTab = makeTabIcon(CalendarIcon, Colors.bl, Colors.bll);
+const LightTab = makeTabIcon(LightningIcon, Colors.bl, Colors.bll);
+const ServersTab = makeTabIcon(PersonIcon, Colors.bl, Colors.bll);
 
 const styles = StyleSheet.create({
   icon: {
@@ -89,11 +89,11 @@ export default function AdminLayout() {
         options={{ tabBarIcon: ({ focused }) => <ServersTab focused={focused} /> }}
       />
       {/* Hidden screens — no tab */}
-      <Tabs.Screen name="inbox/[id]"      options={{ href: null }} />
-      <Tabs.Screen name="notifications"   options={{ href: null }} />
-      <Tabs.Screen name="server/inbox"    options={{ href: null }} />
-      <Tabs.Screen name="centres/index"   options={{ href: null }} />
-      <Tabs.Screen name="centres/[id]"    options={{ href: null }} />
+      <Tabs.Screen name="inbox/[id]" options={{ href: null }} />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="server/inbox" options={{ href: null }} />
+      <Tabs.Screen name="centres/index" options={{ href: null }} />
+      <Tabs.Screen name="centres/[id]" options={{ href: null }} />
     </Tabs>
   );
 }

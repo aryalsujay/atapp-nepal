@@ -1,41 +1,46 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Routes, routeTo } from '@/routes';
 import { useTranslation } from 'react-i18next';
-import { Colors } from '../../src/theme/colors';
-import { FontSize, FontWeight } from '../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../src/theme/spacing';
-import { Shadows } from '../../src/theme/shadows';
-import { SectionHeader } from '../../src/components/layout/SectionHeader';
-import { Chip } from '../../src/components/ui/Badge';
-import coursesData from '../../src/data/courses.json';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { Chip } from '@/components/ui/Badge';
+import { courses as coursesData } from '@/data';
 
 const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 // Color per course type
 const TYPE_COLOR: Record<string, string> = {
-  '10-Day': Colors.sf,       // saffron
-  '20-Day': '#2A7A3A',       // deeper green
-  '30-Day': '#166534',       // forest
-  '45-Day': '#0891b2',       // teal
-  '60-Day': '#0e7490',       // dark teal
-  '3-Day': Colors.fo,        // green
-  '1-Day': Colors.gd,        // gold
+  '10-Day': Colors.sf, // saffron
+  '20-Day': '#2A7A3A', // deeper green
+  '30-Day': '#166534', // forest
+  '45-Day': '#0891b2', // teal
+  '60-Day': '#0e7490', // dark teal
+  '3-Day': Colors.fo, // green
+  '1-Day': Colors.gd, // gold
   'Satipatthana Sutta': '#7c3aed', // purple
   "Children's Anapana": '#f59e0b', // amber
-  'Teen Course': '#d97706',  // orange-amber
-  'Executive': '#475569',    // slate
+  'Teen Course': '#d97706', // orange-amber
+  Executive: '#475569', // slate
 };
 
 function typeColor(type: string): string {
@@ -95,13 +100,17 @@ export default function AdminCalendar() {
   while (cells.length % 7 !== 0) cells.push(null);
 
   const prevMonth = () => {
-    if (month === 0) { setYear(y => y - 1); setMonth(11); }
-    else setMonth(m => m - 1);
+    if (month === 0) {
+      setYear((y) => y - 1);
+      setMonth(11);
+    } else setMonth((m) => m - 1);
     setSelectedDay(null);
   };
   const nextMonth = () => {
-    if (month === 11) { setYear(y => y + 1); setMonth(0); }
-    else setMonth(m => m + 1);
+    if (month === 11) {
+      setYear((y) => y + 1);
+      setMonth(0);
+    } else setMonth((m) => m + 1);
     setSelectedDay(null);
   };
 
@@ -113,9 +122,14 @@ export default function AdminCalendar() {
     // Unique courses spanning this month
     const seen = new Set<number>();
     const result: CalendarCourse[] = [];
-    Object.values(dayMap).flat().forEach((c) => {
-      if (!seen.has(c.id)) { seen.add(c.id); result.push(c); }
-    });
+    Object.values(dayMap)
+      .flat()
+      .forEach((c) => {
+        if (!seen.has(c.id)) {
+          seen.add(c.id);
+          result.push(c);
+        }
+      });
     return result.sort((a, b) => a.startDate.localeCompare(b.startDate));
   }, [dayMap, selectedDay]);
 
@@ -132,7 +146,9 @@ export default function AdminCalendar() {
           <TouchableOpacity onPress={prevMonth} style={styles.navBtn} activeOpacity={0.7}>
             <Text style={styles.navArrow}>‹</Text>
           </TouchableOpacity>
-          <Text style={styles.monthLabel}>{MONTHS[month]} {year}</Text>
+          <Text style={styles.monthLabel}>
+            {MONTHS[month]} {year}
+          </Text>
           <TouchableOpacity onPress={nextMonth} style={styles.navBtn} activeOpacity={0.7}>
             <Text style={styles.navArrow}>›</Text>
           </TouchableOpacity>
@@ -143,7 +159,9 @@ export default function AdminCalendar() {
           {/* Weekday headers */}
           <View style={styles.weekRow}>
             {WEEKDAYS.map((d) => (
-              <Text key={d} style={styles.weekday}>{d}</Text>
+              <Text key={d} style={styles.weekday}>
+                {d}
+              </Text>
             ))}
           </View>
 
@@ -167,18 +185,23 @@ export default function AdminCalendar() {
                     activeOpacity={day !== null ? 0.7 : 1}
                     disabled={day === null}
                   >
-                    <Text style={[
-                      styles.dayNum,
-                      isSelected && styles.dayNumSelected,
-                      isToday(day!) && !isSelected && styles.dayNumToday,
-                      day === null && { opacity: 0 },
-                    ]}>
+                    <Text
+                      style={[
+                        styles.dayNum,
+                        isSelected && styles.dayNumSelected,
+                        isToday(day!) && !isSelected && styles.dayNumToday,
+                        day === null && { opacity: 0 },
+                      ]}
+                    >
                       {day ?? ''}
                     </Text>
                     {hasCourses && (
                       <View style={styles.dotsRow}>
                         {dots.map((c, i) => (
-                          <View key={i} style={[styles.dot, { backgroundColor: typeColor(c.type) }]} />
+                          <View
+                            key={i}
+                            style={[styles.dot, { backgroundColor: typeColor(c.type) }]}
+                          />
                         ))}
                       </View>
                     )}
@@ -190,7 +213,11 @@ export default function AdminCalendar() {
         </View>
 
         {/* Legend */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.legend}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.legend}
+        >
           {Object.entries(TYPE_COLOR).map(([type, color]) => (
             <View key={type} style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: color }]} />
@@ -201,39 +228,58 @@ export default function AdminCalendar() {
 
         {/* Course list */}
         <SectionHeader
-          title={selectedDay !== null
-            ? `${MONTHS[month]} ${selectedDay}`
-            : `All courses — ${MONTHS[month]}`}
+          title={
+            selectedDay !== null
+              ? `${MONTHS[month]} ${selectedDay}`
+              : `All courses — ${MONTHS[month]}`
+          }
           action={selectedDay !== null ? 'Clear' : undefined}
           onAction={() => setSelectedDay(null)}
         />
 
         {listedCourses.length === 0 ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>No courses this {selectedDay !== null ? 'day' : 'month'}</Text>
+            <Text style={styles.emptyText}>
+              No courses this {selectedDay !== null ? 'day' : 'month'}
+            </Text>
           </View>
         ) : (
           listedCourses.map((course) => (
-            <View key={course.id} style={[styles.courseCard, { borderLeftColor: typeColor(course.type) }]}>
+            <View
+              key={course.id}
+              style={[styles.courseCard, { borderLeftColor: typeColor(course.type) }]}
+            >
               <View style={styles.courseTop}>
                 <View style={styles.courseInfo}>
-                  <Text style={[styles.courseType, { color: typeColor(course.type) }]}>{course.type}</Text>
+                  <Text style={[styles.courseType, { color: typeColor(course.type) }]}>
+                    {course.type}
+                  </Text>
                   <Text style={styles.courseCenter}>{course.center}</Text>
                   <Text style={styles.courseDates}>📅 {course.dates}</Text>
                 </View>
                 <View style={styles.courseRight}>
                   <Chip
-                    label={course.status === 'open' ? 'Open'
-                      : course.status === 'waitlist' ? 'Waitlist'
-                      : course.status === 'not_yet_open' ? 'Upcoming'
-                      : 'Closed'}
-                    variant={course.status === 'open' ? 'orange'
-                      : course.status === 'waitlist' ? 'gold'
-                      : course.status === 'not_yet_open' ? 'gray'
-                      : 'red'}
+                    label={
+                      course.status === 'open'
+                        ? 'Open'
+                        : course.status === 'waitlist'
+                          ? 'Waitlist'
+                          : course.status === 'not_yet_open'
+                            ? 'Upcoming'
+                            : 'Closed'
+                    }
+                    variant={
+                      course.status === 'open'
+                        ? 'orange'
+                        : course.status === 'waitlist'
+                          ? 'gold'
+                          : course.status === 'not_yet_open'
+                            ? 'gray'
+                            : 'red'
+                    }
                   />
                   <TouchableOpacity
-                    onPress={() => router.push('/(admin)/schedule')}
+                    onPress={() => router.push(Routes.adminSchedule)}
                     style={styles.scheduleBtn}
                   >
                     <Text style={styles.scheduleBtnText}>Assign →</Text>

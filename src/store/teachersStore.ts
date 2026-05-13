@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import seedTeachers from '../data/teachers.json';
+import seedTeachers from '@/data/teachers.json';
+import type { HistoryEntry } from '@/types';
+import { logger } from '@/utils/logger';
 
 export interface StoredTeacher {
   id: string;
@@ -18,9 +20,12 @@ export interface StoredTeacher {
   authorizations: string[];
   languages: Record<string, string>;
   preferredRegions: string[];
-  monthlyAvailability: (number | string)[];
+  availableMonths: number[];
+  festivalMonths: number[];
   personalNote: string;
-  teachingHistory: any[];
+  teachingHistory: HistoryEntry[];
+  /** Server users have role='server'; teachers have role='teacher' or undefined. */
+  role?: 'teacher' | 'server';
   isOnboarded: boolean;
 }
 
@@ -46,7 +51,8 @@ export const useTeachersStore = create<TeachersState>((set, get) => ({
       const extra: StoredTeacher[] = raw ? JSON.parse(raw) : [];
       const all = [...(seedTeachers as unknown as StoredTeacher[]), ...extra];
       set({ extraTeachers: extra, allTeachers: all, loaded: true });
-    } catch {
+    } catch (err) {
+      logger.warn('[teachersStore] loadTeachers failed', err);
       set({ loaded: true });
     }
   },

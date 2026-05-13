@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Gradients } from '../../theme/colors';
-import { FontSize, FontWeight } from '../../theme/typography';
-import { Spacing, Layout } from '../../theme/spacing';
+import { Colors, Gradients } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Spacing, Layout } from '@/theme/spacing';
 import { LotusHero, MountainSilhouette } from '../ui/HeroDecorations';
 
 type GradientType = keyof typeof Gradients;

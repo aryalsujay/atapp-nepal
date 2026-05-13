@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import { Colors } from '../../theme/colors';
-import { FontSize, FontWeight } from '../../theme/typography';
-import { Radius, Spacing } from '../../theme/spacing';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Spacing } from '@/theme/spacing';
 
 interface ChecklistItemProps {
   label: string;
@@ -11,12 +11,7 @@ interface ChecklistItemProps {
   style?: ViewStyle;
 }
 
-export const ChecklistItem: React.FC<ChecklistItemProps> = ({
-  label,
-  sublabel,
-  passed,
-  style,
-}) => (
+export const ChecklistItem: React.FC<ChecklistItemProps> = ({ label, sublabel, passed, style }) => (
   <View style={[styles.row, style]}>
     <View style={[styles.icon, passed ? styles.iconOk : styles.iconFail]}>
       <Text style={[styles.iconText, { color: passed ? Colors.fo : Colors.ur }]}>

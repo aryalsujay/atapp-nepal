@@ -10,22 +10,24 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useToast } from '@/components/ui/Toast';
 import { useTranslation } from 'react-i18next';
-import { Colors } from '../../src/theme/colors';
-import { FontSize, FontWeight } from '../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../src/theme/spacing';
-import { Shadows } from '../../src/theme/shadows';
-import { SectionHeader } from '../../src/components/layout/SectionHeader';
-import { SearchBar } from '../../src/components/ui/SearchBar';
-import { Chip } from '../../src/components/ui/Badge';
-import { Button } from '../../src/components/ui/Button';
-import { useTeachersStore, StoredTeacher } from '../../src/store/teachersStore';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { Chip } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { useTeachersStore, StoredTeacher } from '@/store/teachersStore';
 
 const ALL_LANGUAGES = ['All', 'Nepali', 'English', 'Hindi'];
 
 export default function AdminDirectory() {
   const { t } = useTranslation();
   const router = useRouter();
+  const toast = useToast();
 
   const [search, setSearch] = useState('');
   const [langFilter, setLangFilter] = useState('All');
@@ -39,7 +41,11 @@ export default function AdminDirectory() {
     contactMethod: 'email' as 'email' | 'phone',
     contact: '',
   });
-  const [inviteResult, setInviteResult] = useState<{ name: string; email: string; password: string } | null>(null);
+  const [inviteResult, setInviteResult] = useState<{
+    name: string;
+    email: string;
+    password: string;
+  } | null>(null);
 
   const { allTeachers, addTeacher } = useTeachersStore();
 
@@ -52,7 +58,7 @@ export default function AdminDirectory() {
     const matchLang =
       langFilter === 'All' ||
       Object.entries(teacher.languages as Record<string, string>).some(
-        ([lang, level]) => lang === langFilter && level !== 'off'
+        ([lang, level]) => lang === langFilter && level !== 'off',
       );
 
     return matchSearch && matchLang;
@@ -60,7 +66,7 @@ export default function AdminDirectory() {
 
   const handleCreateTeacher = async () => {
     if (!newTeacher.name.trim()) {
-      Alert.alert('Required', 'Please enter teacher name.');
+      toast.error('Please enter teacher name.', 'Required');
       return;
     }
     const num = String(allTeachers.length + 1).padStart(3, '0');
@@ -82,7 +88,8 @@ export default function AdminDirectory() {
       authorizations: newTeacher.authorizations,
       languages: { Nepali: 'primary', English: 'secondary' },
       preferredRegions: newTeacher.region ? [newTeacher.region] : ['Kathmandu Valley'],
-      monthlyAvailability: Array(12).fill(0),
+      availableMonths: [],
+      festivalMonths: [],
       personalNote: '',
       teachingHistory: [],
       isOnboarded: false,
@@ -128,7 +135,12 @@ export default function AdminDirectory() {
               langFilter === lang && { backgroundColor: Colors.bl, borderColor: Colors.bl },
             ]}
           >
-            <Text style={[styles.filterChipText, { color: langFilter === lang ? Colors.white : Colors.tx2 }]}>
+            <Text
+              style={[
+                styles.filterChipText,
+                { color: langFilter === lang ? Colors.white : Colors.tx2 },
+              ]}
+            >
               {lang}
             </Text>
           </TouchableOpacity>
@@ -136,14 +148,19 @@ export default function AdminDirectory() {
       </ScrollView>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
-        {teachers.map((teacher: any) => {
+        {teachers.map((teacher) => {
           const primaryLangs = langLabel(teacher.languages);
-          const isAvailable = teacher.monthlyAvailability.some((m: any) => m === 1);
+          const isAvailable = teacher.availableMonths.length > 0;
 
           return (
             <View key={teacher.id} style={styles.teacherCard}>
               <View style={styles.cardHeader}>
-                <View style={[styles.avatar, { backgroundColor: teacher.gender === 'F' ? '#FBE8F0' : Colors.fol }]}>
+                <View
+                  style={[
+                    styles.avatar,
+                    { backgroundColor: teacher.gender === 'F' ? '#FBE8F0' : Colors.fol },
+                  ]}
+                >
                   <Text style={styles.avatarText}>{teacher.name.charAt(0)}</Text>
                 </View>
                 <View style={styles.teacherInfo}>
@@ -155,10 +172,12 @@ export default function AdminDirectory() {
                     {teacher.totalCourses} courses · Since {teacher.authorizedSince}
                   </Text>
                 </View>
-                <View style={[
-                  styles.availBadge,
-                  { backgroundColor: isAvailable ? Colors.fol : Colors.cr3 }
-                ]}>
+                <View
+                  style={[
+                    styles.availBadge,
+                    { backgroundColor: isAvailable ? Colors.fol : Colors.cr3 },
+                  ]}
+                >
                   <Text style={[styles.availText, { color: isAvailable ? Colors.fo : Colors.tx3 }]}>
                     {isAvailable ? 'Available' : 'Busy'}
                   </Text>
@@ -171,22 +190,19 @@ export default function AdminDirectory() {
                   <Chip key={auth} label={auth} variant="green" style={styles.authChip} />
                 ))}
                 {(teacher.authorizations as string[]).length > 3 && (
-                  <Chip label={`+${(teacher.authorizations as string[]).length - 3}`} variant="gray" />
+                  <Chip
+                    label={`+${(teacher.authorizations as string[]).length - 3}`}
+                    variant="gray"
+                  />
                 )}
               </View>
 
               {/* Action buttons */}
               <View style={styles.cardActions}>
-                <TouchableOpacity
-                  style={styles.profileBtn}
-                  activeOpacity={0.8}
-                >
+                <TouchableOpacity style={styles.profileBtn} activeOpacity={0.8}>
                   <Text style={styles.profileBtnText}>{t('admin.directory.viewProfile')}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.assignBtn}
-                  activeOpacity={0.8}
-                >
+                <TouchableOpacity style={styles.assignBtn} activeOpacity={0.8}>
                   <Text style={styles.assignBtnText}>{t('admin.directory.assign')} →</Text>
                 </TouchableOpacity>
               </View>
@@ -217,11 +233,14 @@ export default function AdminDirectory() {
               <Text style={styles.successName}>{inviteResult.name}</Text>
               <View style={styles.codeBox}>
                 <Text style={styles.codeLabel}>Login Credentials</Text>
-                <Text style={styles.codeValue} numberOfLines={1} adjustsFontSizeToFit>{inviteResult.email}</Text>
+                <Text style={styles.codeValue} numberOfLines={1} adjustsFontSizeToFit>
+                  {inviteResult.email}
+                </Text>
                 <Text style={styles.codeHint}>Password: {inviteResult.password}</Text>
               </View>
               <Text style={styles.codeInstructions}>
-                Share these credentials with the teacher. They will complete onboarding on first login.
+                Share these credentials with the teacher. They will complete onboarding on first
+                login.
               </Text>
               <Button
                 label="Done"
@@ -231,9 +250,13 @@ export default function AdminDirectory() {
                   setShowAddSheet(false);
                   setInviteResult(null);
                   setNewTeacher({
-                    name: '', gender: 'M', yearAuthorized: '',
-                    region: '', authorizations: [],
-                    contactMethod: 'email', contact: '',
+                    name: '',
+                    gender: 'M',
+                    yearAuthorized: '',
+                    region: '',
+                    authorizations: [],
+                    contactMethod: 'email',
+                    contact: '',
                   });
                 }}
               />
@@ -259,10 +282,18 @@ export default function AdminDirectory() {
                     onPress={() => setNewTeacher((p) => ({ ...p, gender: g }))}
                     style={[
                       styles.genderBtn,
-                      newTeacher.gender === g && { backgroundColor: Colors.sf, borderColor: Colors.sf },
+                      newTeacher.gender === g && {
+                        backgroundColor: Colors.sf,
+                        borderColor: Colors.sf,
+                      },
                     ]}
                   >
-                    <Text style={[styles.genderBtnText, { color: newTeacher.gender === g ? Colors.white : Colors.tx2 }]}>
+                    <Text
+                      style={[
+                        styles.genderBtnText,
+                        { color: newTeacher.gender === g ? Colors.white : Colors.tx2 },
+                      ]}
+                    >
                       {g === 'M' ? '👨 Male' : '👩 Female'}
                     </Text>
                   </TouchableOpacity>
@@ -290,7 +321,13 @@ export default function AdminDirectory() {
 
               <Text style={styles.fieldLabel}>{t('admin.addTeacher.authorizations')}</Text>
               <View style={styles.authToggleRow}>
-                {['10-Day', '20-Day', 'Satipatthana Sutta', "Children's Anapana", 'Teen Course'].map((type) => {
+                {[
+                  '10-Day',
+                  '20-Day',
+                  'Satipatthana Sutta',
+                  "Children's Anapana",
+                  'Teen Course',
+                ].map((type) => {
                   const selected = newTeacher.authorizations.includes(type);
                   return (
                     <TouchableOpacity
@@ -303,9 +340,17 @@ export default function AdminDirectory() {
                             : [...p.authorizations, type],
                         }))
                       }
-                      style={[styles.authToggle, selected && { backgroundColor: Colors.fo, borderColor: Colors.fo }]}
+                      style={[
+                        styles.authToggle,
+                        selected && { backgroundColor: Colors.fo, borderColor: Colors.fo },
+                      ]}
                     >
-                      <Text style={[styles.authToggleText, { color: selected ? Colors.white : Colors.tx2 }]}>
+                      <Text
+                        style={[
+                          styles.authToggleText,
+                          { color: selected ? Colors.white : Colors.tx2 },
+                        ]}
+                      >
                         {type}
                       </Text>
                     </TouchableOpacity>

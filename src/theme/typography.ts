@@ -1,13 +1,23 @@
 import { Colors } from './colors';
 
+/**
+ * Font family names — must match exactly the names registered by `useFonts()`
+ * in `app/_layout.tsx`. The `@expo-google-fonts/*` packages register fonts
+ * using the import name as the font-family string.
+ */
 export const FontFamily = {
-  sans: 'PlusJakartaSans',
+  // Plus Jakarta Sans — primary Latin face
+  sans: 'PlusJakartaSans_400Regular',
   sansRegular: 'PlusJakartaSans_400Regular',
   sansMedium: 'PlusJakartaSans_500Medium',
   sansSemiBold: 'PlusJakartaSans_600SemiBold',
   sansBold: 'PlusJakartaSans_700Bold',
   sansExtraBold: 'PlusJakartaSans_800ExtraBold',
-  devanagari: 'NotoSansDevanagari',
+
+  // Noto Sans Devanagari — Nepali face
+  devanagari: 'NotoSansDevanagari_400Regular',
+  devanagariMedium: 'NotoSansDevanagari_500Medium',
+  devanagariSemiBold: 'NotoSansDevanagari_600SemiBold',
   devanagariBold: 'NotoSansDevanagari_700Bold',
 } as const;
 

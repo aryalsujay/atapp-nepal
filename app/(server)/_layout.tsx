@@ -1,14 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
-import { Colors } from '../../src/theme/colors';
-import {
-  HomeIcon,
-  LotusIcon,
-  InboxIcon,
-  BellIcon,
-  PersonIcon,
-} from '../../src/components/ui/TabIcons';
+import { Colors } from '@/theme/colors';
+import { HomeIcon, LotusIcon, InboxIcon, BellIcon, PersonIcon } from '@/components/ui/TabIcons';
 
 interface TabIconProps {
   focused: boolean;
@@ -83,10 +77,10 @@ export default function ServerLayout() {
         options={{ tabBarIcon: ({ focused }) => <PersonTab focused={focused} /> }}
       />
       {/* Hidden screens (no tab) */}
-      <Tabs.Screen name="opportunities/[id]"   options={{ href: null }} />
-      <Tabs.Screen name="apply/[id]"           options={{ href: null }} />
-      <Tabs.Screen name="applications/[id]"    options={{ href: null }} />
-      <Tabs.Screen name="onboarding"           options={{ href: null }} />
+      <Tabs.Screen name="opportunities/[id]" options={{ href: null }} />
+      <Tabs.Screen name="apply/[id]" options={{ href: null }} />
+      <Tabs.Screen name="applications/[id]" options={{ href: null }} />
+      <Tabs.Screen name="onboarding" options={{ href: null }} />
     </Tabs>
   );
 }

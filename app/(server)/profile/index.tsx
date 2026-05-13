@@ -1,22 +1,17 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { Routes, routeTo } from '@/routes';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../../src/store/authStore';
-import { useTeachersStore } from '../../../src/store/teachersStore';
-import { Colors } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { Shadows } from '../../../src/theme/shadows';
-import { SERVICE_AREAS } from '../../../src/data/serviceAreas';
+import { useAuthStore } from '@/store/authStore';
+import { useTeachersStore } from '@/store/teachersStore';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SERVICE_AREAS } from '@/data/serviceAreas';
 
 const SV_GRADIENT: [string, string, string] = ['#5A3800', '#8B5E14', '#C8900A'];
 
@@ -30,13 +25,16 @@ function AreaPill({ areaId }: { areaId: string }) {
   if (!area) return null;
   return (
     <View style={[styles.areaPill, { backgroundColor: area.color + '22' }]}>
-      <Text style={[styles.areaPillText, { color: area.color }]}>{area.emoji} {area.label}</Text>
+      <Text style={[styles.areaPillText, { color: area.color }]}>
+        {area.emoji} {area.label}
+      </Text>
     </View>
   );
 }
 
 export default function ServerProfileScreen() {
   const router = useRouter();
+  const confirm = useConfirm();
   const insets = useSafeAreaInsets();
   const signOut = useAuthStore((s) => s.signOut);
   const userId = useAuthStore((s) => s.userId) ?? '';
@@ -44,21 +42,25 @@ export default function ServerProfileScreen() {
   const user = findTeacher(userId);
 
   const name = user?.name ?? 'Server';
-  const initials = name.split(' ').map((w: string) => w[0]).join('').toUpperCase();
-  const history: Array<{ center: string; type: string; year: number; areas: string[] }> = FALLBACK_HISTORY;
+  const initials = name
+    .split(' ')
+    .map((w: string) => w[0])
+    .join('')
+    .toUpperCase();
+  const history: { center: string; type: string; year: number; areas: string[] }[] =
+    FALLBACK_HISTORY;
 
   const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          await signOut();
-          router.replace('/(auth)/login');
-        },
+    confirm({
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out?',
+      confirmText: 'Sign Out',
+      destructive: true,
+      onConfirm: async () => {
+        await signOut();
+        router.replace(Routes.login);
       },
-    ]);
+    });
   };
 
   return (
@@ -81,7 +83,9 @@ export default function ServerProfileScreen() {
         </View>
 
         <Text style={styles.name}>{name}</Text>
-        <Text style={styles.role}>Dhamma Server · सेवक · {user?.region ?? 'Nepal'} {user?.flag ?? '🇳🇵'}</Text>
+        <Text style={styles.role}>
+          Dhamma Server · सेवक · {user?.region ?? 'Nepal'} {user?.flag ?? '🇳🇵'}
+        </Text>
 
         {/* Stats row */}
         <View style={styles.statsRow}>
@@ -109,10 +113,14 @@ export default function ServerProfileScreen() {
           <View key={i} style={[styles.historyItem, i > 0 && styles.historyItemBorder]}>
             <View style={styles.historyLeft}>
               <Text style={styles.historyCenter}>{item.center}</Text>
-              <Text style={styles.historyMeta}>{item.type} · {item.year}</Text>
+              <Text style={styles.historyMeta}>
+                {item.type} · {item.year}
+              </Text>
             </View>
             <View style={styles.historyAreas}>
-              {item.areas.map((a) => <AreaPill key={a} areaId={a} />)}
+              {item.areas.map((a) => (
+                <AreaPill key={a} areaId={a} />
+              ))}
             </View>
           </View>
         ))}

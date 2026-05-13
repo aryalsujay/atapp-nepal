@@ -1,19 +1,14 @@
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useHallsStore } from '../../../src/store/hallsStore';
-import { Colors } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { Shadows } from '../../../src/theme/shadows';
-import { SectionHeader } from '../../../src/components/layout/SectionHeader';
-import centresData from '../../../src/data/centers.json';
+import { Routes, routeTo } from '@/routes';
+import { useHallsStore } from '@/store/hallsStore';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { centres as centresData } from '@/data';
 
 const REGION_COLORS: Record<string, string> = {
   'Kathmandu Valley': Colors.bl,
@@ -29,7 +24,7 @@ export default function AdminCentresScreen() {
     loadHalls();
   }, []);
 
-  const byRegion = (centresData as any[]).reduce<Record<string, any[]>>((acc, c) => {
+  const byRegion = centresData.reduce<Record<string, any[]>>((acc, c) => {
     const r = c.region ?? 'Other';
     if (!acc[r]) acc[r] = [];
     acc[r].push(c);
@@ -38,20 +33,16 @@ export default function AdminCentresScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.cr }}>
-      <SectionHeader
-        title="Centres & Halls"
-        style={styles.header}
-        onBack={() => router.back()}
-      />
+      <SectionHeader title="Centres & Halls" style={styles.header} onBack={() => router.back()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
-        <Text style={styles.subtitle}>
-          Configure halls and teacher requirements per centre
-        </Text>
+        <Text style={styles.subtitle}>Configure halls and teacher requirements per centre</Text>
 
         {Object.entries(byRegion).map(([region, centres]) => (
           <View key={region}>
             <View style={styles.regionHeader}>
-              <View style={[styles.regionDot, { backgroundColor: REGION_COLORS[region] ?? Colors.tx3 }]} />
+              <View
+                style={[styles.regionDot, { backgroundColor: REGION_COLORS[region] ?? Colors.tx3 }]}
+              />
               <Text style={styles.regionLabel}>{region}</Text>
             </View>
 
@@ -63,7 +54,7 @@ export default function AdminCentresScreen() {
                 <TouchableOpacity
                   key={centre.id}
                   style={styles.card}
-                  onPress={() => router.push(`/(admin)/centres/${centre.id}`)}
+                  onPress={() => router.push(routeTo.adminCentreDetail(centre.id))}
                   activeOpacity={0.85}
                 >
                   <View style={styles.cardRow}>
@@ -72,7 +63,9 @@ export default function AdminCentresScreen() {
                     </View>
                     <View style={styles.cardInfo}>
                       <Text style={styles.centreName}>{centre.name}</Text>
-                      <Text style={styles.centreMeta}>{centre.city} · Alt {centre.altitude}m</Text>
+                      <Text style={styles.centreMeta}>
+                        {centre.city} · Alt {centre.altitude}m
+                      </Text>
                     </View>
                     <View style={styles.slotsTag}>
                       <Text style={styles.slotsValue}>{totalSlots}</Text>

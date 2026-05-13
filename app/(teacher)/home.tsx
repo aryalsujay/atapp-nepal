@@ -1,30 +1,25 @@
 import React, { useEffect, useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { DimensionValue, View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Routes, routeTo } from '@/routes';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '../../src/store/authStore';
-import { useProfileStore } from '../../src/store/profileStore';
-import { useApplicationsStore } from '../../src/store/applicationsStore';
-import { useSettingsStore } from '../../src/store/settingsStore';
-import { Colors, Gradients } from '../../src/theme/colors';
-import { FontSize, FontWeight } from '../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../src/theme/spacing';
-import { Shadows } from '../../src/theme/shadows';
-import { SectionHeader } from '../../src/components/layout/SectionHeader';
-import { CourseCard } from '../../src/components/cards/CourseCard';
-import { LotusHero, MountainSilhouette } from '../../src/components/ui/HeroDecorations';
-import { FadeInView } from '../../src/components/ui/FadeInView';
-import { useCoursesStore } from '../../src/store/coursesStore';
-import { Course, TeacherProfile } from '../../src/types';
-import { enrichCoursesWithMatch, getMatchTier } from '../../src/utils/matching';
+import { useAuthStore } from '@/store/authStore';
+import { useProfileStore } from '@/store/profileStore';
+import { useApplicationsStore } from '@/store/applicationsStore';
+import { useSettingsStore } from '@/store/settingsStore';
+import { Colors, Gradients } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { CourseCard } from '@/components/cards/CourseCard';
+import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
+import { FadeInView } from '@/components/ui/FadeInView';
+import { useCoursesStore } from '@/store/coursesStore';
+import { Course, TeacherProfile } from '@/types';
+import { enrichCoursesWithMatch, getMatchTier } from '@/utils/matching';
 
 const TYPE_EMOJI: Record<string, string> = {
   '10-Day': '🪷',
@@ -50,11 +45,11 @@ function getTodayLabel(): string {
   return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
-function availableMonthsLabel(avail: (number | string)[]): string {
-  const count = avail.filter((v) => v === 1).length;
+function availableMonthsLabel(availableMonths: number[]): string {
+  const count = availableMonths.length;
   if (count === 0) return 'No months set';
-  const next = avail.findIndex((v) => v === 1);
-  return next >= 0 ? `${MONTHS[next]}+ (${count} mo)` : `${count} months`;
+  const sorted = [...availableMonths].sort((a, b) => a - b);
+  return `${MONTHS[sorted[0]]}+ (${count} mo)`;
 }
 
 export default function HomeScreen() {
@@ -72,17 +67,14 @@ export default function HomeScreen() {
   }, [userId]);
 
   const courses = useCoursesStore((s) => s.courses) as Course[];
-  const visibleCourses = useMemo(
-    () => courses.filter((c) => (c.needCount ?? 1) > 0),
-    [courses]
-  );
+  const visibleCourses = useMemo(() => courses.filter((c) => (c.needCount ?? 1) > 0), [courses]);
   const enriched = useMemo(
     () => (profile ? enrichCoursesWithMatch(visibleCourses, profile) : visibleCourses),
-    [visibleCourses, profile]
+    [visibleCourses, profile],
   );
   const topMatches = useMemo(
-    () => enriched.filter((c) => (c as any).match >= 83).slice(0, 5),
-    [enriched]
+    () => enriched.filter((c) => (c.match ?? 0) >= 83).slice(0, 5),
+    [enriched],
   );
 
   const approvedApps = applications.filter((a) => a.status === 'approved');
@@ -92,16 +84,18 @@ export default function HomeScreen() {
 
   const name = profile?.name ?? 'Teacher';
   const firstName = name.split(' ')[0];
-  const initials = name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+  const initials = name
+    .split(' ')
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
-  const availLabel = profile
-    ? availableMonthsLabel(profile.monthlyAvailability as (number | string)[])
-    : '—';
+  const availLabel = profile ? availableMonthsLabel(profile.availableMonths) : '—';
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.cr }}>
       <ScrollView showsVerticalScrollIndicator={false}>
-
         {/* ── Hero ── */}
         <LinearGradient
           colors={Gradients.teacher as unknown as [string, string, ...string[]]}
@@ -128,7 +122,7 @@ export default function HomeScreen() {
                 <Text style={styles.langBtnText}>{language === 'en' ? 'NE' : 'EN'}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => router.push('/(teacher)/notifications')}
+                onPress={() => router.push(Routes.teacherNotifications)}
                 style={styles.bellBtn}
               >
                 <Text style={styles.bellText}>🔔</Text>
@@ -137,28 +131,17 @@ export default function HomeScreen() {
           </View>
 
           {/* Greeting */}
-          <Text style={styles.greeting}>🙏 {t('home.greeting')}, {firstName}!</Text>
+          <Text style={styles.greeting}>
+            🙏 {t('home.greeting')}, {firstName}!
+          </Text>
           <Text style={styles.role}>{t('home.subtitle')}</Text>
 
           {/* Stats row */}
           <View style={styles.statsRow}>
-            <StatCard
-              value={String(profile?.totalCourses ?? 0)}
-              label="Total Courses"
-            />
-            <StatCard
-              value={String(profile?.coursesThisYear ?? 0)}
-              label="This Year"
-            />
-            <StatCard
-              value={String(profile?.authorizations?.length ?? 0)}
-              label="Authorizations"
-            />
-            <StatCard
-              value={availLabel}
-              label="Available"
-              small
-            />
+            <StatCard value={String(profile?.totalCourses ?? 0)} label="Total Courses" />
+            <StatCard value={String(profile?.coursesThisYear ?? 0)} label="This Year" />
+            <StatCard value={String(profile?.authorizations?.length ?? 0)} label="Authorizations" />
+            <StatCard value={availLabel} label="Available" small />
           </View>
         </LinearGradient>
 
@@ -171,7 +154,7 @@ export default function HomeScreen() {
                 <CourseCard
                   course={course}
                   isAssigned
-                  onPress={() => router.push(`/(teacher)/courses/${course.id}`)}
+                  onPress={() => router.push(routeTo.teacherCourseDetail(course.id))}
                 />
               </FadeInView>
             ))}
@@ -183,7 +166,7 @@ export default function HomeScreen() {
           <FadeInView delay={60}>
             <RestReminderCard
               lastCourseDate={profile.teachingHistory[0]?.date ?? ''}
-              availableMonth={MONTHS[profile.monthlyAvailability.findIndex((v) => v === 1)] ?? '—'}
+              availableMonth={MONTHS[[...profile.availableMonths].sort((a, b) => a - b)[0]] ?? '—'}
             />
           </FadeInView>
         )}
@@ -192,7 +175,7 @@ export default function HomeScreen() {
         <SectionHeader
           title={t('home.bestMatches')}
           action="See All"
-          onAction={() => router.push('/(teacher)/courses')}
+          onAction={() => router.push(Routes.teacherCourses)}
         />
         <Text style={styles.matchSubtitle}>Based on profile & availability</Text>
         {topMatches.map((course, i) => (
@@ -200,14 +183,14 @@ export default function HomeScreen() {
             <MatchCard
               course={course}
               isApplied={applications.some((a) => a.courseId === course.id)}
-              onPress={() => router.push(`/(teacher)/courses/${course.id}`)}
+              onPress={() => router.push(routeTo.teacherCourseDetail(course.id))}
             />
           </FadeInView>
         ))}
 
         {/* ── Browse all CTA ── */}
         <TouchableOpacity
-          onPress={() => router.push('/(teacher)/courses')}
+          onPress={() => router.push(Routes.teacherCourses)}
           style={styles.browseBtn}
           activeOpacity={0.8}
         >
@@ -236,7 +219,9 @@ const StatCard: React.FC<StatCardProps> = ({ value, label, small }) => (
     >
       {value}
     </Text>
-    <Text style={styles.statLabel} numberOfLines={1}>{label}</Text>
+    <Text style={styles.statLabel} numberOfLines={1}>
+      {label}
+    </Text>
   </View>
 );
 
@@ -281,20 +266,30 @@ const MatchCard: React.FC<MatchCardProps> = ({ course, isApplied, onPress }) => 
         {/* Info */}
         <View style={styles.matchInfo}>
           <View style={styles.matchTopRow}>
-            <Text style={styles.matchCenter} numberOfLines={1}>{course.center}</Text>
+            <Text style={styles.matchCenter} numberOfLines={1}>
+              {course.center}
+            </Text>
             <View style={[styles.matchBadge, { backgroundColor: accentBg }]}>
               <Text style={[styles.matchBadgeText, { color: accentColor }]}>{score}% match</Text>
             </View>
           </View>
           <Text style={styles.matchType}>{course.type}</Text>
-          <Text style={styles.matchMeta}>📅 {course.dates} · 📍 {course.city.split(',')[0]}</Text>
+          <Text style={styles.matchMeta}>
+            📅 {course.dates} · 📍 {course.city.split(',')[0]}
+          </Text>
 
           {/* Lang chips + applied */}
           <View style={styles.matchChipRow}>
             {course.languages.map((lang) => (
               <View key={lang} style={styles.langPill}>
                 <Text style={styles.langPillText}>
-                  {lang === 'ne' ? 'NE' : lang === 'en' ? 'EN' : lang === 'hi' ? 'HI' : lang.toUpperCase()}
+                  {lang === 'ne'
+                    ? 'NE'
+                    : lang === 'en'
+                      ? 'EN'
+                      : lang === 'hi'
+                        ? 'HI'
+                        : lang.toUpperCase()}
                 </Text>
               </View>
             ))}
@@ -309,7 +304,12 @@ const MatchCard: React.FC<MatchCardProps> = ({ course, isApplied, onPress }) => 
 
       {/* Match meter */}
       <View style={styles.meterTrack}>
-        <View style={[styles.meterFill, { width: `${score}%` as any, backgroundColor: accentColor }]} />
+        <View
+          style={[
+            styles.meterFill,
+            { width: `${score}%` as DimensionValue, backgroundColor: accentColor },
+          ]}
+        />
       </View>
 
       <Text style={[styles.viewLink, { color: accentColor }]}>View & Apply →</Text>

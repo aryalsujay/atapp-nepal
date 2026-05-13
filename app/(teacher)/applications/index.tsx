@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Routes, routeTo } from '@/routes';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '../../../src/store/authStore';
-import { useApplicationsStore } from '../../../src/store/applicationsStore';
-import { Colors } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Layout, Spacing, Radius } from '../../../src/theme/spacing';
-import { SectionHeader } from '../../../src/components/layout/SectionHeader';
-import { ApplicationCard } from '../../../src/components/cards/ApplicationCard';
-import { FilterRow } from '../../../src/components/ui/FilterChip';
-import { Button } from '../../../src/components/ui/Button';
-import coursesData from '../../../src/data/courses.json';
-import { Course, Application } from '../../../src/types';
+import { useAuthStore } from '@/store/authStore';
+import { useApplicationsStore } from '@/store/applicationsStore';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Layout, Spacing, Radius } from '@/theme/spacing';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { ApplicationCard } from '@/components/cards/ApplicationCard';
+import { FilterRow } from '@/components/ui/FilterChip';
+import { Button } from '@/components/ui/Button';
+import { courses as coursesData } from '@/data';
+import { Course, Application } from '@/types';
 
 type TabKey = 'all' | 'pending' | 'approved' | 'rejected' | 'withdrawal_requested';
 
@@ -38,8 +39,7 @@ export default function ApplicationsScreen() {
   ];
   const tabKeys: TabKey[] = ['all', 'pending', 'approved', 'rejected', 'withdrawal_requested'];
 
-  const filtered =
-    tab === 'all' ? applications : applications.filter((a) => a.status === tab);
+  const filtered = tab === 'all' ? applications : applications.filter((a) => a.status === tab);
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.cr }}>
@@ -60,7 +60,7 @@ export default function ApplicationsScreen() {
           <Button
             label="Browse Courses"
             variant="primary"
-            onPress={() => router.push('/(teacher)/courses')}
+            onPress={() => router.push(Routes.teacherCourses)}
             style={styles.emptyBtn}
           />
         </View>
@@ -75,8 +75,8 @@ export default function ApplicationsScreen() {
                 application={item}
                 course={course}
                 onViewBrief={
-                  (item.status === 'approved' || item.status === 'withdrawal_requested')
-                    ? () => router.push(`/(teacher)/applications/brief/${item.id}`)
+                  item.status === 'approved' || item.status === 'withdrawal_requested'
+                    ? () => router.push(routeTo.teacherApplicationBrief(item.id))
                     : undefined
                 }
               />

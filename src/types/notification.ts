@@ -1,6 +1,12 @@
 import { Status } from './common';
 
-export type NotificationType = 'invite' | 'assignment' | 'reminder' | 'update' | 'approval' | 'rejection';
+export type NotificationType =
+  | 'invite'
+  | 'assignment'
+  | 'reminder'
+  | 'update'
+  | 'approval'
+  | 'rejection';
 
 export interface Notification {
   id: number;

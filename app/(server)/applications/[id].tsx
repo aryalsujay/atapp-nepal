@@ -1,20 +1,13 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Colors } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { Shadows } from '../../../src/theme/shadows';
-import { SERVICE_AREAS } from '../../../src/data/serviceAreas';
-import serverApplications from '../../../src/data/serverApplications.json';
-import serverCourses from '../../../src/data/serverCourses.json';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SERVICE_AREAS } from '@/data/serviceAreas';
+import { serverApplications, serverCourses } from '@/data';
 
 const WHAT_TO_BRING = [
   'Comfortable meditation clothing (loose, modest)',
@@ -29,6 +22,7 @@ const WHAT_TO_BRING = [
 export default function ServerAppDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const confirm = useConfirm();
   const [checked, setChecked] = useState<Set<number>>(new Set());
 
   const app = serverApplications.find((a) => a.id === Number(id));
@@ -43,13 +37,14 @@ export default function ServerAppDetail() {
   }
 
   const isApproved = app.status === 'approved';
-  const isPending  = app.status === 'pending';
+  const isPending = app.status === 'pending';
   const isRejected = app.status === 'rejected';
 
-  const statusColor =
-    isApproved ? { bg: Colors.fol, text: Colors.fo } :
-    isPending  ? { bg: Colors.gdl, text: Colors.gd } :
-                 { bg: Colors.url, text: Colors.ur };
+  const statusColor = isApproved
+    ? { bg: Colors.fol, text: Colors.fo }
+    : isPending
+      ? { bg: Colors.gdl, text: Colors.gd }
+      : { bg: Colors.url, text: Colors.ur };
 
   const toggleCheck = (i: number) => {
     setChecked((prev) => {
@@ -60,21 +55,15 @@ export default function ServerAppDetail() {
   };
 
   const handleWithdraw = () => {
-    Alert.alert(
-      'Withdraw Application',
-      'Are you sure you want to withdraw this application? This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Withdraw',
-          style: 'destructive',
-          onPress: () => {
-            router.back();
-            Alert.alert('Withdrawn', 'Your application has been withdrawn.');
-          },
-        },
-      ]
-    );
+    confirm({
+      title: 'Withdraw Application',
+      message: 'Are you sure you want to withdraw this application? This cannot be undone.',
+      confirmText: 'Withdraw',
+      destructive: true,
+      onConfirm: () => {
+        router.back();
+      },
+    });
   };
 
   return (
@@ -96,12 +85,13 @@ export default function ServerAppDetail() {
           </Text>
         </View>
         <Text style={styles.courseTitle}>{course.center}</Text>
-        <Text style={styles.courseType}>{course.type} · {course.dates}</Text>
+        <Text style={styles.courseType}>
+          {course.type} · {course.dates}
+        </Text>
         <Text style={styles.appliedOn}>Applied {app.applied}</Text>
       </View>
 
       <View style={{ paddingHorizontal: Layout.horizontalPad, gap: Spacing.md }}>
-
         {/* Service areas */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Service Areas</Text>
@@ -120,9 +110,7 @@ export default function ServerAppDetail() {
           </View>
           {app.partial && (
             <View style={styles.partialNote}>
-              <Text style={styles.partialNoteText}>
-                Partial availability · {app.days}
-              </Text>
+              <Text style={styles.partialNoteText}>Partial availability · {app.days}</Text>
             </View>
           )}
         </View>
@@ -145,7 +133,9 @@ export default function ServerAppDetail() {
             </View>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Coverage</Text>
-              <Text style={styles.detailValue}>{app.partial ? (app.days ?? 'Partial') : 'Full course'}</Text>
+              <Text style={styles.detailValue}>
+                {app.partial ? (app.days ?? 'Partial') : 'Full course'}
+              </Text>
             </View>
           </View>
         </View>
@@ -190,15 +180,16 @@ export default function ServerAppDetail() {
           <View style={[styles.section, styles.pendingBanner]}>
             <Text style={styles.pendingTitle}>Under Review</Text>
             <Text style={styles.pendingBody}>
-              The center manager is reviewing your application. You will be notified once a decision is made.
+              The center manager is reviewing your application. You will be notified once a decision
+              is made.
             </Text>
           </View>
         )}
 
-        {isRejected && (app as any).reason && (
+        {isRejected && app.reason && (
           <View style={[styles.section, styles.rejectedBanner]}>
             <Text style={styles.rejectedTitle}>Reason</Text>
-            <Text style={styles.rejectedBody}>{(app as any).reason}</Text>
+            <Text style={styles.rejectedBody}>{app.reason}</Text>
           </View>
         )}
 
@@ -267,7 +258,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   areaDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
-  areaLabel: { flex: 1, fontSize: FontSize.smPlus, fontWeight: FontWeight.semibold, color: Colors.tx },
+  areaLabel: {
+    flex: 1,
+    fontSize: FontSize.smPlus,
+    fontWeight: FontWeight.semibold,
+    color: Colors.tx,
+  },
   areaNepali: { fontSize: FontSize.sm, color: Colors.tx3 },
   partialNote: {
     backgroundColor: Colors.gdl,
@@ -279,15 +275,31 @@ const styles = StyleSheet.create({
 
   detailGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   detailItem: { width: '50%', paddingVertical: 6 },
-  detailLabel: { fontSize: FontSize.xs, color: Colors.tx3, textTransform: 'uppercase', letterSpacing: 0.5 },
-  detailValue: { fontSize: FontSize.smPlus, fontWeight: FontWeight.semibold, color: Colors.tx, marginTop: 2 },
+  detailLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.tx3,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  detailValue: {
+    fontSize: FontSize.smPlus,
+    fontWeight: FontWeight.semibold,
+    color: Colors.tx,
+    marginTop: 2,
+  },
 
   approvedBanner: {
     borderColor: Colors.fom,
     backgroundColor: Colors.fol,
     gap: 3,
   },
-  approvedTitle: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.fo, textTransform: 'uppercase', letterSpacing: 0.5 },
+  approvedTitle: {
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    color: Colors.fo,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   approvedName: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.tx },
   approvedPhone: { fontSize: FontSize.smPlus, color: Colors.tx2 },
 
@@ -307,7 +319,12 @@ const styles = StyleSheet.create({
   },
   checkboxChecked: { backgroundColor: Colors.fo, borderColor: Colors.fo },
   checkmark: { color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold },
-  checkText: { flex: 1, fontSize: FontSize.smPlus, color: Colors.tx, lineHeight: FontSize.smPlus * 1.5 },
+  checkText: {
+    flex: 1,
+    fontSize: FontSize.smPlus,
+    color: Colors.tx,
+    lineHeight: FontSize.smPlus * 1.5,
+  },
   checkTextDone: { color: Colors.tx3, textDecorationLine: 'line-through' },
   packingNote: {
     fontSize: FontSize.sm,

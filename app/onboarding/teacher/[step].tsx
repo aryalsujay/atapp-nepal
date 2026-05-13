@@ -9,20 +9,34 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Routes, routeTo } from '@/routes';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../../src/store/authStore';
-import { useProfileStore } from '../../../src/store/profileStore';
-import { Colors, Gradients } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { AvailabilityCalendar } from '../../../src/components/ui/AvailabilityCalendar';
-import { LotusHero, MountainSilhouette } from '../../../src/components/ui/HeroDecorations';
-import { AvailabilityState, LanguageLevel } from '../../../src/types';
+import { useAuthStore } from '@/store/authStore';
+import { useProfileStore } from '@/store/profileStore';
+import { Colors, Gradients } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { AvailabilityCalendar } from '@/components/ui/AvailabilityCalendar';
+import { fromAvailabilityArray } from '@/utils/availability';
+import { CourseType, AvailabilityState, LanguageLevel } from '@/types';
+import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
 
 const TOTAL_STEPS = 7;
 
-const ALL_LANGUAGES = ['Nepali', 'English', 'Hindi', 'Gujarati', 'German', 'French', 'Spanish', 'Bengali', 'Tibetan', 'Newari', 'Maithili'];
+const ALL_LANGUAGES = [
+  'Nepali',
+  'English',
+  'Hindi',
+  'Gujarati',
+  'German',
+  'French',
+  'Spanish',
+  'Bengali',
+  'Tibetan',
+  'Newari',
+  'Maithili',
+];
 const ALL_REGIONS = [
   { key: 'Kathmandu Valley', emoji: '🏙️', desc: 'Dhamma Shringa, Dhamma Adhara' },
   { key: 'Pokhara & Gandaki', emoji: '⛰️', desc: 'Dhamma Pokhara' },
@@ -66,25 +80,27 @@ export default function OnboardingStep() {
   const [regions, setRegions] = useState<string[]>(['Kathmandu Valley']);
   const [authorizations, setAuthorizations] = useState<string[]>(['10-Day']);
   const [availability, setAvailability] = useState<AvailabilityState[]>(
-    Array(12).fill(0) as AvailabilityState[]
+    Array(12).fill(0) as AvailabilityState[],
   );
   const [note, setNote] = useState('');
 
   const goNext = async () => {
     if (step < TOTAL_STEPS) {
-      router.push(`/onboarding/teacher/${step + 1}`);
+      router.push(routeTo.onboardingTeacher(step + 1));
     } else {
       await loadProfile(userId);
+      const { availableMonths, festivalMonths } = fromAvailabilityArray(availability);
       await updateProfile({
         languages: languages as Record<string, LanguageLevel>,
         preferredRegions: regions,
-        authorizations,
-        monthlyAvailability: availability,
+        authorizations: authorizations as CourseType[],
+        availableMonths,
+        festivalMonths,
         personalNote: note,
         isOnboarded: true,
       });
       await setOnboarded(true);
-      router.replace('/(teacher)/home');
+      router.replace(Routes.teacherHome);
     }
   };
 
@@ -99,13 +115,13 @@ export default function OnboardingStep() {
 
   const toggleRegion = (region: string) => {
     setRegions((prev) =>
-      prev.includes(region) ? prev.filter((r) => r !== region) : [...prev, region]
+      prev.includes(region) ? prev.filter((r) => r !== region) : [...prev, region],
     );
   };
 
   const toggleAuth = (type: string) => {
     setAuthorizations((prev) =>
-      prev.includes(type) ? prev.filter((a) => a !== type) : [...prev, type]
+      prev.includes(type) ? prev.filter((a) => a !== type) : [...prev, type],
     );
   };
 
@@ -166,7 +182,9 @@ export default function OnboardingStep() {
             />
           ))}
         </View>
-        <Text style={styles.stepCount}>{step} / {TOTAL_STEPS}</Text>
+        <Text style={styles.stepCount}>
+          {step} / {TOTAL_STEPS}
+        </Text>
       </View>
 
       <ScrollView
@@ -186,7 +204,10 @@ export default function OnboardingStep() {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            onPress={async () => { await signOut(); router.replace('/(auth)/login'); }}
+            onPress={async () => {
+              await signOut();
+              router.replace(Routes.login);
+            }}
             style={styles.backBtn}
           >
             <Text style={styles.backBtnText}>Sign Out</Text>
@@ -224,8 +245,8 @@ const StepWelcome = () => (
     </LinearGradient>
     <Text style={stepStyles.stepTitle}>Welcome, Teacher</Text>
     <Text style={stepStyles.stepSubtitle}>
-      Let's set up your profile so we can match you with the right courses.
-      This takes about 2 minutes and you can update it anytime.
+      Let's set up your profile so we can match you with the right courses. This takes about 2
+      minutes and you can update it anytime.
     </Text>
     <View style={stepStyles.infoRow}>
       <InfoBadge emoji="🌐" label="Languages" />
@@ -253,7 +274,8 @@ const StepLanguages = ({
   <View style={stepStyles.container}>
     <Text style={stepStyles.stepTitle}>Teaching Languages</Text>
     <Text style={stepStyles.stepSubtitle}>
-      Which languages can you teach in? Tap once for Primary, twice for Secondary, three times to remove.
+      Which languages can you teach in? Tap once for Primary, twice for Secondary, three times to
+      remove.
     </Text>
     <View style={stepStyles.legendRow}>
       <View style={[stepStyles.legendDot, { backgroundColor: Colors.sf }]} />
@@ -264,7 +286,8 @@ const StepLanguages = ({
     <View style={stepStyles.langGrid}>
       {ALL_LANGUAGES.map((lang) => {
         const level = (languages[lang] ?? 'off') as LanguageLevel;
-        const bg = level === 'primary' ? Colors.sf : level === 'secondary' ? Colors.tx2 : Colors.white;
+        const bg =
+          level === 'primary' ? Colors.sf : level === 'secondary' ? Colors.tx2 : Colors.white;
         const textColor = level !== 'off' ? Colors.white : Colors.tx3;
         const border = level === 'off' ? Colors.bd : bg;
         return (
@@ -275,7 +298,8 @@ const StepLanguages = ({
             style={[stepStyles.langChip, { backgroundColor: bg, borderColor: border }]}
           >
             <Text style={[stepStyles.langChipText, { color: textColor }]}>
-              {lang}{level === 'primary' ? ' ★' : level === 'secondary' ? ' ☆' : ''}
+              {lang}
+              {level === 'primary' ? ' ★' : level === 'secondary' ? ' ☆' : ''}
             </Text>
           </TouchableOpacity>
         );
@@ -312,7 +336,12 @@ const StepRegions = ({
           >
             <Text style={{ fontSize: 22, width: 32 }}>{emoji}</Text>
             <View style={{ flex: 1 }}>
-              <Text style={[stepStyles.regionText, selected && { color: Colors.sf, fontWeight: FontWeight.bold }]}>
+              <Text
+                style={[
+                  stepStyles.regionText,
+                  selected && { color: Colors.sf, fontWeight: FontWeight.bold },
+                ]}
+              >
                 {key}
               </Text>
               <Text style={stepStyles.regionDesc}>{desc}</Text>
@@ -355,13 +384,20 @@ const StepAuthorizations = ({
             ]}
           >
             <Text style={stepStyles.authEmoji}>{emoji}</Text>
-            <Text style={[stepStyles.authLabel, selected && { color: Colors.sf, fontWeight: FontWeight.bold }]}>
+            <Text
+              style={[
+                stepStyles.authLabel,
+                selected && { color: Colors.sf, fontWeight: FontWeight.bold },
+              ]}
+            >
               {key}
             </Text>
             <Text style={stepStyles.authDesc}>{desc}</Text>
             {selected && (
               <View style={stepStyles.authCheck}>
-                <Text style={{ color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold }}>✓</Text>
+                <Text style={{ color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold }}>
+                  ✓
+                </Text>
               </View>
             )}
           </TouchableOpacity>
@@ -381,7 +417,8 @@ const StepAvailability = ({
   <View style={stepStyles.container}>
     <Text style={stepStyles.stepTitle}>Available Months — 2026</Text>
     <Text style={stepStyles.stepSubtitle}>
-      Mark which months you can serve. Tap once for Available, twice for Festival (limited), three times to clear.
+      Mark which months you can serve. Tap once for Available, twice for Festival (limited), three
+      times to clear.
     </Text>
     <View style={stepStyles.legendRow}>
       <View style={[stepStyles.legendDot, { backgroundColor: Colors.fo }]} />
@@ -395,17 +432,12 @@ const StepAvailability = ({
   </View>
 );
 
-const StepNote = ({
-  note,
-  onChangeNote,
-}: {
-  note: string;
-  onChangeNote: (v: string) => void;
-}) => (
+const StepNote = ({ note, onChangeNote }: { note: string; onChangeNote: (v: string) => void }) => (
   <View style={stepStyles.container}>
     <Text style={stepStyles.stepTitle}>Anything we should know?</Text>
     <Text style={stepStyles.stepSubtitle}>
-      Share any personal requirements, health considerations, or preferences that will help the admin schedule you appropriately.
+      Share any personal requirements, health considerations, or preferences that will help the
+      admin schedule you appropriately.
     </Text>
     <TextInput
       value={note}
@@ -417,7 +449,9 @@ const StepNote = ({
       numberOfLines={6}
       textAlignVertical="top"
     />
-    <Text style={stepStyles.hint}>Optional — you can add or update this from your profile anytime.</Text>
+    <Text style={stepStyles.hint}>
+      Optional — you can add or update this from your profile anytime.
+    </Text>
   </View>
 );
 
@@ -471,17 +505,8 @@ const StepSummary = ({
           value={`${authorizations.length} course types`}
           detail={authorizations.join(', ')}
         />
-        <SummaryRow
-          emoji="📅"
-          label="Availability"
-          value={`${availMonths} months`}
-        />
-        <SummaryRow
-          emoji="📝"
-          label="Personal Note"
-          value={note ? 'Added ✓' : 'Not added'}
-          last
-        />
+        <SummaryRow emoji="📅" label="Availability" value={`${availMonths} months`} />
+        <SummaryRow emoji="📝" label="Personal Note" value={note ? 'Added ✓' : 'Not added'} last />
       </View>
     </View>
   );
@@ -504,7 +529,11 @@ const SummaryRow = ({
     <Text style={{ fontSize: 18, width: 28 }}>{emoji}</Text>
     <View style={{ flex: 1 }}>
       <Text style={stepStyles.summaryLabel}>{label}</Text>
-      {detail ? <Text style={stepStyles.summaryDetail} numberOfLines={1}>{detail}</Text> : null}
+      {detail ? (
+        <Text style={stepStyles.summaryDetail} numberOfLines={1}>
+          {detail}
+        </Text>
+      ) : null}
     </View>
     <Text style={stepStyles.summaryValue}>{value}</Text>
   </View>

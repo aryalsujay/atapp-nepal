@@ -9,20 +9,22 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { Routes, routeTo } from '@/routes';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '../../../../src/store/authStore';
-import { useApplicationsStore } from '../../../../src/store/applicationsStore';
-import { useNotificationsStore } from '../../../../src/store/notificationsStore';
-import { useTeachersStore } from '../../../../src/store/teachersStore';
-import { Colors } from '../../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../../src/theme/spacing';
-import { Shadows } from '../../../../src/theme/shadows';
-import { HeroSection } from '../../../../src/components/layout/HeroSection';
-import { Chip } from '../../../../src/components/ui/Badge';
-import { Button } from '../../../../src/components/ui/Button';
-import coursesData from '../../../../src/data/courses.json';
-import { Course } from '../../../../src/types';
+import { useAuthStore } from '@/store/authStore';
+import { useApplicationsStore } from '@/store/applicationsStore';
+import { useNotificationsStore } from '@/store/notificationsStore';
+import { useTeachersStore } from '@/store/teachersStore';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { HeroSection } from '@/components/layout/HeroSection';
+import { Chip } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { courses as coursesData } from '@/data';
+import { Course } from '@/types';
 
 const WHAT_TO_BRING = [
   { key: 'dhamma', emoji: '👘' },
@@ -38,6 +40,7 @@ export default function CourseBriefScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const router = useRouter();
+  const confirm = useConfirm();
   const userId = useAuthStore((s) => s.userId);
   const { applications, requestWithdrawal, getCoTeachersForCourse } = useApplicationsStore();
   const { addNotification } = useNotificationsStore();
@@ -57,12 +60,26 @@ export default function CourseBriefScreen() {
       if (application && course && userId) {
         getCoTeachersForCourse(course.id, userId).then(setCoTeacherIds);
       }
-    }, [application?.id, course?.id, userId])
+    }, [application?.id, course?.id, userId]),
+  );
+
+  // Hooks must run unconditionally — keep all useMemo / useEffect calls above
+  // any early returns to satisfy `react-hooks/rules-of-hooks`.
+  const coTeachers = useMemo(
+    () => coTeacherIds.map((tid) => findTeacher(tid)).filter(Boolean),
+    [coTeacherIds, findTeacher],
   );
 
   if (!course || !application) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.cr, alignItems: 'center', justifyContent: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: Colors.cr,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Text style={{ color: Colors.tx3 }}>Brief not found</Text>
       </View>
     );
@@ -73,31 +90,26 @@ export default function CourseBriefScreen() {
   const handleStepDown = () => {
     if (!userId) return;
     if (showWithdrawInput) {
-      Alert.alert(
-        t('brief.stepDown'),
-        t('brief.stepDownConfirm'),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: 'Send Request',
-            style: 'destructive',
-            onPress: async () => {
-              await requestWithdrawal(application.id, userId, withdrawNote.trim() || undefined);
-              await addNotification({
-                targetUserId: 'admin',
-                type: 'update',
-                center: course.center,
-                course: `${course.center} — ${course.type}`,
-                courseId: course.id,
-                subjectEn: 'Teacher requested step-down',
-                bodyEn: `A teacher has requested to step down from the ${course.type} course at ${course.center} (${course.dates}).${withdrawNote.trim() ? '\n\nReason: ' + withdrawNote.trim() : ''}\n\nPlease review and approve or reject this request.`,
-                bodyNe: `एक शिक्षकले ${course.center}को ${course.type} पाठ्यक्रमबाट पछि हट्न अनुरोध गरेका छन्। कृपया समीक्षा गर्नुहोस्।`,
-              });
-              setRequestSent(true);
-            },
-          },
-        ]
-      );
+      confirm({
+        title: t('brief.stepDown'),
+        message: t('brief.stepDownConfirm'),
+        confirmText: 'Send Request',
+        destructive: true,
+        onConfirm: async () => {
+          await requestWithdrawal(application.id, userId, withdrawNote.trim() || undefined);
+          await addNotification({
+            targetUserId: 'admin',
+            type: 'update',
+            center: course.center,
+            course: `${course.center} — ${course.type}`,
+            courseId: course.id,
+            subjectEn: 'Teacher requested step-down',
+            bodyEn: `A teacher has requested to step down from the ${course.type} course at ${course.center} (${course.dates}).${withdrawNote.trim() ? '\n\nReason: ' + withdrawNote.trim() : ''}\n\nPlease review and approve or reject this request.`,
+            bodyNe: `एक शिक्षकले ${course.center}को ${course.type} पाठ्यक्रमबाट पछि हट्न अनुरोध गरेका छन्। कृपया समीक्षा गर्नुहोस्।`,
+          });
+          setRequestSent(true);
+        },
+      });
     } else {
       setShowWithdrawInput(true);
     }
@@ -105,26 +117,48 @@ export default function CourseBriefScreen() {
 
   if (requestSent) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.cr, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: Colors.cr,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 32,
+        }}
+      >
         <Text style={{ fontSize: 48, marginBottom: 16 }}>🙏</Text>
-        <Text style={{ fontSize: FontSize.xl, fontWeight: FontWeight.bold, color: Colors.tx, textAlign: 'center', marginBottom: 8 }}>
+        <Text
+          style={{
+            fontSize: FontSize.xl,
+            fontWeight: FontWeight.bold,
+            color: Colors.tx,
+            textAlign: 'center',
+            marginBottom: 8,
+          }}
+        >
           Request Sent
         </Text>
-        <Text style={{ fontSize: FontSize.smPlus, color: Colors.tx3, textAlign: 'center', marginBottom: 32 }}>
+        <Text
+          style={{
+            fontSize: FontSize.smPlus,
+            color: Colors.tx3,
+            textAlign: 'center',
+            marginBottom: 32,
+          }}
+        >
           Your step-down request has been sent to admin for approval.
         </Text>
-        <Button label="Back to Applications" variant="primary" onPress={() => router.replace('/(teacher)/applications')} />
+        <Button
+          label="Back to Applications"
+          variant="primary"
+          onPress={() => router.replace(Routes.teacherApplications)}
+        />
       </View>
     );
   }
 
   const langLabel = (code: string) =>
     code === 'ne' ? 'Nepali' : code === 'en' ? 'English' : code === 'hi' ? 'Hindi' : code;
-
-  const coTeachers = useMemo(
-    () => coTeacherIds.map((tid) => findTeacher(tid)).filter(Boolean),
-    [coTeacherIds, findTeacher]
-  );
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.cr }}>
@@ -150,7 +184,8 @@ export default function CourseBriefScreen() {
         {isWithdrawalPending && (
           <View style={styles.withdrawalBanner}>
             <Text style={styles.withdrawalBannerText}>
-              ⏸ Your step-down request is awaiting admin approval. You are still assigned until approved.
+              ⏸ Your step-down request is awaiting admin approval. You are still assigned until
+              approved.
             </Text>
           </View>
         )}
@@ -158,7 +193,10 @@ export default function CourseBriefScreen() {
         {/* Arrival Info */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('brief.arrivalInfo')}</Text>
-          <InfoRow label={t('brief.arriveBy')} value={`${course.arrivalDate}, ${course.arrivalTime}`} />
+          <InfoRow
+            label={t('brief.arriveBy')}
+            value={`${course.arrivalDate}, ${course.arrivalTime}`}
+          />
           <InfoRow label={t('brief.transport')} value={course.transport} />
           <InfoRow
             label={t('brief.students')}
@@ -212,28 +250,36 @@ export default function CourseBriefScreen() {
             <Text style={styles.sectionTitle}>
               {coTeachers.length === 1 ? 'Your Co-Teacher' : 'Your Co-Teachers'}
             </Text>
-            {coTeachers.map((ct) => ct && (
-              <View key={ct.id} style={styles.contactCard}>
-                <View style={[styles.contactAvatar, { backgroundColor: Colors.sfl }]}>
-                  <Text style={[styles.contactAvatarText, { color: Colors.sf }]}>
-                    {ct.name.charAt(0)}
-                  </Text>
-                </View>
-                <View style={styles.contactInfo}>
-                  <Text style={styles.contactName}>{ct.name}</Text>
-                  <Text style={styles.contactRole}>
-                    {ct.gender === 'F' ? '👩 Female AT' : '👨 Male AT'} · {ct.totalCourses} courses
-                  </Text>
-                  <View style={styles.langRow}>
-                    {Object.entries(ct.languages)
-                      .filter(([, v]) => v !== 'off')
-                      .map(([lang, level]) => (
-                        <Chip key={lang} label={lang} variant={level === 'primary' ? 'orange' : 'gray'} />
-                      ))}
+            {coTeachers.map(
+              (ct) =>
+                ct && (
+                  <View key={ct.id} style={styles.contactCard}>
+                    <View style={[styles.contactAvatar, { backgroundColor: Colors.sfl }]}>
+                      <Text style={[styles.contactAvatarText, { color: Colors.sf }]}>
+                        {ct.name.charAt(0)}
+                      </Text>
+                    </View>
+                    <View style={styles.contactInfo}>
+                      <Text style={styles.contactName}>{ct.name}</Text>
+                      <Text style={styles.contactRole}>
+                        {ct.gender === 'F' ? '👩 Female AT' : '👨 Male AT'} · {ct.totalCourses}{' '}
+                        courses
+                      </Text>
+                      <View style={styles.langRow}>
+                        {Object.entries(ct.languages)
+                          .filter(([, v]) => v !== 'off')
+                          .map(([lang, level]) => (
+                            <Chip
+                              key={lang}
+                              label={lang}
+                              variant={level === 'primary' ? 'orange' : 'gray'}
+                            />
+                          ))}
+                      </View>
+                    </View>
                   </View>
-                </View>
-              </View>
-            ))}
+                ),
+            )}
           </View>
         )}
 

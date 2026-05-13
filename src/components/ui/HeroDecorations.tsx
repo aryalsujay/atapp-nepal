@@ -6,13 +6,21 @@ interface LotusHeroProps {
   color?: string;
   opacity?: number;
   size?: number;
+  right?: number;
+  bottom?: number;
 }
 
-/** Decorative lotus flower positioned at bottom-right of hero sections */
+/**
+ * Decorative lotus flower positioned at bottom-right of hero sections.
+ * Defaults match the generic prototype hero (`right:-40, bottom:-30`).
+ * Login hero overrides to `right:-50, bottom:-50` per prototype `app.html:905`.
+ */
 export const LotusHero: React.FC<LotusHeroProps> = ({
   color = 'white',
   opacity = 0.1,
   size = 220,
+  right = -40,
+  bottom = -30,
 }) => {
   const cx = size * 0.65;
   const cy = size * 0.65;
@@ -24,14 +32,14 @@ export const LotusHero: React.FC<LotusHeroProps> = ({
     <View
       style={{
         position: 'absolute',
-        right: -40,
-        bottom: -30,
+        right,
+        bottom,
         pointerEvents: 'none',
         overflow: 'visible',
       }}
       pointerEvents="none"
     >
-      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} overflow="visible">
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         {outerPetals.map((r) => (
           <Ellipse
             key={`o${r}`}
@@ -67,16 +75,8 @@ export const LotusHero: React.FC<LotusHeroProps> = ({
 export const MountainSilhouette: React.FC<{ color?: string }> = ({
   color = 'rgba(255,255,255,0.09)',
 }) => (
-  <View
-    style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}
-    pointerEvents="none"
-  >
-    <Svg
-      width="100%"
-      height={90}
-      viewBox="0 0 390 90"
-      preserveAspectRatio="none"
-    >
+  <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }} pointerEvents="none">
+    <Svg width="100%" height={90} viewBox="0 0 390 90" preserveAspectRatio="none">
       <Polygon
         points="0,90 55,32 110,60 165,18 225,52 285,24 340,48 390,33 390,90"
         fill={color}
@@ -95,8 +95,12 @@ export const MountainSilhouette: React.FC<{ color?: string }> = ({
   </View>
 );
 
-/** Small lotus icon for use inside cards and buttons */
-export const LotusIcon: React.FC<{ size?: number; color?: string; opacity?: number }> = ({
+/**
+ * Small standalone lotus emblem — kept as `LotusGlyph` to avoid colliding with
+ * `LotusIcon` in `TabIcons.tsx` which is the nav-bar variant. Use this where
+ * you want a decorative lotus inside a card / button.
+ */
+export const LotusGlyph: React.FC<{ size?: number; color?: string; opacity?: number }> = ({
   size = 32,
   color = '#D4760E',
   opacity = 1,

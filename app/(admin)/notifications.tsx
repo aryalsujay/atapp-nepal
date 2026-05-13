@@ -1,35 +1,37 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { useSettingsStore } from '../../src/store/settingsStore';
-import { useNotificationsStore, formatNotifTime } from '../../src/store/notificationsStore';
-import { useTeachersStore } from '../../src/store/teachersStore';
-import { Colors } from '../../src/theme/colors';
-import { FontSize, FontWeight } from '../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../src/theme/spacing';
-import { Shadows } from '../../src/theme/shadows';
-import { SectionHeader } from '../../src/components/layout/SectionHeader';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { useToast } from '@/components/ui/Toast';
+import { useSettingsStore } from '@/store/settingsStore';
+import { useNotificationsStore, formatNotifTime } from '@/store/notificationsStore';
+import { useTeachersStore } from '@/store/teachersStore';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
 
 const TYPE_COLOR: Record<string, string> = {
   assignment: Colors.fo,
-  approval:   Colors.fo,
-  rejection:  Colors.ur,
-  reminder:   Colors.sf,
-  update:     Colors.bl,
-  invite:     '#5B6FA8',
+  approval: Colors.fo,
+  rejection: Colors.ur,
+  reminder: Colors.sf,
+  update: Colors.bl,
+  invite: '#5B6FA8',
 };
 const TYPE_EMOJI: Record<string, string> = {
   assignment: '📋',
-  approval:   '✅',
-  rejection:  '❌',
-  reminder:   '📣',
-  update:     '🔄',
-  invite:     '📬',
+  approval: '✅',
+  rejection: '❌',
+  reminder: '📣',
+  update: '🔄',
+  invite: '📬',
 };
 
 export default function AdminNotifications() {
   const { language } = useSettingsStore();
   const { notifications } = useNotificationsStore();
   const { findTeacher } = useTeachersStore();
+  const toast = useToast();
   const [expanded, setExpanded] = useState<number | null>(null);
 
   // Show: notifications sent to teachers + step-down alerts to admin
@@ -39,11 +41,11 @@ export default function AdminNotifications() {
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   const handleResend = () => {
-    Alert.alert('Resend', 'Notification re-sent to teacher.');
+    toast.info('Notification re-sent to teacher.', 'Resend');
   };
 
   const handleCompose = () => {
-    Alert.alert('Compose', 'Compose notification — coming soon.');
+    toast.info('Compose notification — coming soon.', 'Compose');
   };
 
   return (
@@ -62,7 +64,8 @@ export default function AdminNotifications() {
         const accent = TYPE_COLOR[n.type] ?? Colors.tx3;
         const body = language === 'ne' ? n.bodyNe : n.bodyEn;
         const teacher = findTeacher(n.targetUserId);
-        const recipientLabel = teacher?.name ?? (n.targetUserId === 'admin' ? '⚠️ Admin Alert' : n.targetUserId);
+        const recipientLabel =
+          teacher?.name ?? (n.targetUserId === 'admin' ? '⚠️ Admin Alert' : n.targetUserId);
 
         return (
           <TouchableOpacity
@@ -76,9 +79,13 @@ export default function AdminNotifications() {
                 <Text style={styles.iconText}>{TYPE_EMOJI[n.type] ?? '📩'}</Text>
               </View>
               <View style={styles.cardBody}>
-                <Text style={styles.subject} numberOfLines={2}>{n.subjectEn}</Text>
+                <Text style={styles.subject} numberOfLines={2}>
+                  {n.subjectEn}
+                </Text>
                 <Text style={styles.meta}>→ {recipientLabel}</Text>
-                <Text style={styles.meta2}>📅 {n.course} · {formatNotifTime(n.timestamp)}</Text>
+                <Text style={styles.meta2}>
+                  📅 {n.course} · {formatNotifTime(n.timestamp)}
+                </Text>
               </View>
               <Text style={styles.chevron}>{isExp ? '▲' : '▼'}</Text>
             </View>

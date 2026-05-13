@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
-import { Colors, MatchColors, StatusColors } from '../../theme/colors';
-import { FontSize, FontWeight } from '../../theme/typography';
-import { Radius } from '../../theme/spacing';
+import { Colors, MatchColors, StatusColors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius } from '@/theme/spacing';
 
 // ─── Status Pill (Pending / Approved / Rejected / Withdrawal Requested) ─────
 interface StatusPillProps {
@@ -13,9 +13,10 @@ interface StatusPillProps {
 const WITHDRAWAL_COLORS = { bg: '#EDE9FE', text: '#7C3AED' };
 
 export const StatusPill: React.FC<StatusPillProps> = ({ status, style }) => {
-  const colors = status === 'withdrawal_requested'
-    ? WITHDRAWAL_COLORS
-    : StatusColors[status as 'pending' | 'approved' | 'rejected'];
+  const colors =
+    status === 'withdrawal_requested'
+      ? WITHDRAWAL_COLORS
+      : StatusColors[status as 'pending' | 'approved' | 'rejected'];
   const labels: Record<string, string> = {
     pending: 'PENDING',
     approved: 'APPROVED',
@@ -24,7 +25,9 @@ export const StatusPill: React.FC<StatusPillProps> = ({ status, style }) => {
   };
   return (
     <View style={[pillStyles.base, { backgroundColor: colors.bg }, style]}>
-      <Text style={[pillStyles.text, { color: colors.text }]}>{labels[status] ?? status.toUpperCase()}</Text>
+      <Text style={[pillStyles.text, { color: colors.text }]}>
+        {labels[status] ?? status.toUpperCase()}
+      </Text>
     </View>
   );
 };
@@ -124,7 +127,9 @@ export const ProgressMeter: React.FC<ProgressMeterProps> = ({ value, height = 5,
   const color = value >= 90 ? Colors.fo : value >= 70 ? Colors.bl : Colors.tx3;
   return (
     <View style={[meterStyles.track, { height }, style]}>
-      <View style={[meterStyles.fill, { width: `${Math.min(100, value)}%`, backgroundColor: color }]} />
+      <View
+        style={[meterStyles.fill, { width: `${Math.min(100, value)}%`, backgroundColor: color }]}
+      />
     </View>
   );
 };

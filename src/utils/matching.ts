@@ -1,4 +1,4 @@
-import { Course, TeacherProfile } from '../types';
+import { Course, CourseType, TeacherProfile } from '@/types';
 
 // Language code → label mapping
 const LANG_LABELS: Record<string, string> = {
@@ -10,12 +10,12 @@ const LANG_LABELS: Record<string, string> = {
 };
 
 interface MatchBreakdown {
-  language: number;     // 0–35
-  region: number;       // 0–25
+  language: number; // 0–35
+  region: number; // 0–25
   availability: number; // 0–20
   authorization: number; // 0–15
-  restGap: number;      // 0–5
-  total: number;        // 0–100
+  restGap: number; // 0–5
+  total: number; // 0–100
 }
 
 interface MatchResult {
@@ -88,18 +88,17 @@ export function calculateMatch(profile: TeacherProfile, course: Course): MatchRe
 
   // --- AVAILABILITY SCORE (20pts) ---
   const startMonth = new Date(course.startDate).getMonth(); // 0-indexed
-  const avail = profile.monthlyAvailability[startMonth];
-  if (avail === 1) {
+  if (profile.availableMonths.includes(startMonth)) {
     breakdown.availability = 20;
     reasons.push('Available for dates');
-  } else if (avail === 'f') {
+  } else if (profile.festivalMonths.includes(startMonth)) {
     breakdown.availability = 5; // festival / retreat period
   } else {
     breakdown.availability = 0;
   }
 
   // --- AUTHORIZATION SCORE (15pts) ---
-  if (profile.authorizations.includes(course.type as any)) {
+  if (profile.authorizations.includes(course.type as CourseType)) {
     breakdown.authorization = 15;
     reasons.push('Course authorization');
   }
@@ -109,7 +108,11 @@ export function calculateMatch(profile: TeacherProfile, course: Course): MatchRe
 
   breakdown.total = Math.min(
     100,
-    breakdown.language + breakdown.region + breakdown.availability + breakdown.authorization + breakdown.restGap
+    breakdown.language +
+      breakdown.region +
+      breakdown.availability +
+      breakdown.authorization +
+      breakdown.restGap,
   );
 
   return { score: breakdown.total, breakdown, reasons };

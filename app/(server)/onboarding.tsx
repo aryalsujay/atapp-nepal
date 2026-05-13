@@ -1,18 +1,13 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { DimensionValue, View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Routes, routeTo } from '@/routes';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '../../src/theme/colors';
-import { FontSize, FontWeight } from '../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../src/theme/spacing';
-import { useAuthStore } from '../../src/store/authStore';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { useAuthStore } from '@/store/authStore';
 
 interface Question {
   id: number;
@@ -48,7 +43,8 @@ const QUESTIONS: Question[] = [
   },
   {
     id: 5,
-    question: 'Are you free from serious physical limitations that would prevent active service work?',
+    question:
+      'Are you free from serious physical limitations that would prevent active service work?',
     subtext: 'Kitchen and compound roles require standing and light physical activity.',
     required: false, // nice-to-have, not blocking
   },
@@ -88,9 +84,9 @@ export default function ServerOnboarding() {
   const handleFinish = async () => {
     if (!hasFailure) {
       await setAuth(role!, userId!, true);
-      router.replace('/(server)/home');
+      router.replace(Routes.serverHome);
     } else {
-      router.replace('/(auth)/login');
+      router.replace(Routes.login);
     }
   };
 
@@ -104,13 +100,19 @@ export default function ServerOnboarding() {
       >
         <Text style={styles.headerTitle}>Server Eligibility</Text>
         <Text style={styles.headerSub}>
-          {isIntro ? '5 quick questions' : isDone ? 'All done' : `Question ${step} of ${QUESTIONS.length}`}
+          {isIntro
+            ? '5 quick questions'
+            : isDone
+              ? 'All done'
+              : `Question ${step} of ${QUESTIONS.length}`}
         </Text>
 
         {/* Progress bar */}
         {!isIntro && (
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progress * 100}%` as any }]} />
+            <View
+              style={[styles.progressFill, { width: `${progress * 100}%` as DimensionValue }]}
+            />
           </View>
         )}
       </LinearGradient>
@@ -176,9 +178,11 @@ export default function ServerOnboarding() {
                 <Text style={styles.resultIcon}>🚫</Text>
                 <Text style={styles.resultTitle}>Not Yet Eligible</Text>
                 <Text style={styles.resultBody}>
-                  Based on your answers, you do not yet meet the requirements to serve at a Vipassana centre.
+                  Based on your answers, you do not yet meet the requirements to serve at a
+                  Vipassana centre.
                   {'\n\n'}
-                  Please sit a 10-Day course first if you haven't done so, and return when you're ready.
+                  Please sit a 10-Day course first if you haven't done so, and return when you're
+                  ready.
                   {'\n\n'}
                   Sadhu for your interest in Dhamma service. 🙏
                 </Text>
@@ -191,7 +195,8 @@ export default function ServerOnboarding() {
                 <Text style={styles.resultIcon}>✅</Text>
                 <Text style={styles.resultTitle}>You're Eligible!</Text>
                 <Text style={styles.resultBody}>
-                  You meet all requirements to serve at a Vipassana centre. You can now browse service opportunities and apply.
+                  You meet all requirements to serve at a Vipassana centre. You can now browse
+                  service opportunities and apply.
                   {'\n\n'}
                   May your service be a source of Dhamma. Sadhu 🙏
                 </Text>

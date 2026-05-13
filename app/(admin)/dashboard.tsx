@@ -1,39 +1,36 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Routes, routeTo } from '@/routes';
+import { useToast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuthStore } from '../../src/store/authStore';
-import { useSettingsStore } from '../../src/store/settingsStore';
-import { useApplicationsStore } from '../../src/store/applicationsStore';
-import { useNotificationsStore } from '../../src/store/notificationsStore';
-import { useTeachersStore } from '../../src/store/teachersStore';
-import { LotusHero, MountainSilhouette } from '../../src/components/ui/HeroDecorations';
-import { FadeInView } from '../../src/components/ui/FadeInView';
-import { Colors, Gradients } from '../../src/theme/colors';
-import { FontSize, FontWeight } from '../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../src/theme/spacing';
-import { Shadows } from '../../src/theme/shadows';
-import { SectionHeader } from '../../src/components/layout/SectionHeader';
-import { Toggle } from '../../src/components/ui/Toggle';
-import { Chip } from '../../src/components/ui/Badge';
-import { useCoursesStore } from '../../src/store/coursesStore';
-import applicationsData from '../../src/data/applications.json';
-import teachersData from '../../src/data/teachers.json';
+import { useAuthStore } from '@/store/authStore';
+import { useSettingsStore } from '@/store/settingsStore';
+import { useApplicationsStore } from '@/store/applicationsStore';
+import { useNotificationsStore } from '@/store/notificationsStore';
+import { useTeachersStore } from '@/store/teachersStore';
+import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
+import { FadeInView } from '@/components/ui/FadeInView';
+import { Colors, Gradients } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { Toggle } from '@/components/ui/Toggle';
+import { Chip } from '@/components/ui/Badge';
+import { useCoursesStore } from '@/store/coursesStore';
+import { applications as applicationsData, teachers as teachersData } from '@/data';
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const toast = useToast();
+  const confirm = useConfirm();
   const signOut = useAuthStore((s) => s.signOut);
   const { showCoTeacher, toggleCoTeacher } = useSettingsStore();
   const { courses, lastSyncAt, syncing, syncCourses } = useCoursesStore();
@@ -42,39 +39,38 @@ export default function AdminDashboard() {
   const reloadTeachers = useTeachersStore((s) => s.loadTeachers);
 
   const handleResetDemo = () => {
-    Alert.alert(
-      'Reset Demo Data',
-      'Clear all stored applications, notifications, profiles, and synced courses, then reload seed data. This is for demo purposes only.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: async () => {
-            const keys = await AsyncStorage.getAllKeys();
-            const dhammaKeys = keys.filter((k) => k.startsWith('@dhamma_'));
-            await AsyncStorage.multiRemove(dhammaKeys);
-            await Promise.all([reloadAllApps(), reloadNotifs(), reloadTeachers()]);
-            Alert.alert('Demo Reset', 'Local data cleared. Sign out and back in to refresh your session.');
-          },
-        },
-      ]
-    );
+    confirm({
+      title: 'Reset Demo Data',
+      message:
+        'Clear all stored applications, notifications, profiles, and synced courses, then reload seed data. This is for demo purposes only.',
+      confirmText: 'Reset',
+      destructive: true,
+      onConfirm: async () => {
+        const keys = await AsyncStorage.getAllKeys();
+        const dhammaKeys = keys.filter((k) => k.startsWith('@dhamma_'));
+        await AsyncStorage.multiRemove(dhammaKeys);
+        await Promise.all([reloadAllApps(), reloadNotifs(), reloadTeachers()]);
+        toast.success(
+          'Local data cleared. Sign out and back in to refresh your session.',
+          'Demo Reset',
+        );
+      },
+    });
   };
 
-  const pendingApps = (applicationsData as any[]).filter((a) => a.status === 'pending').length;
-  const totalTeachers = (teachersData as any[]).length;
+  const pendingApps = applicationsData.filter((a) => a.status === 'pending').length;
+  const totalTeachers = teachersData.length;
 
   const urgentCourses = courses
-    .filter((c: any) => c.status === 'open' || c.status === 'not_yet_open')
+    .filter((c) => c.status === 'open' || c.status === 'not_yet_open')
     .slice(0, 3);
 
   const handleSync = async () => {
     const result = await syncCourses();
     if (result.error) {
-      Alert.alert('Sync Failed', result.error);
+      toast.error(result.error, t('system.syncFailed'));
     } else {
-      Alert.alert('Sync Complete', `${result.added} courses updated from dhamma.org`);
+      toast.success(`${result.added} courses updated from dhamma.org`, t('system.syncSuccess'));
     }
   };
 
@@ -83,21 +79,23 @@ export default function AdminDashboard() {
     : 'Never synced';
 
   const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Sign out of admin?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          await signOut();
-          router.replace('/(auth)/login');
-        },
+    confirm({
+      title: 'Sign Out',
+      message: 'Sign out of admin?',
+      confirmText: 'Sign Out',
+      destructive: true,
+      onConfirm: async () => {
+        await signOut();
+        router.replace(Routes.login);
       },
-    ]);
+    });
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: Colors.cr }} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: Colors.cr }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Hero */}
       <LinearGradient
         colors={Gradients.admin as unknown as [string, string, ...string[]]}
@@ -129,19 +127,39 @@ export default function AdminDashboard() {
 
       {/* Quick actions */}
       <View style={styles.quickRow}>
-        <QuickAction emoji="📥" label="Applications" onPress={() => router.push('/(admin)/inbox')} color={Colors.sf} />
-        <QuickAction emoji="👥" label="Teachers" onPress={() => router.push('/(admin)/directory')} color={Colors.fo} />
-        <QuickAction emoji="⚡" label="Auto-Schedule" onPress={() => router.push('/(admin)/schedule')} color={Colors.bl} />
-        <QuickAction emoji="📅" label="Calendar" onPress={() => router.push('/(admin)/calendar')} color={Colors.gd} />
+        <QuickAction
+          emoji="📥"
+          label="Applications"
+          onPress={() => router.push(Routes.adminInbox)}
+          color={Colors.sf}
+        />
+        <QuickAction
+          emoji="👥"
+          label="Teachers"
+          onPress={() => router.push(Routes.adminDirectory)}
+          color={Colors.fo}
+        />
+        <QuickAction
+          emoji="⚡"
+          label="Auto-Schedule"
+          onPress={() => router.push(Routes.adminSchedule)}
+          color={Colors.bl}
+        />
+        <QuickAction
+          emoji="📅"
+          label="Calendar"
+          onPress={() => router.push(Routes.adminCalendar)}
+          color={Colors.gd}
+        />
       </View>
 
       {/* Urgent courses */}
       <SectionHeader
         title={t('admin.dashboard.urgentCourses')}
         action="View All"
-        onAction={() => router.push('/(admin)/schedule')}
+        onAction={() => router.push(Routes.adminSchedule)}
       />
-      {urgentCourses.map((course: any, i: number) => (
+      {urgentCourses.map((course, i) => (
         <FadeInView key={course.id} delay={100 + i * 60}>
           <View style={styles.urgentCard}>
             <View style={styles.urgentLeft}>
@@ -155,7 +173,7 @@ export default function AdminDashboard() {
                 variant={course.status === 'open' ? 'orange' : 'gray'}
               />
               <TouchableOpacity
-                onPress={() => router.push('/(admin)/inbox')}
+                onPress={() => router.push(Routes.adminInbox)}
                 style={styles.assignBtn}
               >
                 <Text style={styles.assignBtnText}>Assign →</Text>
@@ -169,15 +187,15 @@ export default function AdminDashboard() {
       <SectionHeader
         title={t('admin.dashboard.recentApplications')}
         action="See All"
-        onAction={() => router.push('/(admin)/inbox')}
+        onAction={() => router.push(Routes.adminInbox)}
       />
-      {(applicationsData as any[]).slice(0, 3).map((app: any) => {
-        const teacher = (teachersData as any[]).find((t) => t.id === app.teacherId);
-        const course = (courses as any[]).find((c) => c.id === app.courseId);
+      {applicationsData.slice(0, 3).map((app) => {
+        const teacher = teachersData.find((t) => t.id === app.teacherId);
+        const course = courses.find((c) => c.id === app.courseId);
         return (
           <TouchableOpacity
             key={app.id}
-            onPress={() => router.push(`/(admin)/inbox/${app.id}`)}
+            onPress={() => router.push(routeTo.adminApplicationReview(app.id))}
             style={styles.appCard}
             activeOpacity={0.85}
           >
@@ -186,12 +204,16 @@ export default function AdminDashboard() {
             </View>
             <View style={styles.appInfo}>
               <Text style={styles.appName}>{teacher?.name ?? 'Unknown'}</Text>
-              <Text style={styles.appCourse}>{course?.center} — {course?.type}</Text>
+              <Text style={styles.appCourse}>
+                {course?.center} — {course?.type}
+              </Text>
               <Text style={styles.appDate}>{app.appliedDate}</Text>
             </View>
             <Chip
               label={app.status.toUpperCase()}
-              variant={app.status === 'approved' ? 'green' : app.status === 'rejected' ? 'red' : 'gold'}
+              variant={
+                app.status === 'approved' ? 'green' : app.status === 'rejected' ? 'red' : 'gold'
+              }
             />
           </TouchableOpacity>
         );
@@ -203,7 +225,9 @@ export default function AdminDashboard() {
         <View style={styles.settingRow}>
           <View style={styles.settingInfo}>
             <Text style={styles.settingLabel}>🔄 Sync from dhamma.org</Text>
-            <Text style={styles.settingDesc}>{syncLabel} · {courses.length} courses loaded</Text>
+            <Text style={styles.settingDesc}>
+              {syncLabel} · {courses.length} courses loaded
+            </Text>
           </View>
           <TouchableOpacity
             onPress={handleSync}
@@ -221,21 +245,24 @@ export default function AdminDashboard() {
         <View style={styles.settingRow}>
           <View style={styles.settingInfo}>
             <Text style={styles.settingLabel}>{t('admin.dashboard.showCoTeacher')}</Text>
-            <Text style={styles.settingDesc}>Show co-teacher contact info to assigned ATs</Text>
+            <Text style={styles.settingDesc}>{t('admin.dashboard.showCoTeacherDesc')}</Text>
           </View>
           <Toggle value={showCoTeacher} onToggle={toggleCoTeacher} />
         </View>
       </View>
 
       {/* Demo controls */}
-      <SectionHeader title="🧪 Demo" />
+      <SectionHeader title={t('admin.dashboard.demoSection')} />
       <View style={styles.settingsCard}>
         <View style={styles.settingRow}>
           <View style={styles.settingInfo}>
-            <Text style={styles.settingLabel}>Reset demo data</Text>
-            <Text style={styles.settingDesc}>Wipe local AsyncStorage and reload seed JSON</Text>
+            <Text style={styles.settingLabel}>{t('admin.dashboard.resetDemo')}</Text>
+            <Text style={styles.settingDesc}>{t('admin.dashboard.resetDemoDesc')}</Text>
           </View>
-          <TouchableOpacity onPress={handleResetDemo} style={[styles.syncBtn, { backgroundColor: Colors.url }]}>
+          <TouchableOpacity
+            onPress={handleResetDemo}
+            style={[styles.syncBtn, { backgroundColor: Colors.url }]}
+          >
             <Text style={[styles.syncBtnText, { color: Colors.ur }]}>Reset</Text>
           </TouchableOpacity>
         </View>
@@ -254,8 +281,22 @@ const AdminStat = ({ label, value, emoji }: { label: string; value: string; emoj
   </View>
 );
 
-const QuickAction = ({ emoji, label, onPress, color }: { emoji: string; label: string; onPress: () => void; color: string }) => (
-  <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={[styles.quickAction, { borderColor: color + '33' }]}>
+const QuickAction = ({
+  emoji,
+  label,
+  onPress,
+  color,
+}: {
+  emoji: string;
+  label: string;
+  onPress: () => void;
+  color: string;
+}) => (
+  <TouchableOpacity
+    onPress={onPress}
+    activeOpacity={0.8}
+    style={[styles.quickAction, { borderColor: color + '33' }]}
+  >
     <View style={[styles.quickIcon, { backgroundColor: color + '18' }]}>
       <Text style={styles.quickEmoji}>{emoji}</Text>
     </View>

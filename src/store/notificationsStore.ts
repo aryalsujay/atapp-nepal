@@ -1,16 +1,22 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Notification } from '../types';
+import { Notification } from '@/types';
 
 interface NotificationsState {
   notifications: Notification[];
   loaded: boolean;
   loadNotifications: () => Promise<void>;
   getForUser: (userId: string) => Notification[];
-  addNotification: (partial: Omit<Notification, 'id' | 'timestamp' | 'read'>) => Promise<Notification>;
+  addNotification: (
+    partial: Omit<Notification, 'id' | 'timestamp' | 'read'>,
+  ) => Promise<Notification>;
   markRead: (id: number) => Promise<void>;
   markAllRead: (userId: string) => Promise<void>;
-  respondToInvite: (id: number, response: 'accepted' | 'declined', reason?: string) => Promise<void>;
+  respondToInvite: (
+    id: number,
+    response: 'accepted' | 'declined',
+    reason?: string,
+  ) => Promise<void>;
   getUnreadCount: (userId: string) => number;
   removeForApplication: (teacherId: string, courseId: number) => Promise<void>;
 }
@@ -162,8 +168,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     }
   },
 
-  getForUser: (userId) =>
-    get().notifications.filter((n) => n.targetUserId === userId),
+  getForUser: (userId) => get().notifications.filter((n) => n.targetUserId === userId),
 
   addNotification: async (partial) => {
     const all = get().notifications;
@@ -180,16 +185,14 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   },
 
   markRead: async (id) => {
-    const updated = get().notifications.map((n) =>
-      n.id === id ? { ...n, read: true } : n
-    );
+    const updated = get().notifications.map((n) => (n.id === id ? { ...n, read: true } : n));
     await saveAll(updated);
     set({ notifications: updated });
   },
 
   markAllRead: async (userId) => {
     const updated = get().notifications.map((n) =>
-      n.targetUserId === userId ? { ...n, read: true } : n
+      n.targetUserId === userId ? { ...n, read: true } : n,
     );
     await saveAll(updated);
     set({ notifications: updated });
@@ -198,8 +201,13 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   respondToInvite: async (id, response, reason) => {
     const updated = get().notifications.map((n) =>
       n.id === id
-        ? { ...n, status: response === 'accepted' ? ('approved' as const) : ('rejected' as const), declineReason: reason, read: true }
-        : n
+        ? {
+            ...n,
+            status: response === 'accepted' ? ('approved' as const) : ('rejected' as const),
+            declineReason: reason,
+            read: true,
+          }
+        : n,
     );
     await saveAll(updated);
     set({ notifications: updated });
@@ -210,7 +218,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
 
   removeForApplication: async (teacherId, courseId) => {
     const updated = get().notifications.filter(
-      (n) => !(n.targetUserId === teacherId && n.courseId === courseId)
+      (n) => !(n.targetUserId === teacherId && n.courseId === courseId),
     );
     await saveAll(updated);
     set({ notifications: updated });

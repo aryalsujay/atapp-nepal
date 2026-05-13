@@ -1,27 +1,22 @@
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  Image,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { Routes, routeTo } from '@/routes';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '../../../src/store/authStore';
-import { useProfileStore } from '../../../src/store/profileStore';
-import { Colors, Gradients } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { Shadows } from '../../../src/theme/shadows';
-import { AvailabilityCalendar } from '../../../src/components/ui/AvailabilityCalendar';
-import { Chip } from '../../../src/components/ui/Badge';
-import { Button } from '../../../src/components/ui/Button';
-import { LotusHero, MountainSilhouette } from '../../../src/components/ui/HeroDecorations';
+import { useAuthStore } from '@/store/authStore';
+import { useProfileStore } from '@/store/profileStore';
+import { Colors, Gradients } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { AvailabilityCalendar } from '@/components/ui/AvailabilityCalendar';
+import { Chip } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
+import { toAvailabilityArray } from '@/utils/availability';
 
 const LANG_LEVELS: Record<string, string> = {
   primary: 'Primary',
@@ -32,6 +27,7 @@ export default function ProfileScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const confirm = useConfirm();
   const userId = useAuthStore((s) => s.userId) ?? '';
   const signOut = useAuthStore((s) => s.signOut);
   const { profile, loadProfile } = useProfileStore();
@@ -41,29 +37,29 @@ export default function ProfileScreen() {
   }, [userId]);
 
   const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          await signOut();
-          router.replace('/(auth)/login');
-        },
+    confirm({
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out?',
+      confirmText: 'Sign Out',
+      destructive: true,
+      onConfirm: async () => {
+        await signOut();
+        router.replace(Routes.login);
       },
-    ]);
+    });
   };
 
   if (!profile) {
-    return (
-      <View style={{ flex: 1, backgroundColor: Colors.cr }} />
-    );
+    return <View style={{ flex: 1, backgroundColor: Colors.cr }} />;
   }
 
   const activeLangs = Object.entries(profile.languages).filter(([, v]) => v !== 'off');
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: Colors.cr }} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: Colors.cr }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Hero */}
       <LinearGradient
         colors={Gradients.teacher as unknown as [string, string, ...string[]]}
@@ -89,7 +85,9 @@ export default function ProfileScreen() {
         </View>
 
         <Text style={styles.name}>{profile.name}</Text>
-        <Text style={styles.role}>{t('home.subtitle')} · {profile.region} {profile.flag ?? '🇳🇵'}</Text>
+        <Text style={styles.role}>
+          {t('home.subtitle')} · {profile.region} {profile.flag ?? '🇳🇵'}
+        </Text>
         <Text style={styles.authLine}>🔒 Authorized since {profile.authorizedSince}</Text>
 
         {/* Stats */}
@@ -97,12 +95,15 @@ export default function ProfileScreen() {
           <StatBox label={t('profile.totalCourses')} value={String(profile.totalCourses)} />
           <StatBox label={t('profile.centersServed')} value={String(profile.centersServed)} />
           <StatBox label={t('profile.thisYear')} value={String(profile.coursesThisYear)} />
-          <StatBox label="Years" value={String(new Date().getFullYear() - Number(profile.authorizedSince))} />
+          <StatBox
+            label="Years"
+            value={String(new Date().getFullYear() - Number(profile.authorizedSince))}
+          />
         </View>
 
         {/* Edit button */}
         <TouchableOpacity
-          onPress={() => router.push('/(teacher)/profile/edit')}
+          onPress={() => router.push(Routes.teacherProfileEdit)}
           style={styles.editBtn}
           activeOpacity={0.8}
         >
@@ -131,10 +132,7 @@ export default function ProfileScreen() {
         <View style={styles.langGrid}>
           {activeLangs.map(([lang, level]) => (
             <View key={lang} style={styles.langItem}>
-              <Chip
-                label={lang}
-                variant={level === 'primary' ? 'orange' : 'gray'}
-              />
+              <Chip label={lang} variant={level === 'primary' ? 'orange' : 'gray'} />
               <Text style={styles.langLevel}>{LANG_LEVELS[level] ?? level}</Text>
             </View>
           ))}
@@ -165,7 +163,7 @@ export default function ProfileScreen() {
       {/* Availability */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('profile.availability')}</Text>
-        <AvailabilityCalendar availability={profile.monthlyAvailability} editable={false} />
+        <AvailabilityCalendar availability={toAvailabilityArray(profile)} editable={false} />
       </View>
 
       {/* Teaching history */}
@@ -176,7 +174,9 @@ export default function ProfileScreen() {
             <View key={idx} style={styles.historyItem}>
               <View style={styles.historyLeft}>
                 <Text style={styles.historyDate}>{entry.date}</Text>
-                <Text style={styles.historyCenter}>{entry.center} {entry.country}</Text>
+                <Text style={styles.historyCenter}>
+                  {entry.center} {entry.country}
+                </Text>
               </View>
               <View style={styles.historyRight}>
                 <Chip label={entry.type} variant="orange" />
@@ -197,12 +197,7 @@ export default function ProfileScreen() {
 
       {/* Sign out */}
       <View style={{ paddingHorizontal: Layout.horizontalPad, paddingVertical: Spacing.xl }}>
-        <Button
-          label={t('common.signOut')}
-          variant="outline"
-          fullWidth
-          onPress={handleSignOut}
-        />
+        <Button label={t('common.signOut')} variant="outline" fullWidth onPress={handleSignOut} />
       </View>
     </ScrollView>
   );

@@ -1,16 +1,10 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ViewStyle,
-} from 'react-native';
-import { Course } from '../../types';
-import { Colors } from '../../theme/colors';
-import { FontSize, FontWeight } from '../../theme/typography';
-import { Radius, Layout, Spacing } from '../../theme/spacing';
-import { Shadows } from '../../theme/shadows';
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { Course } from '@/types';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
 import { MatchBadge, Chip, ProgressMeter } from '../ui/Badge';
 import { useTranslation } from 'react-i18next';
 
@@ -61,11 +55,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   const matchScore = course.match ?? 0;
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.88}
-      style={[styles.card, style]}
-    >
+    <TouchableOpacity onPress={onPress} activeOpacity={0.88} style={[styles.card, style]}>
       {/* Top row: type + match */}
       <View style={styles.topRow}>
         <View style={styles.typeRow}>
@@ -92,7 +82,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({
       <View style={styles.metaRow}>
         <Text style={styles.meta}>📅 {course.dates}</Text>
         <Text style={styles.metaDot}>·</Text>
-        <Text style={styles.meta}>{course.flag ?? '🇳🇵'} {course.city.split(',')[0]}</Text>
+        <Text style={styles.meta}>
+          {course.flag ?? '🇳🇵'} {course.city.split(',')[0]}
+        </Text>
       </View>
 
       {/* Languages */}
@@ -100,17 +92,15 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         {course.languages.map((lang) => (
           <Chip
             key={lang}
-            label={lang === 'ne' ? 'Nepali' : lang === 'en' ? 'English' : lang === 'hi' ? 'Hindi' : lang}
+            label={
+              lang === 'ne' ? 'Nepali' : lang === 'en' ? 'English' : lang === 'hi' ? 'Hindi' : lang
+            }
             variant="blue"
             style={styles.langChip}
           />
         ))}
         {course.genderRequired !== 'Any' && (
-          <Chip
-            label={`${course.genderRequired} AT`}
-            variant="gray"
-            style={styles.langChip}
-          />
+          <Chip label={`${course.genderRequired} AT`} variant="gray" style={styles.langChip} />
         )}
       </View>
 

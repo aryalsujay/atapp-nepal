@@ -11,15 +11,18 @@ import {
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../../src/store/authStore';
-import { useProfileStore } from '../../../src/store/profileStore';
-import { Colors } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { Shadows } from '../../../src/theme/shadows';
-import { AvailabilityCalendar } from '../../../src/components/ui/AvailabilityCalendar';
-import { Button } from '../../../src/components/ui/Button';
-import { AvailabilityState, LanguageLevel } from '../../../src/types';
+import { useAuthStore } from '@/store/authStore';
+import { useProfileStore } from '@/store/profileStore';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { AvailabilityCalendar } from '@/components/ui/AvailabilityCalendar';
+import { Button } from '@/components/ui/Button';
+import { useToast } from '@/components/ui/Toast';
+import { AvailabilityState, CourseType, LanguageLevel } from '@/types';
+import { toAvailabilityArray, fromAvailabilityArray } from '@/utils/availability';
+import { logger } from '@/utils/logger';
 
 const ALL_LANGUAGES = ['Nepali', 'English', 'Hindi', 'Gujarati', 'German', 'French', 'Spanish'];
 const ALL_AUTHORIZATIONS = [
@@ -51,13 +54,14 @@ export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const userId = useAuthStore((s) => s.userId) ?? '';
   const { profile, loadProfile, updateProfile } = useProfileStore();
+  const toast = useToast();
 
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [languages, setLanguages] = useState<Record<string, LanguageLevel>>({});
   const [regions, setRegions] = useState<string[]>([]);
   const [availability, setAvailability] = useState<AvailabilityState[]>(
-    Array(12).fill(0) as AvailabilityState[]
+    Array(12).fill(0) as AvailabilityState[],
   );
   const [note, setNote] = useState('');
   const [authorizations, setAuthorizations] = useState<string[]>([]);
@@ -70,7 +74,7 @@ export default function EditProfileScreen() {
         setEmail(profile.email ?? '');
         setLanguages({ ...profile.languages } as Record<string, LanguageLevel>);
         setRegions([...profile.preferredRegions]);
-        setAvailability([...profile.monthlyAvailability]);
+        setAvailability(toAvailabilityArray(profile));
         setNote(profile.personalNote ?? '');
         setAuthorizations([...(profile.authorizations ?? [])]);
       }
@@ -83,7 +87,7 @@ export default function EditProfileScreen() {
       setEmail(profile.email ?? '');
       setLanguages({ ...profile.languages } as Record<string, LanguageLevel>);
       setRegions([...profile.preferredRegions]);
-      setAvailability([...profile.monthlyAvailability]);
+      setAvailability(toAvailabilityArray(profile));
       setNote(profile.personalNote ?? '');
       setAuthorizations([...(profile.authorizations ?? [])]);
     }
@@ -96,7 +100,7 @@ export default function EditProfileScreen() {
 
   const toggleRegion = (region: string) => {
     setRegions((prev) =>
-      prev.includes(region) ? prev.filter((r) => r !== region) : [...prev, region]
+      prev.includes(region) ? prev.filter((r) => r !== region) : [...prev, region],
     );
   };
 
@@ -112,18 +116,22 @@ export default function EditProfileScreen() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const { availableMonths, festivalMonths } = fromAvailabilityArray(availability);
       await updateProfile({
         phone,
         email,
         languages: languages as Record<string, LanguageLevel>,
         preferredRegions: regions,
-        monthlyAvailability: availability,
+        availableMonths,
+        festivalMonths,
         personalNote: note,
-        authorizations: authorizations as any,
+        authorizations: authorizations as CourseType[],
       });
+      toast.success(t('system.savedBody'), t('system.saved'));
       router.back();
-    } catch {
-      Alert.alert('Error', 'Could not save profile. Please try again.');
+    } catch (err) {
+      logger.warn('[edit-profile] save failed', err);
+      toast.error('Could not save profile. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -207,7 +215,12 @@ export default function EditProfileScreen() {
                 regions.includes(region) && { backgroundColor: Colors.sfl },
               ]}
             >
-              <Text style={[styles.regionText, regions.includes(region) && { color: Colors.sf, fontWeight: FontWeight.bold }]}>
+              <Text
+                style={[
+                  styles.regionText,
+                  regions.includes(region) && { color: Colors.sf, fontWeight: FontWeight.bold },
+                ]}
+              >
                 {region}
               </Text>
               {regions.includes(region) && (
@@ -240,7 +253,7 @@ export default function EditProfileScreen() {
                   key={key}
                   onPress={() =>
                     setAuthorizations((prev) =>
-                      selected ? prev.filter((a) => a !== key) : [...prev, key]
+                      selected ? prev.filter((a) => a !== key) : [...prev, key],
                     )
                   }
                   activeOpacity={0.75}

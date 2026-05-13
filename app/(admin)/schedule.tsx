@@ -1,26 +1,20 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Colors, Gradients } from '../../src/theme/colors';
-import { FontSize, FontWeight } from '../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../src/theme/spacing';
-import { Shadows } from '../../src/theme/shadows';
-import { SectionHeader } from '../../src/components/layout/SectionHeader';
-import { MatchBadge, Chip } from '../../src/components/ui/Badge';
-import { Button } from '../../src/components/ui/Button';
-import { useCoursesStore } from '../../src/store/coursesStore';
-import { useApplicationsStore } from '../../src/store/applicationsStore';
-import { useNotificationsStore } from '../../src/store/notificationsStore';
-import teachersData from '../../src/data/teachers.json';
-import { calculateMatch } from '../../src/utils/matching';
+import { Colors, Gradients } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { MatchBadge, Chip } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { useCoursesStore } from '@/store/coursesStore';
+import { useApplicationsStore } from '@/store/applicationsStore';
+import { useNotificationsStore } from '@/store/notificationsStore';
+import { teachers as teachersData } from '@/data';
+import { calculateMatch } from '@/utils/matching';
+import type { Course, TeacherProfile } from '@/types';
 
 type Confidence = 'high' | 'review' | 'none';
 
@@ -31,14 +25,14 @@ interface AssignmentDraft {
   confidence: Confidence;
 }
 
-function buildDrafts(allCourses: any[]): AssignmentDraft[] {
+function buildDrafts(allCourses: Course[]): AssignmentDraft[] {
   const openCourses = allCourses
     .filter((c) => c.status === 'open' || c.status === 'not_yet_open')
     .slice(0, 6);
 
   return openCourses.map((course) => {
-    const matches = (teachersData as any[])
-      .map((t) => ({ teacher: t, result: calculateMatch(t as any, course as any) }))
+    const matches = teachersData
+      .map((t) => ({ teacher: t, result: calculateMatch(t as unknown as TeacherProfile, course) }))
       .sort((a, b) => b.result.score - a.result.score);
 
     const best = matches[0];
@@ -56,65 +50,61 @@ function buildDrafts(allCourses: any[]): AssignmentDraft[] {
 
 export default function AdminSchedule() {
   const { t } = useTranslation();
-  const courses = useCoursesStore((s) => s.courses) as any[];
+  const confirm = useConfirm();
+  const courses = useCoursesStore((s) => s.courses) as Course[];
   const { addAssignment } = useApplicationsStore();
   const { addNotification } = useNotificationsStore();
   const [drafts, setDrafts] = useState<AssignmentDraft[]>(() => buildDrafts(courses));
   const [selectedDraft, setSelectedDraft] = useState<AssignmentDraft | null>(null);
   const [finalized, setFinalized] = useState(false);
 
-  const teachers = teachersData as any[];
+  const teachers = teachersData;
 
-  const getTeacher = (id: string | null) =>
-    id ? teachers.find((t) => t.id === id) : null;
+  const getTeacher = (id: string | null) => (id ? teachers.find((t) => t.id === id) : null);
 
   const getCourse = (id: number) => courses.find((c) => c.id === id);
 
   const handleChangeTeacher = (draft: AssignmentDraft, newTeacherId: string) => {
     const teacher = teachers.find((t) => t.id === newTeacherId);
     const course = getCourse(draft.courseId);
-    const score = teacher && course ? calculateMatch(teacher as any, course as any).score : 0;
+    const score =
+      teacher && course ? calculateMatch(teacher as unknown as TeacherProfile, course).score : 0;
     setDrafts((prev) =>
       prev.map((d) =>
         d.courseId === draft.courseId
           ? { ...d, teacherId: newTeacherId, score, confidence: score >= 80 ? 'high' : 'review' }
-          : d
-      )
+          : d,
+      ),
     );
     setSelectedDraft(null);
   };
 
   const handleFinalize = () => {
     const highConfidence = drafts.filter((d) => d.confidence === 'high' && d.teacherId);
-    Alert.alert(
-      'Finalize & Notify',
-      `This will confirm ${highConfidence.length} high-confidence assignment(s) and notify teachers. Continue?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Finalize',
-          onPress: async () => {
-            for (const draft of highConfidence) {
-              const teacher = teachers.find((t: any) => t.id === draft.teacherId);
-              const course = courses.find((c: any) => c.id === draft.courseId);
-              if (!teacher || !course) continue;
-              await addAssignment(draft.courseId, draft.teacherId!);
-              await addNotification({
-                targetUserId: draft.teacherId!,
-                type: 'assignment',
-                center: course.center,
-                course: `${course.center} — ${course.type}`,
-                courseId: course.id,
-                subjectEn: 'You have been assigned to teach',
-                bodyEn: `Dear ${teacher.name},\n\nWith great joy we confirm your assignment to teach the ${course.type} course at ${course.center}.\n\nDates: ${course.dates}\n\nSadhu! 🙏`,
-                bodyNe: `प्रिय ${teacher.name},\n\n${course.center}मा ${course.type} पाठ्यक्रम पढाउन तपाईंको नियुक्ति पुष्टि गर्दा हामी हर्षित छौं।`,
-              });
-            }
-            setFinalized(true);
-          },
-        },
-      ]
-    );
+    confirm({
+      title: 'Finalize & Notify',
+      message: `This will confirm ${highConfidence.length} high-confidence assignment(s) and notify teachers. Continue?`,
+      confirmText: 'Finalize',
+      onConfirm: async () => {
+        for (const draft of highConfidence) {
+          const teacher = teachers.find((t) => t.id === draft.teacherId);
+          const course = courses.find((c) => c.id === draft.courseId);
+          if (!teacher || !course) continue;
+          await addAssignment(draft.courseId, draft.teacherId!);
+          await addNotification({
+            targetUserId: draft.teacherId!,
+            type: 'assignment',
+            center: course.center,
+            course: `${course.center} — ${course.type}`,
+            courseId: course.id,
+            subjectEn: 'You have been assigned to teach',
+            bodyEn: `Dear ${teacher.name},\n\nWith great joy we confirm your assignment to teach the ${course.type} course at ${course.center}.\n\nDates: ${course.dates}\n\nSadhu! 🙏`,
+            bodyNe: `प्रिय ${teacher.name},\n\n${course.center}मा ${course.type} पाठ्यक्रम पढाउन तपाईंको नियुक्ति पुष्टि गर्दा हामी हर्षित छौं।`,
+          });
+        }
+        setFinalized(true);
+      },
+    });
   };
 
   const confidenceColor: Record<Confidence, string> = {
@@ -131,13 +121,38 @@ export default function AdminSchedule() {
 
   if (finalized) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.cr, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: Colors.cr,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 32,
+        }}
+      >
         <Text style={{ fontSize: 52, marginBottom: 16 }}>✅</Text>
-        <Text style={{ fontSize: FontSize.xl, fontWeight: FontWeight.bold, color: Colors.tx, textAlign: 'center', marginBottom: 8 }}>
+        <Text
+          style={{
+            fontSize: FontSize.xl,
+            fontWeight: FontWeight.bold,
+            color: Colors.tx,
+            textAlign: 'center',
+            marginBottom: 8,
+          }}
+        >
           Assignments Finalized
         </Text>
-        <Text style={{ fontSize: FontSize.smPlus, color: Colors.tx3, textAlign: 'center', marginBottom: 32, lineHeight: FontSize.smPlus * 1.5 }}>
-          {drafts.filter((d) => d.confidence === 'high').length} teachers have been notified of their assignments.
+        <Text
+          style={{
+            fontSize: FontSize.smPlus,
+            color: Colors.tx3,
+            textAlign: 'center',
+            marginBottom: 32,
+            lineHeight: FontSize.smPlus * 1.5,
+          }}
+        >
+          {drafts.filter((d) => d.confidence === 'high').length} teachers have been notified of
+          their assignments.
         </Text>
         <Button label="Back to Dashboard" variant="primary" onPress={() => setFinalized(false)} />
       </View>
@@ -192,7 +207,13 @@ export default function AdminSchedule() {
                   </View>
                   <View style={styles.teacherInfo}>
                     <Text style={styles.teacherName}>{teacher.name}</Text>
-                    <Text style={styles.teacherMeta}>{teacher.gender === 'F' ? '👩' : '👨'} · {Object.entries(teacher.languages as Record<string, string>).filter(([, v]) => v === 'primary').map(([k]) => k).join(', ')}</Text>
+                    <Text style={styles.teacherMeta}>
+                      {teacher.gender === 'F' ? '👩' : '👨'} ·{' '}
+                      {Object.entries(teacher.languages as Record<string, string>)
+                        .filter(([, v]) => v === 'primary')
+                        .map(([k]) => k)
+                        .join(', ')}
+                    </Text>
                   </View>
                   <MatchBadge score={draft.score} />
                 </View>
@@ -232,17 +253,27 @@ export default function AdminSchedule() {
         animationType="slide"
         onRequestClose={() => setSelectedDraft(null)}
       >
-        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setSelectedDraft(null)} />
+        <TouchableOpacity
+          style={styles.overlay}
+          activeOpacity={1}
+          onPress={() => setSelectedDraft(null)}
+        />
         <View style={styles.sheet}>
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>{t('admin.schedule.changeTeacher')}</Text>
           <Text style={styles.sheetSub}>
-            {selectedDraft ? getCourse(selectedDraft.courseId)?.type + ' — ' + getCourse(selectedDraft.courseId)?.dates : ''}
+            {selectedDraft
+              ? getCourse(selectedDraft.courseId)?.type +
+                ' — ' +
+                getCourse(selectedDraft.courseId)?.dates
+              : ''}
           </Text>
           <ScrollView showsVerticalScrollIndicator={false}>
-            {teachers.map((teacher: any) => {
+            {teachers.map((teacher) => {
               const course = selectedDraft ? getCourse(selectedDraft.courseId) : null;
-              const score = course ? calculateMatch(teacher as any, course as any).score : 0;
+              const score = course
+                ? calculateMatch(teacher as unknown as TeacherProfile, course).score
+                : 0;
               return (
                 <TouchableOpacity
                   key={teacher.id}

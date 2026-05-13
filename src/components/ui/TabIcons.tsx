@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import Svg, { Path, Rect, Circle, Ellipse } from 'react-native-svg';
-import { Colors } from '../../theme/colors';
+import { Colors } from '@/theme/colors';
 
 interface IconProps {
   size?: number;
@@ -37,18 +37,30 @@ export const LotusIcon: React.FC<IconProps> = ({ size = 24, active, accentColor 
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Ellipse cx={12} cy={12} rx={3} ry={6} stroke={color} strokeWidth={1.7} />
       <Ellipse
-        cx={12} cy={12} rx={3} ry={6}
-        stroke={color} strokeWidth={1.7}
+        cx={12}
+        cy={12}
+        rx={3}
+        ry={6}
+        stroke={color}
+        strokeWidth={1.7}
         transform="rotate(45 12 12)"
       />
       <Ellipse
-        cx={12} cy={12} rx={3} ry={6}
-        stroke={color} strokeWidth={1.7}
+        cx={12}
+        cy={12}
+        rx={3}
+        ry={6}
+        stroke={color}
+        strokeWidth={1.7}
         transform="rotate(90 12 12)"
       />
       <Ellipse
-        cx={12} cy={12} rx={3} ry={6}
-        stroke={color} strokeWidth={1.7}
+        cx={12}
+        cy={12}
+        rx={3}
+        ry={6}
+        stroke={color}
+        strokeWidth={1.7}
         transform="rotate(135 12 12)"
       />
       <Circle cx={12} cy={12} r={2.2} fill={color} />
@@ -71,7 +83,12 @@ export const PersonIcon: React.FC<IconProps> = ({ size = 24, active, accentColor
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx={12} cy={8} r={4} stroke={color} strokeWidth={1.8} />
-      <Path d="M4 20C4 16.13 7.58 13 12 13C16.42 13 20 16.13 20 20" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+      <Path
+        d="M4 20C4 16.13 7.58 13 12 13C16.42 13 20 16.13 20 20"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
     </Svg>
   );
 };
@@ -82,14 +99,25 @@ export const BellIcon: React.FC<IconProps> = ({ size = 24, active, accentColor =
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
         d="M20 17H4L6 9C6 6.24 8.69 4 12 4C15.31 4 18 6.24 18 9L20 17Z"
-        stroke={color} strokeWidth={1.8} strokeLinejoin="round"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinejoin="round"
       />
-      <Path d="M12 22C10.89 22 10 21.1 10 20H14C14 21.1 13.11 22 12 22" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+      <Path
+        d="M12 22C10.89 22 10 21.1 10 20H14C14 21.1 13.11 22 12 22"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
     </Svg>
   );
 };
 
-export const DashboardIcon: React.FC<IconProps> = ({ size = 24, active, accentColor = Colors.bl }) => {
+export const DashboardIcon: React.FC<IconProps> = ({
+  size = 24,
+  active,
+  accentColor = Colors.bl,
+}) => {
   const color = active ? accentColor : INACTIVE;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -106,26 +134,47 @@ export const PeopleIcon: React.FC<IconProps> = ({ size = 24, active, accentColor
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx={9} cy={7.5} r={3} stroke={color} strokeWidth={1.8} />
-      <Path d="M2 20C2 16.68 5.13 14.5 9 14.5C12.87 14.5 16 16.68 16 20" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
-      <Circle cx={17} cy={7.5} r={2.5} stroke={color} strokeWidth={1.6} opacity={0.6} />
-      <Path d="M19 14.5C20.9 15.2 22 16.8 22 20" stroke={color} strokeWidth={1.6} strokeLinecap="round" opacity={0.6} />
-    </Svg>
-  );
-};
-
-export const LightningIcon: React.FC<IconProps> = ({ size = 24, active, accentColor = Colors.bl }) => {
-  const color = active ? accentColor : INACTIVE;
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M13 2L4 14H12L11 22L20 10H12L13 2Z"
-        stroke={color} strokeWidth={1.8} strokeLinejoin="round"
+        d="M2 20C2 16.68 5.13 14.5 9 14.5C12.87 14.5 16 16.68 16 20"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+      <Circle cx={17} cy={7.5} r={2.5} stroke={color} strokeWidth={1.6} opacity={0.6} />
+      <Path
+        d="M19 14.5C20.9 15.2 22 16.8 22 20"
+        stroke={color}
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        opacity={0.6}
       />
     </Svg>
   );
 };
 
-export const CalendarIcon: React.FC<IconProps> = ({ size = 24, active, accentColor = Colors.bl }) => {
+export const LightningIcon: React.FC<IconProps> = ({
+  size = 24,
+  active,
+  accentColor = Colors.bl,
+}) => {
+  const color = active ? accentColor : INACTIVE;
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M13 2L4 14H12L11 22L20 10H12L13 2Z"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const CalendarIcon: React.FC<IconProps> = ({
+  size = 24,
+  active,
+  accentColor = Colors.bl,
+}) => {
   const color = active ? accentColor : INACTIVE;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">

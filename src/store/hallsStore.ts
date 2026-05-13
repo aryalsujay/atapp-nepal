@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Hall } from '../types';
-import seedHalls from '../data/halls.json';
+import { Hall } from '@/types';
+import seedHalls from '@/data/halls.json';
 
 const HALLS_KEY = '@dhamma_halls_v1';
 
@@ -39,8 +39,7 @@ export const useHallsStore = create<HallsState>((set, get) => ({
     }
   },
 
-  getHallsForCentre: (centreId) =>
-    get().halls.filter((h) => h.centreId === centreId),
+  getHallsForCentre: (centreId) => get().halls.filter((h) => h.centreId === centreId),
 
   createHall: async (partial) => {
     const hall: Hall = { ...partial, id: `hall-${Date.now()}` };

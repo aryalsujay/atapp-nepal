@@ -1,4 +1,4 @@
-import type { Course, TeacherProfile } from '../types';
+import type { Course, CourseType } from '@/types';
 
 const LANG_LABELS: Record<string, string> = {
   ne: 'Nepali',
@@ -22,7 +22,8 @@ export interface EligibilityCheck {
 interface ProfileLike {
   authorizations: string[];
   languages: Record<string, string>;
-  monthlyAvailability: (number | string)[];
+  availableMonths: number[];
+  festivalMonths?: number[];
   gender?: 'M' | 'F';
 }
 
@@ -35,7 +36,7 @@ interface ProfileLike {
 export function buildEligibilityChecks(
   profile: ProfileLike,
   course: Pick<Course, 'type' | 'languages' | 'startDate' | 'dates' | 'genderRequired'>,
-  labels?: Partial<Record<EligibilityCheck['key'], string>>
+  labels?: Partial<Record<EligibilityCheck['key'], string>>,
 ): EligibilityCheck[] {
   const langSubs = course.languages.map(langLabel).join(', ');
 
@@ -45,16 +46,15 @@ export function buildEligibilityChecks(
   });
 
   const monthIdx = new Date(course.startDate).getMonth();
-  const availPass = profile.monthlyAvailability?.[monthIdx] === 1;
+  const availPass = profile.availableMonths.includes(monthIdx);
 
-  const genderPass =
-    course.genderRequired === 'Any' || course.genderRequired === profile.gender;
+  const genderPass = course.genderRequired === 'Any' || course.genderRequired === profile.gender;
 
   return [
     {
       key: 'authorization',
       label: labels?.authorization ?? 'Authorization',
-      passed: profile.authorizations.includes(course.type as any),
+      passed: profile.authorizations.includes(course.type as CourseType),
     },
     {
       key: 'language',
@@ -77,9 +77,7 @@ export function buildEligibilityChecks(
       key: 'gender',
       label: labels?.gender ?? 'Gender',
       sublabel:
-        course.genderRequired !== 'Any'
-          ? `${course.genderRequired} AT required`
-          : 'Any gender',
+        course.genderRequired !== 'Any' ? `${course.genderRequired} AT required` : 'Any gender',
       passed: genderPass,
     },
   ];

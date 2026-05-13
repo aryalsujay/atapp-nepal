@@ -1,12 +1,25 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
-import { AvailabilityState } from '../../types';
-import { Colors } from '../../theme/colors';
-import { FontSize, FontWeight } from '../../theme/typography';
-import { Radius, Spacing } from '../../theme/spacing';
+import { AvailabilityState } from '@/types';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Spacing } from '@/theme/spacing';
 import { useTranslation } from 'react-i18next';
 
-const MONTH_KEYS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+const MONTH_KEYS = [
+  'jan',
+  'feb',
+  'mar',
+  'apr',
+  'may',
+  'jun',
+  'jul',
+  'aug',
+  'sep',
+  'oct',
+  'nov',
+  'dec',
+];
 
 interface AvailabilityCalendarProps {
   availability: AvailabilityState[];

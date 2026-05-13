@@ -1,37 +1,43 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  Modal,
-  FlatList,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Routes, routeTo } from '@/routes';
+import { useToast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { useTranslation } from 'react-i18next';
-import { Colors } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { Shadows } from '../../../src/theme/shadows';
-import { SectionHeader } from '../../../src/components/layout/SectionHeader';
-import { StatusPill, MatchBadge } from '../../../src/components/ui/Badge';
-import { FilterRow } from '../../../src/components/ui/FilterChip';
-import { useApplicationsStore } from '../../../src/store/applicationsStore';
-import { useNotificationsStore } from '../../../src/store/notificationsStore';
-import coursesData from '../../../src/data/courses.json';
-import teachersData from '../../../src/data/teachers.json';
-import { calculateMatch } from '../../../src/utils/matching';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { StatusPill, MatchBadge } from '@/components/ui/Badge';
+import { FilterRow } from '@/components/ui/FilterChip';
+import { useApplicationsStore } from '@/store/applicationsStore';
+import { useNotificationsStore } from '@/store/notificationsStore';
+import { courses as coursesData, teachers as teachersData } from '@/data';
+import { calculateMatch } from '@/utils/matching';
+import type { Course, TeacherProfile } from '@/types';
+import type { StoredTeacher } from '@/store/teachersStore';
 
 type TabKey = 'all' | 'pending' | 'withdrawal_requested' | 'approved' | 'rejected';
 
 export default function AdminInbox() {
   const { t } = useTranslation();
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [tab, setTab] = useState<TabKey>('all');
-  const [inviteModal, setInviteModal] = useState<{ courseId: number; courseName: string } | null>(null);
+  const [inviteModal, setInviteModal] = useState<{ courseId: number; courseName: string } | null>(
+    null,
+  );
 
-  const { applications, loadAllApplications, updateStatus, withdrawApplication, getApprovedCountForCourse } = useApplicationsStore();
+  const {
+    applications,
+    loadAllApplications,
+    updateStatus,
+    withdrawApplication,
+    getApprovedCountForCourse,
+  } = useApplicationsStore();
   const { addNotification } = useNotificationsStore();
 
   useEffect(() => {
@@ -43,59 +49,71 @@ export default function AdminInbox() {
 
   const filtered = useMemo(
     () => (tab === 'all' ? applications : applications.filter((a) => a.status === tab)),
-    [tab, applications]
+    [tab, applications],
   );
 
   // Pre-compute teacher/course/match per row so re-renders don't redo it
   const rows = useMemo(
     () =>
       filtered.map((app) => {
-        const teacher = (teachersData as any[]).find((t) => t.id === app.teacherId);
-        const course = (coursesData as any[]).find((c) => c.id === app.courseId);
-        const matchScore = teacher && course ? calculateMatch(teacher as any, course as any).score : 0;
+        const teacher = teachersData.find((t) => t.id === app.teacherId);
+        const course = coursesData.find((c) => c.id === app.courseId);
+        const matchScore =
+          teacher && course
+            ? calculateMatch(teacher as unknown as TeacherProfile, course).score
+            : 0;
         return { app, teacher, course, matchScore };
       }),
-    [filtered]
+    [filtered],
   );
 
   // Courses with zero applications — need teacher invites
   const coursesNeedingTeachers = useMemo(() => {
     const allCourseIds = new Set(applications.map((a) => a.courseId));
-    return (coursesData as any[]).filter((c) => !allCourseIds.has(c.id)).slice(0, 3);
+    return coursesData.filter((c) => !allCourseIds.has(c.id)).slice(0, 3);
   }, [applications]);
 
-  const handleQuickAction = async (appId: number, teacherId: string, courseId: number, action: 'approved' | 'rejected') => {
-    const teacher = (teachersData as any[]).find((t) => t.id === teacherId);
-    const course = (coursesData as any[]).find((c) => c.id === courseId);
+  const handleQuickAction = async (
+    appId: number,
+    teacherId: string,
+    courseId: number,
+    action: 'approved' | 'rejected',
+  ) => {
+    const teacher = teachersData.find((t) => t.id === teacherId);
+    const course = coursesData.find((c) => c.id === courseId);
     const label = action === 'approved' ? 'Approve' : 'Reject';
 
     if (action === 'approved') {
       const approvedCount = await getApprovedCountForCourse(courseId);
       const needCount = course?.needCount ?? 1;
       if (approvedCount >= needCount) {
-        Alert.alert(
-          'Course Already Filled',
-          `This course already has ${approvedCount} approved teacher(s) and only needs ${needCount}. Approve anyway?`,
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Approve Anyway', onPress: () => doAction(appId, teacherId, courseId, action, teacher, course) },
-          ]
-        );
+        confirm({
+          title: 'Course Already Filled',
+          message: `This course already has ${approvedCount} approved teacher(s) and only needs ${needCount}. Approve anyway?`,
+          confirmText: 'Approve Anyway',
+          onConfirm: () => doAction(appId, teacherId, courseId, action, teacher, course),
+        });
         return;
       }
     }
 
-    Alert.alert(`${label} Application`, `Are you sure you want to ${label.toLowerCase()} this application?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: label,
-        style: action === 'rejected' ? 'destructive' : 'default',
-        onPress: () => doAction(appId, teacherId, courseId, action, teacher, course),
-      },
-    ]);
+    confirm({
+      title: `${label} Application`,
+      message: `Are you sure you want to ${label.toLowerCase()} this application?`,
+      confirmText: label,
+      destructive: action === 'rejected',
+      onConfirm: () => doAction(appId, teacherId, courseId, action, teacher, course),
+    });
   };
 
-  const doAction = async (appId: number, teacherId: string, courseId: number, action: 'approved' | 'rejected', teacher: any, course: any) => {
+  const doAction = async (
+    appId: number,
+    teacherId: string,
+    courseId: number,
+    action: 'approved' | 'rejected',
+    teacher: StoredTeacher | undefined,
+    course: Course | undefined,
+  ) => {
     await updateStatus(appId, action);
     if (teacher && course) {
       await addNotification({
@@ -103,83 +121,76 @@ export default function AdminInbox() {
         type: action === 'approved' ? 'assignment' : 'rejection',
         center: course.center,
         course: `${course.center} — ${course.type}`,
-        subjectEn: action === 'approved'
-          ? 'You have been assigned to teach'
-          : 'Application update — ' + course.center,
-        bodyEn: action === 'approved'
-          ? `Dear ${teacher.name},\n\nYour application for the ${course.type} course at ${course.center} has been approved.\n\nDates: ${course.dates}\n\nSadhu! 🙏`
-          : `Dear ${teacher.name},\n\nThank you for applying to the ${course.type} course at ${course.center}. Unfortunately another AT was confirmed.\n\nIn Dhamma,\nScheduling Team`,
-        bodyNe: action === 'approved'
-          ? `प्रिय ${teacher.name},\n\nतपाईंको आवेदन स्वीकृत भएको छ।`
-          : `प्रिय ${teacher.name},\n\nआवेदनका लागि धन्यवाद।`,
+        subjectEn:
+          action === 'approved'
+            ? 'You have been assigned to teach'
+            : 'Application update — ' + course.center,
+        bodyEn:
+          action === 'approved'
+            ? `Dear ${teacher.name},\n\nYour application for the ${course.type} course at ${course.center} has been approved.\n\nDates: ${course.dates}\n\nSadhu! 🙏`
+            : `Dear ${teacher.name},\n\nThank you for applying to the ${course.type} course at ${course.center}. Unfortunately another AT was confirmed.\n\nIn Dhamma,\nScheduling Team`,
+        bodyNe:
+          action === 'approved'
+            ? `प्रिय ${teacher.name},\n\nतपाईंको आवेदन स्वीकृत भएको छ।`
+            : `प्रिय ${teacher.name},\n\nआवेदनका लागि धन्यवाद।`,
         courseId,
       });
     }
   };
 
   const handleWithdrawalApprove = (appId: number, teacherId: string, courseId: number) => {
-    const teacher = (teachersData as any[]).find((t) => t.id === teacherId);
-    const course = (coursesData as any[]).find((c) => c.id === courseId);
-    Alert.alert(
-      'Approve Step-Down',
-      `Approve ${teacher?.name ?? 'this teacher'}'s request to step down from ${course?.center ?? 'this course'}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Approve',
-          style: 'destructive',
-          onPress: async () => {
-            await withdrawApplication(appId, teacherId);
-            if (teacher && course) {
-              await addNotification({
-                targetUserId: teacherId,
-                type: 'update',
-                center: course.center,
-                course: `${course.center} — ${course.type}`,
-                courseId: course.id,
-                subjectEn: 'Step-down approved',
-                bodyEn: `Dear ${teacher.name},\n\nYour request to step down from the ${course.type} course at ${course.center} has been approved.\n\nThank you for your service. We wish you well.\n\nIn Dhamma,\nScheduling Team`,
-                bodyNe: `प्रिय ${teacher.name},\n\nतपाईंको पछि हट्ने अनुरोध स्वीकृत भएको छ। धन्यवाद।`,
-              });
-            }
-          },
-        },
-      ]
-    );
+    const teacher = teachersData.find((t) => t.id === teacherId);
+    const course = coursesData.find((c) => c.id === courseId);
+    confirm({
+      title: 'Approve Step-Down',
+      message: `Approve ${teacher?.name ?? 'this teacher'}'s request to step down from ${course?.center ?? 'this course'}?`,
+      confirmText: 'Approve',
+      destructive: true,
+      onConfirm: async () => {
+        await withdrawApplication(appId, teacherId);
+        if (teacher && course) {
+          await addNotification({
+            targetUserId: teacherId,
+            type: 'update',
+            center: course.center,
+            course: `${course.center} — ${course.type}`,
+            courseId: course.id,
+            subjectEn: 'Step-down approved',
+            bodyEn: `Dear ${teacher.name},\n\nYour request to step down from the ${course.type} course at ${course.center} has been approved.\n\nThank you for your service. We wish you well.\n\nIn Dhamma,\nScheduling Team`,
+            bodyNe: `प्रिय ${teacher.name},\n\nतपाईंको पछि हट्ने अनुरोध स्वीकृत भएको छ। धन्यवाद।`,
+          });
+        }
+      },
+    });
   };
 
   const handleWithdrawalReject = (appId: number, teacherId: string, courseId: number) => {
-    const teacher = (teachersData as any[]).find((t) => t.id === teacherId);
-    const course = (coursesData as any[]).find((c) => c.id === courseId);
-    Alert.alert(
-      'Reject Step-Down Request',
-      `Reject this step-down request? The teacher will remain assigned to ${course?.center ?? 'this course'}.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reject',
-          onPress: async () => {
-            await updateStatus(appId, 'approved');
-            if (teacher && course) {
-              await addNotification({
-                targetUserId: teacherId,
-                type: 'update',
-                center: course.center,
-                course: `${course.center} — ${course.type}`,
-                courseId: course.id,
-                subjectEn: 'Step-down request not approved',
-                bodyEn: `Dear ${teacher.name},\n\nWe are unable to approve your step-down request from the ${course.type} course at ${course.center} at this time.\n\nPlease contact us if you need to discuss further.\n\nIn Dhamma,\nScheduling Team`,
-                bodyNe: `प्रिय ${teacher.name},\n\nतपाईंको पछि हट्ने अनुरोध अस्वीकार गरिएको छ।`,
-              });
-            }
-          },
-        },
-      ]
-    );
+    const teacher = teachersData.find((t) => t.id === teacherId);
+    const course = coursesData.find((c) => c.id === courseId);
+    confirm({
+      title: 'Reject Step-Down Request',
+      message: `Reject this step-down request? The teacher will remain assigned to ${course?.center ?? 'this course'}.`,
+      confirmText: 'Reject',
+      onConfirm: async () => {
+        await updateStatus(appId, 'approved');
+        if (teacher && course) {
+          await addNotification({
+            targetUserId: teacherId,
+            type: 'update',
+            center: course.center,
+            course: `${course.center} — ${course.type}`,
+            courseId: course.id,
+            subjectEn: 'Step-down request not approved',
+            bodyEn: `Dear ${teacher.name},\n\nWe are unable to approve your step-down request from the ${course.type} course at ${course.center} at this time.\n\nPlease contact us if you need to discuss further.\n\nIn Dhamma,\nScheduling Team`,
+            bodyNe: `प्रिय ${teacher.name},\n\nतपाईंको पछि हट्ने अनुरोध अस्वीकार गरिएको छ।`,
+          });
+        }
+      },
+    });
   };
 
-  const handleSendInvite = async (teacher: any, courseId: number) => {
-    const course = (coursesData as any[]).find((c) => c.id === courseId);
+  const handleSendInvite = async (teacher: StoredTeacher, courseId: number) => {
+    const course = coursesData.find((c) => c.id === courseId);
     if (!course) return;
     await addNotification({
       targetUserId: teacher.id,
@@ -192,7 +203,7 @@ export default function AdminInbox() {
       bodyNe: `प्रिय ${teacher.name},\n\n${course.center}को ${course.type} पाठ्यक्रममा पढाउनका लागि आमन्त्रण गर्न चाहन्छौं।`,
     });
     setInviteModal(null);
-    Alert.alert('Invite Sent', `Invitation sent to ${teacher.name}.`);
+    toast.success(`Invitation sent to ${teacher.name}.`, t('system.inviteSent'));
   };
 
   const pendingCount = applications.filter((a) => a.status === 'pending').length;
@@ -206,7 +217,11 @@ export default function AdminInbox() {
       <View style={styles.statsRow}>
         <StatCard label="Total" value={String(applications.length)} color={Colors.bl} />
         <StatCard label="Pending" value={String(pendingCount)} color={Colors.gd} />
-        <StatCard label="Approved" value={String(applications.filter((a) => a.status === 'approved').length)} color={Colors.fo} />
+        <StatCard
+          label="Approved"
+          value={String(applications.filter((a) => a.status === 'approved').length)}
+          color={Colors.fo}
+        />
         <StatCard label="Step Down" value={String(withdrawalCount)} color="#7C3AED" />
       </View>
 
@@ -218,11 +233,15 @@ export default function AdminInbox() {
             <View key={c.id} style={styles.needsRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.needsCenter}>{c.center}</Text>
-                <Text style={styles.needsMeta}>{c.type} · {c.dates}</Text>
+                <Text style={styles.needsMeta}>
+                  {c.type} · {c.dates}
+                </Text>
               </View>
               <TouchableOpacity
                 style={styles.inviteBtn}
-                onPress={() => setInviteModal({ courseId: c.id, courseName: `${c.center} — ${c.type}` })}
+                onPress={() =>
+                  setInviteModal({ courseId: c.id, courseName: `${c.center} — ${c.type}` })
+                }
               >
                 <Text style={styles.inviteBtnText}>Invite →</Text>
               </TouchableOpacity>
@@ -256,7 +275,8 @@ export default function AdminInbox() {
                 <View style={styles.headerInfo}>
                   <Text style={styles.teacherName}>{teacher?.name ?? 'Unknown Teacher'}</Text>
                   <Text style={styles.teacherMeta}>
-                    {teacher?.gender === 'F' ? '👩' : '👨'} · {teacher?.totalCourses ?? 0} {t('admin.inbox.courses')}
+                    {teacher?.gender === 'F' ? '👩' : '👨'} · {teacher?.totalCourses ?? 0}{' '}
+                    {t('admin.inbox.courses')}
                     {app.queuePosition ? ` · Queue #${app.queuePosition}` : ''}
                   </Text>
                 </View>
@@ -264,10 +284,14 @@ export default function AdminInbox() {
               </View>
 
               <View style={styles.courseRow}>
-                <Text style={styles.courseName}>{course?.center ?? 'Unknown'} — {course?.type}</Text>
+                <Text style={styles.courseName}>
+                  {course?.center ?? 'Unknown'} — {course?.type}
+                </Text>
                 {matchScore > 0 && <MatchBadge score={matchScore} />}
               </View>
-              <Text style={styles.courseDates}>📅 {course?.dates} · Applied {app.appliedDate}</Text>
+              <Text style={styles.courseDates}>
+                📅 {course?.dates} · Applied {app.appliedDate}
+              </Text>
 
               {isWithdrawal && app.withdrawalNote && (
                 <View style={styles.withdrawalNote}>
@@ -279,21 +303,25 @@ export default function AdminInbox() {
               {app.status === 'pending' && (
                 <View style={styles.actions}>
                   <TouchableOpacity
-                    onPress={() => router.push(`/(admin)/inbox/${app.id}`)}
+                    onPress={() => router.push(routeTo.adminApplicationReview(app.id))}
                     style={styles.reviewBtn}
                     activeOpacity={0.8}
                   >
                     <Text style={styles.reviewBtnText}>{t('admin.inbox.review')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={() => handleQuickAction(app.id, app.teacherId, app.courseId, 'approved')}
+                    onPress={() =>
+                      handleQuickAction(app.id, app.teacherId, app.courseId, 'approved')
+                    }
                     style={[styles.actionBtn, { backgroundColor: Colors.fol }]}
                     activeOpacity={0.8}
                   >
                     <Text style={[styles.actionBtnText, { color: Colors.fo }]}>✓</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={() => handleQuickAction(app.id, app.teacherId, app.courseId, 'rejected')}
+                    onPress={() =>
+                      handleQuickAction(app.id, app.teacherId, app.courseId, 'rejected')
+                    }
                     style={[styles.actionBtn, { backgroundColor: Colors.url }]}
                     activeOpacity={0.8}
                   >
@@ -316,14 +344,16 @@ export default function AdminInbox() {
                     style={[styles.actionBtn, { flex: 1, backgroundColor: '#EDE9FE' }]}
                     activeOpacity={0.8}
                   >
-                    <Text style={[styles.actionBtnText, { color: '#7C3AED' }]}>Approve Step-Down</Text>
+                    <Text style={[styles.actionBtnText, { color: '#7C3AED' }]}>
+                      Approve Step-Down
+                    </Text>
                   </TouchableOpacity>
                 </View>
               )}
 
               {app.status !== 'pending' && !isWithdrawal && (
                 <TouchableOpacity
-                  onPress={() => router.push(`/(admin)/inbox/${app.id}`)}
+                  onPress={() => router.push(routeTo.adminApplicationReview(app.id))}
                   style={styles.viewBtn}
                 >
                   <Text style={styles.viewBtnText}>View Details →</Text>
@@ -351,13 +381,18 @@ export default function AdminInbox() {
       />
 
       {/* Invite Modal */}
-      <Modal visible={!!inviteModal} transparent animationType="slide" onRequestClose={() => setInviteModal(null)}>
+      <Modal
+        visible={!!inviteModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setInviteModal(null)}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitle}>Invite a Teacher</Text>
             <Text style={styles.modalSubtitle}>{inviteModal?.courseName}</Text>
             <FlatList
-              data={teachersData as any[]}
+              data={teachersData}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity
@@ -371,10 +406,15 @@ export default function AdminInbox() {
                   <View style={{ flex: 1 }}>
                     <Text style={styles.teacherRowName}>{item.name}</Text>
                     <Text style={styles.teacherRowMeta}>
-                      {item.gender === 'F' ? '👩' : '👨'} · {item.totalCourses} courses · {item.region}
+                      {item.gender === 'F' ? '👩' : '👨'} · {item.totalCourses} courses ·{' '}
+                      {item.region}
                     </Text>
                   </View>
-                  <Text style={{ color: Colors.bl, fontWeight: FontWeight.bold, fontSize: FontSize.sm }}>Invite</Text>
+                  <Text
+                    style={{ color: Colors.bl, fontWeight: FontWeight.bold, fontSize: FontSize.sm }}
+                  >
+                    Invite
+                  </Text>
                 </TouchableOpacity>
               )}
               style={{ maxHeight: 400 }}

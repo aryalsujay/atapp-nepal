@@ -1,14 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
-import { Colors } from '../../src/theme/colors';
-import {
-  HomeIcon,
-  ListIcon,
-  InboxIcon,
-  PersonIcon,
-  BellIcon,
-} from '../../src/components/ui/TabIcons';
+import { Colors } from '@/theme/colors';
+import { HomeIcon, ListIcon, InboxIcon, PersonIcon, BellIcon } from '@/components/ui/TabIcons';
 
 interface TabIconProps {
   focused: boolean;
@@ -27,11 +21,11 @@ const makeTabIcon = (
     );
   };
 
-const HomeTab   = makeTabIcon(HomeIcon,   Colors.sf, Colors.sfl);
-const ListTab   = makeTabIcon(ListIcon,   Colors.sf, Colors.sfl);
-const InboxTab  = makeTabIcon(InboxIcon,  Colors.sf, Colors.sfl);
+const HomeTab = makeTabIcon(HomeIcon, Colors.sf, Colors.sfl);
+const ListTab = makeTabIcon(ListIcon, Colors.sf, Colors.sfl);
+const InboxTab = makeTabIcon(InboxIcon, Colors.sf, Colors.sfl);
 const PersonTab = makeTabIcon(PersonIcon, Colors.sf, Colors.sfl);
-const BellTab   = makeTabIcon(BellIcon,   Colors.sf, Colors.sfl);
+const BellTab = makeTabIcon(BellIcon, Colors.sf, Colors.sfl);
 
 const styles = StyleSheet.create({
   icon: {
@@ -83,9 +77,9 @@ export default function TeacherLayout() {
         options={{ tabBarIcon: ({ focused }) => <BellTab focused={focused} /> }}
       />
       {/* Hidden screens (no tab) */}
-      <Tabs.Screen name="courses/[id]"           options={{ href: null }} />
+      <Tabs.Screen name="courses/[id]" options={{ href: null }} />
       <Tabs.Screen name="applications/brief/[id]" options={{ href: null }} />
-      <Tabs.Screen name="profile/edit"            options={{ href: null }} />
+      <Tabs.Screen name="profile/edit" options={{ href: null }} />
     </Tabs>
   );
 }

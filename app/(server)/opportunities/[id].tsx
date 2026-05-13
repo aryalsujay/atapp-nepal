@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  DimensionValue,
   View,
   Text,
   ScrollView,
@@ -8,14 +9,16 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Routes, routeTo } from '@/routes';
+import { useToast } from '@/components/ui/Toast';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { Shadows } from '../../../src/theme/shadows';
-import { SERVICE_AREAS } from '../../../src/data/serviceAreas';
-import serverCoursesData from '../../../src/data/serverCourses.json';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SERVICE_AREAS } from '@/data/serviceAreas';
+import { serverCourses as serverCoursesData } from '@/data';
 
 const SV_GRADIENT: [string, string, string] = ['#5A3800', '#8B5E14', '#C8900A'];
 
@@ -23,7 +26,7 @@ function ProgressBar({ filled, total }: { filled: number; total: number }) {
   const pct = total > 0 ? Math.min(filled / total, 1) : 0;
   return (
     <View style={styles.progressTrack}>
-      <View style={[styles.progressFill, { width: `${pct * 100}%` as any }]} />
+      <View style={[styles.progressFill, { width: `${pct * 100}%` as DimensionValue }]} />
     </View>
   );
 }
@@ -31,6 +34,7 @@ function ProgressBar({ filled, total }: { filled: number; total: number }) {
 export default function OpportunityDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const course = serverCoursesData.find((c) => String(c.id) === id);
@@ -43,7 +47,14 @@ export default function OpportunityDetailScreen() {
 
   if (!course) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.cr, alignItems: 'center', justifyContent: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: Colors.cr,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Text style={{ color: Colors.tx3 }}>Course not found.</Text>
       </View>
     );
@@ -57,7 +68,7 @@ export default function OpportunityDetailScreen() {
 
   const handleApply = () => {
     if (selectedAreas.length === 0) {
-      Alert.alert('Select an area', 'Please select at least one service area to apply.');
+      toast.warning('Please select at least one service area to apply.', 'Select an area');
       return;
     }
     setSubmitted(true);
@@ -67,15 +78,24 @@ export default function OpportunityDetailScreen() {
 
   if (submitted) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.cr, alignItems: 'center', justifyContent: 'center', padding: Layout.horizontalPad }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: Colors.cr,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: Layout.horizontalPad,
+        }}
+      >
         <Text style={styles.successIcon}>🙏</Text>
         <Text style={styles.successTitle}>Application Submitted!</Text>
         <Text style={styles.successBody}>
-          Your application to serve at {course.center} has been sent. The coordinator will review and notify you. Sadhu!
+          Your application to serve at {course.center} has been sent. The coordinator will review
+          and notify you. Sadhu!
         </Text>
         <TouchableOpacity
           style={styles.backBtn}
-          onPress={() => router.replace('/(server)/applications')}
+          onPress={() => router.replace(Routes.serverApplications)}
         >
           <Text style={styles.backBtnText}>View My Applications</Text>
         </TouchableOpacity>
@@ -91,8 +111,10 @@ export default function OpportunityDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.cr }}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
         {/* Hero gradient header */}
         <LinearGradient
           colors={SV_GRADIENT}
@@ -105,15 +127,23 @@ export default function OpportunityDetailScreen() {
             <Text style={styles.backArrowText}>← Back</Text>
           </TouchableOpacity>
 
-          <Text style={styles.heroCenter}>{course.center} {course.flag}</Text>
+          <Text style={styles.heroCenter}>
+            {course.center} {course.flag}
+          </Text>
           <Text style={styles.heroCity}>{course.city}</Text>
           <Text style={styles.heroDates}>📅 {course.dates}</Text>
 
           {/* Quick stat chips */}
           <View style={styles.heroChips}>
-            <View style={styles.heroChip}><Text style={styles.heroChipText}>{course.type}</Text></View>
-            <View style={styles.heroChip}><Text style={styles.heroChipText}>{course.days} days</Text></View>
-            <View style={styles.heroChip}><Text style={styles.heroChipText}>{course.altitude}m alt.</Text></View>
+            <View style={styles.heroChip}>
+              <Text style={styles.heroChipText}>{course.type}</Text>
+            </View>
+            <View style={styles.heroChip}>
+              <Text style={styles.heroChipText}>{course.days} days</Text>
+            </View>
+            <View style={styles.heroChip}>
+              <Text style={styles.heroChipText}>{course.altitude}m alt.</Text>
+            </View>
           </View>
         </LinearGradient>
 
@@ -130,9 +160,13 @@ export default function OpportunityDetailScreen() {
           <Text style={styles.sectionTitle}>Slots Filled</Text>
           <View style={styles.progressRow}>
             <ProgressBar filled={course.filled} total={course.total} />
-            <Text style={styles.progressLabel}>{course.filled}/{course.total}</Text>
+            <Text style={styles.progressLabel}>
+              {course.filled}/{course.total}
+            </Text>
           </View>
-          <Text style={styles.genderSlotsText}>{course.mServers} male · {course.fServers} female</Text>
+          <Text style={styles.genderSlotsText}>
+            {course.mServers} male · {course.fServers} female
+          </Text>
         </View>
 
         {/* Arrive by */}
@@ -161,7 +195,9 @@ export default function OpportunityDetailScreen() {
                   activeOpacity={0.8}
                 >
                   <Text style={styles.areaOptionEmoji}>{area.emoji}</Text>
-                  <Text style={[styles.areaOptionLabel, isSelected && styles.areaOptionLabelSelected]}>
+                  <Text
+                    style={[styles.areaOptionLabel, isSelected && styles.areaOptionLabelSelected]}
+                  >
                     {area.label}
                   </Text>
                   {isSelected && <Text style={styles.checkmark}>✓</Text>}
@@ -191,21 +227,33 @@ export default function OpportunityDetailScreen() {
               <Text style={styles.dayRangeLabel}>Serve days:</Text>
               <View style={styles.dayRangeRow}>
                 <View style={styles.dayInput}>
-                  <TouchableOpacity onPress={() => setFromDay((v) => Math.max(1, v - 1))} style={styles.dayBtn}>
+                  <TouchableOpacity
+                    onPress={() => setFromDay((v) => Math.max(1, v - 1))}
+                    style={styles.dayBtn}
+                  >
                     <Text style={styles.dayBtnText}>−</Text>
                   </TouchableOpacity>
                   <Text style={styles.dayValue}>Day {fromDay}</Text>
-                  <TouchableOpacity onPress={() => setFromDay((v) => Math.min(toDay, v + 1))} style={styles.dayBtn}>
+                  <TouchableOpacity
+                    onPress={() => setFromDay((v) => Math.min(toDay, v + 1))}
+                    style={styles.dayBtn}
+                  >
                     <Text style={styles.dayBtnText}>+</Text>
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.toText}>to</Text>
                 <View style={styles.dayInput}>
-                  <TouchableOpacity onPress={() => setToDay((v) => Math.max(fromDay, v - 1))} style={styles.dayBtn}>
+                  <TouchableOpacity
+                    onPress={() => setToDay((v) => Math.max(fromDay, v - 1))}
+                    style={styles.dayBtn}
+                  >
                     <Text style={styles.dayBtnText}>−</Text>
                   </TouchableOpacity>
                   <Text style={styles.dayValue}>Day {toDay}</Text>
-                  <TouchableOpacity onPress={() => setToDay((v) => Math.min(course.days, v + 1))} style={styles.dayBtn}>
+                  <TouchableOpacity
+                    onPress={() => setToDay((v) => Math.min(course.days, v + 1))}
+                    style={styles.dayBtn}
+                  >
                     <Text style={styles.dayBtnText}>+</Text>
                   </TouchableOpacity>
                 </View>
@@ -216,7 +264,6 @@ export default function OpportunityDetailScreen() {
             </View>
           )}
         </View>
-
       </ScrollView>
 
       {/* Apply button (floating) */}
@@ -227,7 +274,9 @@ export default function OpportunityDetailScreen() {
           activeOpacity={0.85}
         >
           <Text style={styles.applyBtnText}>
-            {selectedAreas.length === 0 ? 'Select an area to apply' : `Apply to Serve (${selectedAreas.length} area${selectedAreas.length > 1 ? 's' : ''})`}
+            {selectedAreas.length === 0
+              ? 'Select an area to apply'
+              : `Apply to Serve (${selectedAreas.length} area${selectedAreas.length > 1 ? 's' : ''})`}
           </Text>
         </TouchableOpacity>
       </View>
@@ -235,7 +284,15 @@ export default function OpportunityDetailScreen() {
   );
 }
 
-function StatBox({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function StatBox({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
   return (
     <View style={[styles.statBox, highlight && { backgroundColor: Colors.svl }]}>
       <Text style={[styles.statBoxValue, highlight && { color: Colors.sv }]}>{value}</Text>

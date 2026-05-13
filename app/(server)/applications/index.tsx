@@ -1,20 +1,15 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Routes, routeTo } from '@/routes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, StatusColors } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { Shadows } from '../../../src/theme/shadows';
-import { FadeInView } from '../../../src/components/ui/FadeInView';
-import { SERVICE_AREAS } from '../../../src/data/serviceAreas';
-import serverApplicationsData from '../../../src/data/serverApplications.json';
+import { Colors, StatusColors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { FadeInView } from '@/components/ui/FadeInView';
+import { SERVICE_AREAS } from '@/data/serviceAreas';
+import { serverApplications as serverApplicationsData } from '@/data';
 
 type AppStatus = 'approved' | 'pending' | 'rejected';
 type TabFilter = 'all' | AppStatus;
@@ -36,7 +31,9 @@ function AreaChip({ areaId }: { areaId: string }) {
   if (!area) return null;
   return (
     <View style={[styles.areaChip, { backgroundColor: Colors.svl }]}>
-      <Text style={styles.areaChipText}>{area.emoji} {area.label}</Text>
+      <Text style={styles.areaChipText}>
+        {area.emoji} {area.label}
+      </Text>
     </View>
   );
 }
@@ -46,9 +43,10 @@ export default function ApplicationsScreen() {
   const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState<TabFilter>('all');
 
-  const filtered = filter === 'all'
-    ? serverApplicationsData
-    : serverApplicationsData.filter((a) => a.status === filter);
+  const filtered =
+    filter === 'all'
+      ? serverApplicationsData
+      : serverApplicationsData.filter((a) => a.status === filter);
 
   const counts = {
     all: serverApplicationsData.length,
@@ -87,7 +85,10 @@ export default function ApplicationsScreen() {
         ))}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110, paddingTop: 8 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 110, paddingTop: 8 }}
+      >
         {filtered.length === 0 && (
           <View style={styles.empty}>
             <Text style={styles.emptyEmoji}>📋</Text>
@@ -104,14 +105,16 @@ export default function ApplicationsScreen() {
               <TouchableOpacity
                 style={styles.card}
                 activeOpacity={0.88}
-                onPress={() => router.push(`/(server)/applications/${app.id}` as any)}
+                onPress={() => router.push(routeTo.serverApplicationDetail(app.id))}
               >
                 {/* Status bar */}
                 <View style={[styles.statusBar, { backgroundColor: sc.bg }]}>
                   <Text style={[styles.statusBarText, { color: sc.text }]}>
                     {STATUS_EMOJI[status]} {STATUS_LABELS[status]}
                   </Text>
-                  <Text style={[styles.appliedText, { color: sc.text }]}>Applied {app.applied}</Text>
+                  <Text style={[styles.appliedText, { color: sc.text }]}>
+                    Applied {app.applied}
+                  </Text>
                 </View>
 
                 <View style={styles.cardBody}>
@@ -119,7 +122,9 @@ export default function ApplicationsScreen() {
                   <View style={styles.cardHeader}>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.centerName}>{app.center}</Text>
-                      <Text style={styles.courseMeta}>{app.type} · {app.dates}</Text>
+                      <Text style={styles.courseMeta}>
+                        {app.type} · {app.dates}
+                      </Text>
                     </View>
                   </View>
 
@@ -132,7 +137,9 @@ export default function ApplicationsScreen() {
 
                   {/* Areas */}
                   <View style={styles.chipRow}>
-                    {app.areas.map((a) => <AreaChip key={a} areaId={a} />)}
+                    {app.areas.map((a) => (
+                      <AreaChip key={a} areaId={a} />
+                    ))}
                   </View>
 
                   {/* Approved: coordinator + arrive info */}

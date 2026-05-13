@@ -1,22 +1,17 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { DimensionValue, View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Routes, routeTo } from '@/routes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { Shadows } from '../../../src/theme/shadows';
-import { FadeInView } from '../../../src/components/ui/FadeInView';
-import { SERVICE_AREAS } from '../../../src/data/serviceAreas';
-import serverCoursesData from '../../../src/data/serverCourses.json';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { FadeInView } from '@/components/ui/FadeInView';
+import { SERVICE_AREAS } from '@/data/serviceAreas';
+import { serverCourses as serverCoursesData } from '@/data';
 
-type CourseEntry = typeof serverCoursesData[number];
+type CourseEntry = (typeof serverCoursesData)[number];
 
 const totalOpen = serverCoursesData.reduce((acc, c) => acc + (c.total - c.filled), 0);
 
@@ -25,7 +20,9 @@ function AreaChip({ areaId }: { areaId: string }) {
   if (!area) return null;
   return (
     <View style={[styles.areaChip, { backgroundColor: Colors.svl }]}>
-      <Text style={styles.areaChipText}>{area.emoji} {area.label}</Text>
+      <Text style={styles.areaChipText}>
+        {area.emoji} {area.label}
+      </Text>
     </View>
   );
 }
@@ -34,7 +31,7 @@ function ProgressBar({ filled, total }: { filled: number; total: number }) {
   const pct = total > 0 ? Math.min(filled / total, 1) : 0;
   return (
     <View style={styles.progressTrack}>
-      <View style={[styles.progressFill, { width: `${pct * 100}%` as any }]} />
+      <View style={[styles.progressFill, { width: `${pct * 100}%` as DimensionValue }]} />
     </View>
   );
 }
@@ -44,9 +41,10 @@ export default function OpportunitiesScreen() {
   const insets = useSafeAreaInsets();
   const [activeArea, setActiveArea] = useState<string>('all');
 
-  const filtered: CourseEntry[] = activeArea === 'all'
-    ? serverCoursesData
-    : serverCoursesData.filter((c) => c.areas.includes(activeArea));
+  const filtered: CourseEntry[] =
+    activeArea === 'all'
+      ? serverCoursesData
+      : serverCoursesData.filter((c) => c.areas.includes(activeArea));
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.cr }}>
@@ -66,7 +64,9 @@ export default function OpportunitiesScreen() {
           style={[styles.filterChip, activeArea === 'all' && styles.filterChipActive]}
           onPress={() => setActiveArea('all')}
         >
-          <Text style={[styles.filterChipText, activeArea === 'all' && styles.filterChipTextActive]}>
+          <Text
+            style={[styles.filterChipText, activeArea === 'all' && styles.filterChipTextActive]}
+          >
             All
           </Text>
         </TouchableOpacity>
@@ -76,14 +76,19 @@ export default function OpportunitiesScreen() {
             style={[styles.filterChip, activeArea === area.id && styles.filterChipActive]}
             onPress={() => setActiveArea(area.id)}
           >
-            <Text style={[styles.filterChipText, activeArea === area.id && styles.filterChipTextActive]}>
+            <Text
+              style={[styles.filterChipText, activeArea === area.id && styles.filterChipTextActive]}
+            >
               {area.emoji} {area.label}
             </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110, paddingTop: 4 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 110, paddingTop: 4 }}
+      >
         {filtered.length === 0 && (
           <View style={styles.empty}>
             <Text style={styles.emptyEmoji}>🔍</Text>
@@ -97,12 +102,14 @@ export default function OpportunitiesScreen() {
               <TouchableOpacity
                 style={styles.card}
                 activeOpacity={0.88}
-                onPress={() => router.push(`/(server)/opportunities/${course.id}`)}
+                onPress={() => router.push(routeTo.serverOpportunityDetail(course.id))}
               >
                 {/* Card header */}
                 <View style={styles.cardHeader}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.centerName}>{course.center} {course.flag}</Text>
+                    <Text style={styles.centerName}>
+                      {course.center} {course.flag}
+                    </Text>
                     <Text style={styles.cityMeta}>{course.city}</Text>
                   </View>
                   <View style={styles.typeBadge}>
@@ -111,12 +118,16 @@ export default function OpportunitiesScreen() {
                 </View>
 
                 {/* Dates */}
-                <Text style={styles.dates}>📅 {course.dates} · {course.days} days</Text>
+                <Text style={styles.dates}>
+                  📅 {course.dates} · {course.days} days
+                </Text>
 
                 {/* Progress bar */}
                 <View style={styles.progressRow}>
                   <ProgressBar filled={course.filled} total={course.total} />
-                  <Text style={styles.progressLabel}>{course.filled}/{course.total}</Text>
+                  <Text style={styles.progressLabel}>
+                    {course.filled}/{course.total}
+                  </Text>
                 </View>
 
                 {/* Slot info */}
@@ -126,12 +137,16 @@ export default function OpportunitiesScreen() {
                       {open > 0 ? `${open} open` : 'Full'}
                     </Text>
                   </View>
-                  <Text style={styles.genderText}>{course.mServers}m + {course.fServers}f slots</Text>
+                  <Text style={styles.genderText}>
+                    {course.mServers}m + {course.fServers}f slots
+                  </Text>
                 </View>
 
                 {/* Area chips */}
                 <View style={styles.chipRow}>
-                  {course.areas.slice(0, 5).map((a) => <AreaChip key={a} areaId={a} />)}
+                  {course.areas.slice(0, 5).map((a) => (
+                    <AreaChip key={a} areaId={a} />
+                  ))}
                   {course.areas.length > 5 && (
                     <View style={styles.areaChip}>
                       <Text style={styles.areaChipText}>+{course.areas.length - 5}</Text>
@@ -142,7 +157,7 @@ export default function OpportunitiesScreen() {
                 {/* CTA */}
                 <TouchableOpacity
                   style={styles.viewBtn}
-                  onPress={() => router.push(`/(server)/opportunities/${course.id}`)}
+                  onPress={() => router.push(routeTo.serverOpportunityDetail(course.id))}
                 >
                   <Text style={styles.viewBtnText}>View Details →</Text>
                 </TouchableOpacity>

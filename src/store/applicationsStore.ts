@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Application } from '../types';
-import seedData from '../data/applications.json';
+import { Application } from '@/types';
+import seedData from '@/data/applications.json';
 import { useNotificationsStore } from './notificationsStore';
 
 interface ApplicationsState {
@@ -11,7 +11,11 @@ interface ApplicationsState {
   submitApplication: (courseId: number, userId: string) => Promise<Application>;
   requestWithdrawal: (applicationId: number, userId: string, note?: string) => Promise<void>;
   withdrawApplication: (applicationId: number, userId: string) => Promise<void>;
-  updateStatus: (applicationId: number, status: Application['status'], reason?: string) => Promise<void>;
+  updateStatus: (
+    applicationId: number,
+    status: Application['status'],
+    reason?: string,
+  ) => Promise<void>;
   addAssignment: (courseId: number, teacherId: string) => Promise<Application>;
   getApprovedCountForCourse: (courseId: number) => Promise<number>;
   getCoTeachersForCourse: (courseId: number, currentTeacherId: string) => Promise<string[]>;
@@ -42,7 +46,7 @@ function recalcQueueForCourse(apps: Application[], courseId: number): Applicatio
   return apps.map((a) =>
     a.courseId === courseId
       ? { ...a, queuePosition: a.status === 'pending' ? positions.get(a.id) : undefined }
-      : a
+      : a,
   );
 }
 
@@ -77,13 +81,19 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
 
   submitApplication: async (courseId, userId) => {
     const all = await loadFromStorage();
-    const pendingForCourse = all.filter((a) => a.courseId === courseId && a.status === 'pending').length;
+    const pendingForCourse = all.filter(
+      (a) => a.courseId === courseId && a.status === 'pending',
+    ).length;
     const newApp: Application = {
       id: Date.now(),
       courseId,
       teacherId: userId,
       status: 'pending',
-      appliedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      appliedDate: new Date().toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
       source: 'applied',
       queuePosition: pendingForCourse + 1,
     };
@@ -101,14 +111,14 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
     const updated = all.map((a) =>
       a.id === applicationId
         ? { ...a, status: 'withdrawal_requested' as const, withdrawalNote: note }
-        : a
+        : a,
     );
     await persistAll(updated);
     set((state) => ({
       applications: state.applications.map((a) =>
         a.id === applicationId
           ? { ...a, status: 'withdrawal_requested' as const, withdrawalNote: note }
-          : a
+          : a,
       ),
     }));
   },
@@ -137,7 +147,7 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
       return;
     }
     let updated = all.map((a) =>
-      a.id === applicationId ? { ...a, status, rejectionReason: reason } : a
+      a.id === applicationId ? { ...a, status, rejectionReason: reason } : a,
     );
     updated = recalcQueueForCourse(updated, target.courseId);
     await persistAll(updated);
@@ -159,7 +169,11 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
       courseId,
       teacherId,
       status: 'approved',
-      appliedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      appliedDate: new Date().toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
       source: 'assigned',
     };
     const updated = recalcQueueForCourse([...all, newApp], courseId);
@@ -176,7 +190,10 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
   getCoTeachersForCourse: async (courseId, currentTeacherId) => {
     const all = await loadFromStorage();
     return all
-      .filter((a) => a.courseId === courseId && a.teacherId !== currentTeacherId && a.status === 'approved')
+      .filter(
+        (a) =>
+          a.courseId === courseId && a.teacherId !== currentTeacherId && a.status === 'approved',
+      )
       .map((a) => a.teacherId);
   },
 }));

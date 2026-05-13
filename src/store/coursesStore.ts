@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import bundledCourses from '../data/courses.json';
-import { parseSchedulePage, NEPAL_CENTERS } from '../utils/scraper';
-import type { Course } from '../types/course';
+import bundledCourses from '@/data/courses.json';
+import { parseSchedulePage, NEPAL_CENTERS } from '@/utils/scraper';
+import type { Course } from '@/types/course';
 
 const COURSES_KEY = '@dhamma_courses_synced';
 const SYNC_TIME_KEY = '@dhamma_courses_last_sync';
@@ -18,10 +18,13 @@ interface CoursesState {
   shouldAutoSync: () => boolean;
 }
 
-function scrapedToCourse(scraped: ReturnType<typeof parseSchedulePage>[number], id: number): Course {
+function scrapedToCourse(
+  scraped: ReturnType<typeof parseSchedulePage>[number],
+  id: number,
+): Course {
   return {
     id,
-    type: scraped.type as any,
+    type: scraped.type as Course['type'],
     center: scraped.centerName,
     centerId: scraped.centerId,
     city: scraped.city,
@@ -33,15 +36,39 @@ function scrapedToCourse(scraped: ReturnType<typeof parseSchedulePage>[number], 
     languages: scraped.languages,
     needCount: 1,
     genderRequired: scraped.genderRequired,
-    status: scraped.status as any,
+    status: scraped.status,
     notes: scraped.notes || undefined,
     distanceKm: 0,
     travelHrs: 0,
     altitude: scraped.altitude,
     students: { expected: 80, male: 40, female: 40 },
-    arrivalDate: scraped.startDate ? (() => { const [,m,d] = scraped.startDate.split('-'); const mn = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return `${mn[+m]} ${+d}`; })() : '',
+    arrivalDate: scraped.startDate
+      ? (() => {
+          const [, m, d] = scraped.startDate.split('-');
+          const mn = [
+            '',
+            'Jan',
+            'Feb',
+            'Mar',
+            'Apr',
+            'May',
+            'Jun',
+            'Jul',
+            'Aug',
+            'Sep',
+            'Oct',
+            'Nov',
+            'Dec',
+          ];
+          return `${mn[+m]} ${+d}`;
+        })()
+      : '',
     arrivalTime: '5:00 PM',
-    coordinator: { name: 'Center Coordinator', role: 'Course Coordinator', phone: 'See dhamma.org' },
+    coordinator: {
+      name: 'Center Coordinator',
+      role: 'Course Coordinator',
+      phone: 'See dhamma.org',
+    },
     transport: 'See dhamma.org for directions',
   };
 }
@@ -112,9 +139,10 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
 
       set({ courses, lastSyncAt: now, syncing: false });
       return { added: courses.length };
-    } catch (err: any) {
+    } catch (err) {
       set({ syncing: false });
-      return { added: 0, error: err?.message ?? 'Sync failed' };
+      const message = err instanceof Error ? err.message : 'Sync failed';
+      return { added: 0, error: message };
     }
   },
 }));

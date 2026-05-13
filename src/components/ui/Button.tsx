@@ -8,10 +8,10 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { Colors } from '../../theme/colors';
-import { FontSize, FontWeight } from '../../theme/typography';
-import { Radius, Layout } from '../../theme/spacing';
-import { Shadows } from '../../theme/shadows';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
 
 type Variant = 'primary' | 'outline' | 'forest' | 'danger' | 'secondary' | 'ghost';
 type Size = 'sm' | 'md' | 'lg';

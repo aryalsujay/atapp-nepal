@@ -10,19 +10,23 @@ import {
   Modal,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useHallsStore } from '../../../src/store/hallsStore';
-import { Hall } from '../../../src/types';
-import { Colors } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { Shadows } from '../../../src/theme/shadows';
-import { SectionHeader } from '../../../src/components/layout/SectionHeader';
-import centresData from '../../../src/data/centers.json';
+import { useToast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { useHallsStore } from '@/store/hallsStore';
+import { Hall } from '@/types';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { centres as centresData } from '@/data';
 
 const GENDER_OPTIONS: Hall['genderRequired'][] = ['Any', 'M', 'F'];
 const GENDER_LABELS = { Any: 'Any Gender', M: 'Male Only', F: 'Female Only' };
 
 export default function AdminCentreDetailScreen() {
+  const toast = useToast();
+  const confirm = useConfirm();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { halls, loadHalls, createHall, updateHall, deleteHall } = useHallsStore();
@@ -40,12 +44,19 @@ export default function AdminCentreDetailScreen() {
     loadHalls();
   }, []);
 
-  const centre = (centresData as any[]).find((c) => c.id === id);
+  const centre = centresData.find((c) => c.id === id);
   const centreHalls = halls.filter((h) => h.centreId === id);
 
   if (!centre) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.cr, alignItems: 'center', justifyContent: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: Colors.cr,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Text style={{ color: Colors.tx3 }}>Centre not found</Text>
       </View>
     );
@@ -71,12 +82,12 @@ export default function AdminCentreDetailScreen() {
   const handleSave = async () => {
     const name = form.name.trim();
     if (!name) {
-      Alert.alert('Validation', 'Hall name is required.');
+      toast.error('Hall name is required.', 'Validation');
       return;
     }
     const slots = parseInt(form.teacherSlots, 10);
     if (isNaN(slots) || slots < 1 || slots > 10) {
-      Alert.alert('Validation', 'Teacher slots must be between 1 and 10.');
+      toast.error('Teacher slots must be between 1 and 10.', 'Validation');
       return;
     }
 
@@ -97,27 +108,18 @@ export default function AdminCentreDetailScreen() {
   };
 
   const handleDelete = (hall: Hall) => {
-    Alert.alert(
-      'Delete Hall',
-      `Delete "${hall.name}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => deleteHall(hall.id),
-        },
-      ]
-    );
+    confirm({
+      title: 'Delete Hall',
+      message: `Delete "${hall.name}"? This cannot be undone.`,
+      confirmText: 'Delete',
+      destructive: true,
+      onConfirm: () => deleteHall(hall.id),
+    });
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.cr }}>
-      <SectionHeader
-        title={centre.name}
-        style={styles.header}
-        onBack={() => router.back()}
-      />
+      <SectionHeader title={centre.name} style={styles.header} onBack={() => router.back()} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
         {/* Centre info */}
@@ -153,7 +155,9 @@ export default function AdminCentreDetailScreen() {
         {centreHalls.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyText}>No halls configured yet.</Text>
-            <Text style={styles.emptySubtext}>Add halls to define teacher slots for this centre.</Text>
+            <Text style={styles.emptySubtext}>
+              Add halls to define teacher slots for this centre.
+            </Text>
           </View>
         ) : (
           centreHalls.map((hall) => (
@@ -180,25 +184,34 @@ export default function AdminCentreDetailScreen() {
 
               <View style={styles.hallMeta}>
                 <View style={styles.metaChip}>
-                  <Text style={styles.metaChipText}>👥 {hall.teacherSlots} teacher{hall.teacherSlots > 1 ? 's' : ''}</Text>
+                  <Text style={styles.metaChipText}>
+                    👥 {hall.teacherSlots} teacher{hall.teacherSlots > 1 ? 's' : ''}
+                  </Text>
                 </View>
                 <View style={styles.metaChip}>
                   <Text style={styles.metaChipText}>
-                    {hall.genderRequired === 'Any' ? '⚧ Any gender' : hall.genderRequired === 'F' ? '👩 Female only' : '👨 Male only'}
+                    {hall.genderRequired === 'Any'
+                      ? '⚧ Any gender'
+                      : hall.genderRequired === 'F'
+                        ? '👩 Female only'
+                        : '👨 Male only'}
                   </Text>
                 </View>
               </View>
 
-              {hall.notes && (
-                <Text style={styles.hallNotes}>{hall.notes}</Text>
-              )}
+              {hall.notes && <Text style={styles.hallNotes}>{hall.notes}</Text>}
             </View>
           ))
         )}
       </ScrollView>
 
       {/* Add/Edit Hall Modal */}
-      <Modal visible={showModal} transparent animationType="slide" onRequestClose={() => setShowModal(false)}>
+      <Modal
+        visible={showModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowModal(false)}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitle}>{editingHall ? 'Edit Hall' : 'Add Hall'}</Text>
@@ -232,11 +245,19 @@ export default function AdminCentreDetailScreen() {
                 {GENDER_OPTIONS.map((g) => (
                   <TouchableOpacity
                     key={g}
-                    style={[styles.genderChip, form.genderRequired === g && styles.genderChipActive]}
+                    style={[
+                      styles.genderChip,
+                      form.genderRequired === g && styles.genderChipActive,
+                    ]}
                     onPress={() => setForm((f) => ({ ...f, genderRequired: g }))}
                     activeOpacity={0.8}
                   >
-                    <Text style={[styles.genderChipText, form.genderRequired === g && { color: Colors.white }]}>
+                    <Text
+                      style={[
+                        styles.genderChipText,
+                        form.genderRequired === g && { color: Colors.white },
+                      ]}
+                    >
                       {GENDER_LABELS[g]}
                     </Text>
                   </TouchableOpacity>
@@ -265,11 +286,7 @@ export default function AdminCentreDetailScreen() {
               >
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.saveBtn}
-                onPress={handleSave}
-                activeOpacity={0.8}
-              >
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
                 <Text style={styles.saveBtnText}>{editingHall ? 'Save Changes' : 'Add Hall'}</Text>
               </TouchableOpacity>
             </View>

@@ -24,8 +24,8 @@ export const Layout = {
   heroPadBottom: 22,
   buttonPadV: 15,
   buttonPadH: 22,
-  inputPadV: 12,
-  inputPadH: 14,
+  inputPadV: 13, // prototype `.inp` uses 13px vertical
+  inputPadH: 15, // prototype `.inp` uses 15px horizontal
   chipPadV: 7,
   chipPadH: 14,
   tabBarHeight: 64,

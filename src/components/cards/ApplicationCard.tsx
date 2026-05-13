@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
-import { Application, Course } from '../../types';
-import { Colors } from '../../theme/colors';
-import { FontSize, FontWeight } from '../../theme/typography';
-import { Radius, Layout, Spacing } from '../../theme/spacing';
-import { Shadows } from '../../theme/shadows';
+import { Application, Course } from '@/types';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
 import { useTranslation } from 'react-i18next';
 
 interface ApplicationCardProps {
@@ -24,7 +24,11 @@ function getTimelineSteps(application: Application) {
       { label: 'Assigned by Admin', done: true },
       { label: 'Confirmed ✓', done: application.status === 'approved' || isWithdrawal },
       {
-        label: isWithdrawal ? 'Step-down Pending' : application.status === 'rejected' ? 'Not Selected' : 'Active',
+        label: isWithdrawal
+          ? 'Step-down Pending'
+          : application.status === 'rejected'
+            ? 'Not Selected'
+            : 'Active',
         done: false,
         rejected: application.status === 'rejected',
         warning: isWithdrawal,
@@ -35,7 +39,13 @@ function getTimelineSteps(application: Application) {
     { label: 'Applied', done: true },
     { label: 'Under Review', done: application.status !== 'pending' },
     {
-      label: isWithdrawal ? 'Step-down Pending' : application.status === 'approved' ? 'Confirmed ✓' : application.status === 'rejected' ? 'Not Selected' : 'Awaiting Decision',
+      label: isWithdrawal
+        ? 'Step-down Pending'
+        : application.status === 'approved'
+          ? 'Confirmed ✓'
+          : application.status === 'rejected'
+            ? 'Not Selected'
+            : 'Awaiting Decision',
       done: application.status === 'approved' && !isWithdrawal,
       rejected: application.status === 'rejected',
       warning: isWithdrawal,
@@ -55,28 +65,37 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
 
   const isWithdrawal = application.status === 'withdrawal_requested';
 
-  const borderColor =
-    isWithdrawal ? '#7C3AED' :
-    application.source === 'assigned'
+  const borderColor = isWithdrawal
+    ? '#7C3AED'
+    : application.source === 'assigned'
       ? '#5B6FA8'
       : application.status === 'approved'
+        ? Colors.fo
+        : application.status === 'rejected'
+          ? Colors.bd2
+          : Colors.sf;
+
+  const statusBg = isWithdrawal
+    ? '#EDE9FE'
+    : application.status === 'approved'
+      ? Colors.fol
+      : application.status === 'rejected'
+        ? Colors.url
+        : Colors.gdl;
+  const statusText = isWithdrawal
+    ? '#7C3AED'
+    : application.status === 'approved'
       ? Colors.fo
       : application.status === 'rejected'
-      ? Colors.bd2
-      : Colors.sf;
-
-  const statusBg =
-    isWithdrawal ? '#EDE9FE' :
-    application.status === 'approved' ? Colors.fol :
-    application.status === 'rejected' ? Colors.url : Colors.gdl;
-  const statusText =
-    isWithdrawal ? '#7C3AED' :
-    application.status === 'approved' ? Colors.fo :
-    application.status === 'rejected' ? Colors.ur : Colors.gd;
-  const statusLabel =
-    isWithdrawal ? '⏸ Step-down Requested' :
-    application.status === 'approved' ? '✓ Approved' :
-    application.status === 'rejected' ? 'Not Selected' : '⏳ Pending';
+        ? Colors.ur
+        : Colors.gd;
+  const statusLabel = isWithdrawal
+    ? '⏸ Step-down Requested'
+    : application.status === 'approved'
+      ? '✓ Approved'
+      : application.status === 'rejected'
+        ? 'Not Selected'
+        : '⏳ Pending';
 
   return (
     <TouchableOpacity
@@ -91,7 +110,9 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
           {course && (
             <>
               <Text style={styles.center}>{course.center}</Text>
-              <Text style={styles.courseMeta}>{course.type} · {course.dates}</Text>
+              <Text style={styles.courseMeta}>
+                {course.type} · {course.dates}
+              </Text>
             </>
           )}
           {(!application.source || application.source === 'applied') && (
@@ -117,26 +138,24 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
       <View style={styles.timeline}>
         {steps.map((step, i) => {
           const isLast = i === steps.length - 1;
-          const dotColor = (step as any).warning
+          const dotColor = step.warning
             ? '#7C3AED'
             : step.rejected
-            ? Colors.ur
-            : step.done
-            ? Colors.fo
-            : Colors.cr3;
+              ? Colors.ur
+              : step.done
+                ? Colors.fo
+                : Colors.cr3;
           const lineColor = steps[i + 1]?.done ? Colors.fo : Colors.cr3;
           return (
             <View key={i} style={styles.timelineStep}>
               {/* Dot + line */}
               <View style={styles.timelineDotCol}>
-                <View style={[styles.timelineDot, { backgroundColor: dotColor, borderColor: dotColor }]}>
-                  {step.done && !step.rejected && (
-                    <Text style={styles.timelineCheck}>✓</Text>
-                  )}
+                <View
+                  style={[styles.timelineDot, { backgroundColor: dotColor, borderColor: dotColor }]}
+                >
+                  {step.done && !step.rejected && <Text style={styles.timelineCheck}>✓</Text>}
                 </View>
-                {!isLast && (
-                  <View style={[styles.timelineLine, { backgroundColor: lineColor }]} />
-                )}
+                {!isLast && <View style={[styles.timelineLine, { backgroundColor: lineColor }]} />}
               </View>
               {/* Label */}
               <Text
@@ -156,9 +175,13 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
       {/* Withdrawal request note */}
       {isWithdrawal && (
         <View style={[styles.reasonBox, { backgroundColor: '#EDE9FE' }]}>
-          <Text style={[styles.reasonLabel, { color: '#7C3AED' }]}>Step-down request pending admin approval</Text>
+          <Text style={[styles.reasonLabel, { color: '#7C3AED' }]}>
+            Step-down request pending admin approval
+          </Text>
           {application.withdrawalNote ? (
-            <Text style={[styles.reasonText, { color: '#7C3AED' }]}>{application.withdrawalNote}</Text>
+            <Text style={[styles.reasonText, { color: '#7C3AED' }]}>
+              {application.withdrawalNote}
+            </Text>
           ) : null}
         </View>
       )}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, ViewStyle, StatusBar } from 'react-native';
-import { Colors } from '../../theme/colors';
+import { Colors } from '@/theme/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ScreenWrapperProps {

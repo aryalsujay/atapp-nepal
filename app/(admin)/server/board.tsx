@@ -1,37 +1,47 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { Colors } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { Shadows } from '../../../src/theme/shadows';
-import { SectionHeader } from '../../../src/components/layout/SectionHeader';
-import { SERVICE_AREAS } from '../../../src/data/serviceAreas';
-import serverCourses from '../../../src/data/serverCourses.json';
+import {
+  DimensionValue,
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from 'react-native';
+import { useToast } from '@/components/ui/Toast';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { SERVICE_AREAS } from '@/data/serviceAreas';
+import { serverCourses } from '@/data';
 
 const MOCK_ASSIGNMENTS: Record<number, Record<string, string[]>> = {
   1: {
-    kitchen:   ['Priya Thapa', 'Maya Rai'],
-    dining:    ['Sita Karki'],
-    dhamma:    ['Anita Shrestha', 'Gita Malla'],
-    compound:  ['Ram Bahadur'],
+    kitchen: ['Priya Thapa', 'Maya Rai'],
+    dining: ['Sita Karki'],
+    dhamma: ['Anita Shrestha', 'Gita Malla'],
+    compound: ['Ram Bahadur'],
     reception: ['Bindu Tamang'],
     at_assist: [],
-    manager:   ['Dev Adhikari'],
+    manager: ['Dev Adhikari'],
     residence: ['Kamala Bist'],
   },
   2: {
-    kitchen:   ['Priya Thapa'],
-    dining:    ['Maya Rai', 'Laxmi Devi'],
-    dhamma:    [],
-    compound:  ['Bikram KC'],
+    kitchen: ['Priya Thapa'],
+    dining: ['Maya Rai', 'Laxmi Devi'],
+    dhamma: [],
+    compound: ['Bikram KC'],
     reception: [],
     at_assist: ['Sarita Pun'],
-    manager:   [],
+    manager: [],
     residence: ['Hira Tamang'],
   },
 };
 
 export default function AdminServerBoard() {
+  const toast = useToast();
   const [selectedCourse, setSelectedCourse] = useState(serverCourses[0].id);
   const course = serverCourses.find((c) => c.id === selectedCourse)!;
   const assignments = MOCK_ASSIGNMENTS[selectedCourse] ?? {};
@@ -40,11 +50,11 @@ export default function AdminServerBoard() {
   const capacity = course.total;
 
   const handleAssign = (areaId: string) => {
-    Alert.alert('Assign Server', `Manually assign a server to ${areaId} — coming soon.`);
+    toast.info(`Manually assign a server to ${areaId} — coming soon.`, 'Assign Server');
   };
 
   const handleViewApplicants = (areaId: string) => {
-    Alert.alert('View Applicants', `Applicants for ${areaId} area — open inbox filtered.`);
+    toast.info(`Applicants for ${areaId} area — open inbox filtered.`, 'View Applicants');
   };
 
   return (
@@ -66,10 +76,7 @@ export default function AdminServerBoard() {
           <TouchableOpacity
             key={c.id}
             onPress={() => setSelectedCourse(c.id)}
-            style={[
-              styles.courseChip,
-              selectedCourse === c.id && styles.courseChipActive,
-            ]}
+            style={[styles.courseChip, selectedCourse === c.id && styles.courseChipActive]}
           >
             <Text
               style={[
@@ -108,7 +115,7 @@ export default function AdminServerBoard() {
             <View
               style={[
                 styles.progressFill,
-                { width: `${Math.min(100, (totalFilled / capacity) * 100)}%` as any },
+                { width: `${Math.min(100, (totalFilled / capacity) * 100)}%` as DimensionValue },
               ]}
             />
           </View>
@@ -127,23 +134,31 @@ export default function AdminServerBoard() {
                 <View style={[styles.areaTag, { backgroundColor: area.color + '22' }]}>
                   <Text style={styles.areaTagText}>{area.label}</Text>
                 </View>
-                <View style={[
-                  styles.statusPill,
-                  isFull
-                    ? { backgroundColor: Colors.fol }
-                    : assigned.length > 0
-                    ? { backgroundColor: Colors.gdl }
-                    : { backgroundColor: Colors.url },
-                ]}>
-                  <Text style={[
-                    styles.statusPillText,
+                <View
+                  style={[
+                    styles.statusPill,
                     isFull
-                      ? { color: Colors.fo }
+                      ? { backgroundColor: Colors.fol }
                       : assigned.length > 0
-                      ? { color: Colors.gd }
-                      : { color: Colors.ur },
-                  ]}>
-                    {isFull ? 'Filled' : assigned.length > 0 ? `${assigned.length} assigned` : 'Open'}
+                        ? { backgroundColor: Colors.gdl }
+                        : { backgroundColor: Colors.url },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusPillText,
+                      isFull
+                        ? { color: Colors.fo }
+                        : assigned.length > 0
+                          ? { color: Colors.gd }
+                          : { color: Colors.ur },
+                    ]}
+                  >
+                    {isFull
+                      ? 'Filled'
+                      : assigned.length > 0
+                        ? `${assigned.length} assigned`
+                        : 'Open'}
                   </Text>
                 </View>
               </View>

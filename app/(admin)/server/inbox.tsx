@@ -8,12 +8,13 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import { Colors } from '../../../src/theme/colors';
-import { FontSize, FontWeight } from '../../../src/theme/typography';
-import { Radius, Layout, Spacing } from '../../../src/theme/spacing';
-import { Shadows } from '../../../src/theme/shadows';
-import { SectionHeader } from '../../../src/components/layout/SectionHeader';
-import { SERVICE_AREAS } from '../../../src/data/serviceAreas';
+import { useToast } from '@/components/ui/Toast';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Shadows } from '@/theme/shadows';
+import { SectionHeader } from '@/components/layout/SectionHeader';
+import { SERVICE_AREAS } from '@/data/serviceAreas';
 
 type AppStatus = 'pending' | 'approved' | 'rejected';
 
@@ -102,12 +103,13 @@ const APPS: ServerApp[] = [
 ];
 
 const STATUS_COLOR: Record<AppStatus, { bg: string; text: string }> = {
-  pending:  { bg: Colors.gdl,  text: Colors.gd },
-  approved: { bg: Colors.fol,  text: Colors.fo },
-  rejected: { bg: Colors.url,  text: Colors.ur },
+  pending: { bg: Colors.gdl, text: Colors.gd },
+  approved: { bg: Colors.fol, text: Colors.fo },
+  rejected: { bg: Colors.url, text: Colors.ur },
 };
 
 export default function AdminServerInbox() {
+  const toast = useToast();
   const [filter, setFilter] = useState<'all' | AppStatus>('all');
   const [apps, setApps] = useState<ServerApp[]>(APPS);
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -117,14 +119,15 @@ export default function AdminServerInbox() {
 
   const handleDecision = (id: number, decision: AppStatus) => {
     setApps((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status: decision, note: decisionNote } : a))
+      prev.map((a) => (a.id === id ? { ...a, status: decision, note: decisionNote } : a)),
     );
     setExpanded(null);
     setDecisionNote('');
-    Alert.alert(
-      decision === 'approved' ? 'Approved' : 'Rejected',
-      `Application ${decision}. Notification will be sent.`
-    );
+    if (decision === 'approved') {
+      toast.success(`Application approved. Notification will be sent.`, 'Approved');
+    } else {
+      toast.info(`Application rejected. Notification will be sent.`, 'Rejected');
+    }
   };
 
   const pending = apps.filter((a) => a.status === 'pending').length;
@@ -160,9 +163,7 @@ export default function AdminServerInbox() {
       </ScrollView>
 
       <View style={{ paddingHorizontal: Layout.horizontalPad, gap: 10, marginTop: Spacing.sm }}>
-        {filtered.length === 0 && (
-          <Text style={styles.empty}>No {filter} applications.</Text>
-        )}
+        {filtered.length === 0 && <Text style={styles.empty}>No {filter} applications.</Text>}
 
         {filtered.map((app) => {
           const isExp = expanded === app.id;
@@ -187,13 +188,20 @@ export default function AdminServerInbox() {
                       <Text style={[styles.statusText, { color: sc.text }]}>{app.status}</Text>
                     </View>
                   </View>
-                  <Text style={styles.meta}>{app.center} · {app.dates}</Text>
+                  <Text style={styles.meta}>
+                    {app.center} · {app.dates}
+                  </Text>
                   <View style={styles.areaRow}>
                     {app.areas.map((aId) => {
                       const area = SERVICE_AREAS.find((a) => a.id === aId);
                       return area ? (
-                        <View key={aId} style={[styles.areaChip, { backgroundColor: area.color + '22' }]}>
-                          <Text style={[styles.areaChipText, { color: area.color }]}>{area.label}</Text>
+                        <View
+                          key={aId}
+                          style={[styles.areaChip, { backgroundColor: area.color + '22' }]}
+                        >
+                          <Text style={[styles.areaChipText, { color: area.color }]}>
+                            {area.label}
+                          </Text>
                         </View>
                       ) : null;
                     })}
@@ -213,7 +221,9 @@ export default function AdminServerInbox() {
                   <View style={styles.detailGrid}>
                     <View style={styles.detailItem}>
                       <Text style={styles.detailLabel}>Gender</Text>
-                      <Text style={styles.detailValue}>{app.gender === 'M' ? 'Male' : 'Female'}</Text>
+                      <Text style={styles.detailValue}>
+                        {app.gender === 'M' ? 'Male' : 'Female'}
+                      </Text>
                     </View>
                     <View style={styles.detailItem}>
                       <Text style={styles.detailLabel}>Courses Served</Text>
@@ -225,7 +235,9 @@ export default function AdminServerInbox() {
                     </View>
                     <View style={styles.detailItem}>
                       <Text style={styles.detailLabel}>Full / Partial</Text>
-                      <Text style={styles.detailValue}>{app.partial ? `Partial (${app.days})` : 'Full course'}</Text>
+                      <Text style={styles.detailValue}>
+                        {app.partial ? `Partial (${app.days})` : 'Full course'}
+                      </Text>
                     </View>
                   </View>
 
@@ -258,7 +270,9 @@ export default function AdminServerInbox() {
                           style={[styles.decisionBtn, { backgroundColor: Colors.fol }]}
                           onPress={() => handleDecision(app.id, 'approved')}
                         >
-                          <Text style={[styles.decisionBtnText, { color: Colors.fo }]}>Approve</Text>
+                          <Text style={[styles.decisionBtnText, { color: Colors.fo }]}>
+                            Approve
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     </>
@@ -356,8 +370,18 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   detailItem: { width: '50%', paddingVertical: 4 },
-  detailLabel: { fontSize: FontSize.xs, color: Colors.tx3, textTransform: 'uppercase', letterSpacing: 0.5 },
-  detailValue: { fontSize: FontSize.smPlus, fontWeight: FontWeight.semibold, color: Colors.tx, marginTop: 2 },
+  detailLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.tx3,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  detailValue: {
+    fontSize: FontSize.smPlus,
+    fontWeight: FontWeight.semibold,
+    color: Colors.tx,
+    marginTop: 2,
+  },
 
   noteBox: {
     backgroundColor: Colors.gdl,

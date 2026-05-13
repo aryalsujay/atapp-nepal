@@ -1,8 +1,8 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ScrollView, View, ViewStyle } from 'react-native';
-import { Colors } from '../../theme/colors';
-import { FontSize, FontWeight } from '../../theme/typography';
-import { Radius, Spacing } from '../../theme/spacing';
+import { Colors } from '@/theme/colors';
+import { FontSize, FontWeight } from '@/theme/typography';
+import { Radius, Spacing } from '@/theme/spacing';
 
 interface FilterChipProps {
   label: string;
@@ -74,11 +74,7 @@ export const FilterRow: React.FC<FilterRowProps> = ({
   activeColor,
   style,
 }) => (
-  <ScrollView
-    horizontal
-    showsHorizontalScrollIndicator={false}
-    style={styles.scroll}
-  >
+  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scroll}>
     <View style={[styles.row, style]}>
       {options.map((opt) => (
         <FilterChip
