@@ -99,7 +99,7 @@ export default function LoginScreen() {
 
   const [mode, setMode] = useState<Role>('teacher');
   const [identifier, setIdentifier] = useState(DEMO_CREDS.teacher.identifier);
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState(DEMO_CREDS.teacher.password);
   const [savePassword, setSavePassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
