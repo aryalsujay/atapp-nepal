@@ -32,7 +32,7 @@ export interface CenterMeta {
 
 export const NEPAL_CENTERS: Record<string, CenterMeta> = {
   schshringa: {
-    name: 'Dhamma Shringa',
+    name: 'Dharma Shringa',
     centerId: 'dhamma-shringa',
     city: 'Budhanilkantha, Kathmandu',
     region: 'Kathmandu Valley',

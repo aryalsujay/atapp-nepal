@@ -8,7 +8,7 @@ const path = require('path');
 
 const NEPAL_CENTERS = {
   schshringa: {
-    name: 'Dhamma Shringa',
+    name: 'Dharma Shringa',
     centerId: 'dhamma-shringa',
     city: 'Budhanilkantha, Kathmandu',
     region: 'Kathmandu Valley',

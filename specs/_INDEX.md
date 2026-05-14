@@ -41,7 +41,7 @@ Legend: `📝 draft` · `👀 review` · `✅ approved` · `🔨 in progress` ·
 | # | Spec | Route | Prototype | Status |
 |---|---|---|---|---|
 | 03 | [Teacher Onboarding](./03-onboarding-teacher.md) | `/onboarding/teacher/[step]` | `app.html:1713` | ✓ done |
-| 04 | Teacher Home | `/(teacher)/home` | `app.html:940` | — |
+| 04 | [Teacher Home](./04-teacher-home.md) | `/(teacher)/home` | `app.html:940` | 📝 draft |
 | 05 | Teacher Courses | `/(teacher)/courses` | `app.html:1008` | — |
 | 06 | Teacher Course Detail | `/(teacher)/courses/[id]` | `app.html:1071` | — |
 | 07 | Teacher Course Brief | `/(teacher)/applications/brief/[id]` | `app.html:1225` | — |

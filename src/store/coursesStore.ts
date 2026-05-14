@@ -2,11 +2,11 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import bundledCourses from '@/data/courses.json';
 import { parseSchedulePage, NEPAL_CENTERS } from '@/utils/scraper';
+import { SYNC_MIN_AGE_MS } from '@/config/app';
 import type { Course } from '@/types/course';
 
 const COURSES_KEY = '@dhamma_courses_synced';
 const SYNC_TIME_KEY = '@dhamma_courses_last_sync';
-const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 
 interface CoursesState {
   courses: Course[];
@@ -100,7 +100,7 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
   shouldAutoSync: () => {
     const { lastSyncAt } = get();
     if (!lastSyncAt) return true;
-    return Date.now() - lastSyncAt.getTime() > SIX_HOURS_MS;
+    return Date.now() - lastSyncAt.getTime() > SYNC_MIN_AGE_MS;
   },
 
   syncCourses: async () => {

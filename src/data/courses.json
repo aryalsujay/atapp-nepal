@@ -2,7 +2,7 @@
   {
     "id": 1,
     "type": "Teen Course",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -37,7 +37,7 @@
   {
     "id": 2,
     "type": "Teen Course",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -73,7 +73,7 @@
   {
     "id": 3,
     "type": "3-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -109,7 +109,7 @@
   {
     "id": 4,
     "type": "1-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -145,7 +145,7 @@
   {
     "id": 5,
     "type": "1-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -181,7 +181,7 @@
   {
     "id": 6,
     "type": "3-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -217,7 +217,7 @@
   {
     "id": 7,
     "type": "1-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -253,7 +253,7 @@
   {
     "id": 8,
     "type": "1-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -289,7 +289,7 @@
   {
     "id": 9,
     "type": "1-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -325,7 +325,7 @@
   {
     "id": 10,
     "type": "1-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -361,7 +361,7 @@
   {
     "id": 11,
     "type": "3-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -397,42 +397,7 @@
   {
     "id": 12,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
-    "centerId": "dhamma-shringa",
-    "city": "Budhanilkantha, Kathmandu",
-    "country": "NP",
-    "flag": "🇳🇵",
-    "dates": "May 14–May 25, 2026",
-    "startDate": "2026-05-14",
-    "endDate": "2026-05-25",
-    "languages": [
-      "ne",
-      "en"
-    ],
-    "needCount": 1,
-    "genderRequired": "Any",
-    "status": "waitlist",
-    "distanceKm": 0,
-    "travelHrs": 0,
-    "altitude": 1337,
-    "students": {
-      "expected": 80,
-      "male": 40,
-      "female": 40
-    },
-    "arrivalDate": "May 14",
-    "arrivalTime": "5:00 PM",
-    "coordinator": {
-      "name": "Center Coordinator",
-      "role": "Course Coordinator",
-      "phone": "See dhamma.org"
-    },
-    "transport": "See dhamma.org for directions"
-  },
-  {
-    "id": 13,
-    "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -465,9 +430,45 @@
     "transport": "See dhamma.org for directions"
   },
   {
+    "id": 13,
+    "type": "45-Day",
+    "center": "Dharma Shringa",
+    "centerId": "dhamma-shringa",
+    "city": "Budhanilkantha, Kathmandu",
+    "country": "NP",
+    "flag": "🇳🇵",
+    "dates": "Jun 09–Jul 25, 2026",
+    "startDate": "2026-06-09",
+    "endDate": "2026-07-25",
+    "languages": [
+      "ne",
+      "en"
+    ],
+    "needCount": 1,
+    "genderRequired": "Any",
+    "status": "waitlist",
+    "notes": "Old Student Course Qualification RequirementsTo apply Click here",
+    "distanceKm": 0,
+    "travelHrs": 0,
+    "altitude": 1337,
+    "students": {
+      "expected": 80,
+      "male": 40,
+      "female": 40
+    },
+    "arrivalDate": "Jun 9",
+    "arrivalTime": "5:00 PM",
+    "coordinator": {
+      "name": "Center Coordinator",
+      "role": "Course Coordinator",
+      "phone": "See dhamma.org"
+    },
+    "transport": "See dhamma.org for directions"
+  },
+  {
     "id": 14,
     "type": "45-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -502,44 +503,8 @@
   },
   {
     "id": 15,
-    "type": "45-Day",
-    "center": "Dhamma Shringa",
-    "centerId": "dhamma-shringa",
-    "city": "Budhanilkantha, Kathmandu",
-    "country": "NP",
-    "flag": "🇳🇵",
-    "dates": "Jun 09–Jul 25, 2026",
-    "startDate": "2026-06-09",
-    "endDate": "2026-07-25",
-    "languages": [
-      "ne",
-      "en"
-    ],
-    "needCount": 1,
-    "genderRequired": "Any",
-    "status": "waitlist",
-    "notes": "Old Student Course Qualification RequirementsTo apply Click here",
-    "distanceKm": 0,
-    "travelHrs": 0,
-    "altitude": 1337,
-    "students": {
-      "expected": 80,
-      "male": 40,
-      "female": 40
-    },
-    "arrivalDate": "Jun 9",
-    "arrivalTime": "5:00 PM",
-    "coordinator": {
-      "name": "Center Coordinator",
-      "role": "Course Coordinator",
-      "phone": "See dhamma.org"
-    },
-    "transport": "See dhamma.org for directions"
-  },
-  {
-    "id": 16,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -572,9 +537,9 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 17,
+    "id": 16,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -607,9 +572,9 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 18,
+    "id": 17,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -642,9 +607,9 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 19,
+    "id": 18,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -677,9 +642,9 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 20,
+    "id": 19,
     "type": "Satipatthana Sutta",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -713,9 +678,44 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 21,
+    "id": 20,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
+    "centerId": "dhamma-shringa",
+    "city": "Budhanilkantha, Kathmandu",
+    "country": "NP",
+    "flag": "🇳🇵",
+    "dates": "Aug 14–Aug 25, 2026",
+    "startDate": "2026-08-14",
+    "endDate": "2026-08-25",
+    "languages": [
+      "ne",
+      "en"
+    ],
+    "needCount": 1,
+    "genderRequired": "Any",
+    "status": "not_yet_open",
+    "distanceKm": 0,
+    "travelHrs": 0,
+    "altitude": 1337,
+    "students": {
+      "expected": 80,
+      "male": 40,
+      "female": 40
+    },
+    "arrivalDate": "Aug 14",
+    "arrivalTime": "5:00 PM",
+    "coordinator": {
+      "name": "Center Coordinator",
+      "role": "Course Coordinator",
+      "phone": "See dhamma.org"
+    },
+    "transport": "See dhamma.org for directions"
+  },
+  {
+    "id": 21,
+    "type": "Executive",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -749,43 +749,8 @@
   },
   {
     "id": 22,
-    "type": "Executive",
-    "center": "Dhamma Shringa",
-    "centerId": "dhamma-shringa",
-    "city": "Budhanilkantha, Kathmandu",
-    "country": "NP",
-    "flag": "🇳🇵",
-    "dates": "Aug 14–Aug 25, 2026",
-    "startDate": "2026-08-14",
-    "endDate": "2026-08-25",
-    "languages": [
-      "ne",
-      "en"
-    ],
-    "needCount": 1,
-    "genderRequired": "Any",
-    "status": "not_yet_open",
-    "distanceKm": 0,
-    "travelHrs": 0,
-    "altitude": 1337,
-    "students": {
-      "expected": 80,
-      "male": 40,
-      "female": 40
-    },
-    "arrivalDate": "Aug 14",
-    "arrivalTime": "5:00 PM",
-    "coordinator": {
-      "name": "Center Coordinator",
-      "role": "Course Coordinator",
-      "phone": "See dhamma.org"
-    },
-    "transport": "See dhamma.org for directions"
-  },
-  {
-    "id": 23,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -818,9 +783,9 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 24,
+    "id": 23,
     "type": "20-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -854,9 +819,9 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 25,
+    "id": 24,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -889,9 +854,9 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 26,
+    "id": 25,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -924,9 +889,9 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 27,
+    "id": 26,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -960,9 +925,9 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 28,
+    "id": 27,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -996,9 +961,9 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 29,
+    "id": 28,
     "type": "60-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -1032,9 +997,9 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 30,
+    "id": 29,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -1067,9 +1032,9 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 31,
+    "id": 30,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -1102,9 +1067,9 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 32,
+    "id": 31,
     "type": "10-Day",
-    "center": "Dhamma Shringa",
+    "center": "Dharma Shringa",
     "centerId": "dhamma-shringa",
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
@@ -1137,7 +1102,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 33,
+    "id": 32,
     "type": "Children's Anapana",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1172,7 +1137,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 34,
+    "id": 33,
     "type": "Children's Anapana",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1207,7 +1172,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 35,
+    "id": 34,
     "type": "Children's Anapana",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1242,7 +1207,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 36,
+    "id": 35,
     "type": "3-Day",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1278,7 +1243,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 37,
+    "id": 36,
     "type": "10-Day",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1313,7 +1278,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 38,
+    "id": 37,
     "type": "10-Day",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1348,7 +1313,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 39,
+    "id": 38,
     "type": "10-Day",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1383,7 +1348,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 40,
+    "id": 39,
     "type": "10-Day",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1418,7 +1383,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 41,
+    "id": 40,
     "type": "10-Day",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1453,7 +1418,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 42,
+    "id": 41,
     "type": "10-Day",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1488,7 +1453,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 43,
+    "id": 42,
     "type": "10-Day",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1523,7 +1488,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 44,
+    "id": 43,
     "type": "10-Day",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1558,7 +1523,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 45,
+    "id": 44,
     "type": "10-Day",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1593,7 +1558,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 46,
+    "id": 45,
     "type": "10-Day",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1628,7 +1593,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 47,
+    "id": 46,
     "type": "20-Day",
     "center": "Dhamma Pokhara",
     "centerId": "dhamma-pokhara",
@@ -1664,7 +1629,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 48,
+    "id": 47,
     "type": "10-Day",
     "center": "Dhamma Adhara",
     "centerId": "dhamma-adhara",
@@ -1700,7 +1665,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 49,
+    "id": 48,
     "type": "10-Day",
     "center": "Dhamma Adhara",
     "centerId": "dhamma-adhara",
@@ -1736,7 +1701,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 50,
+    "id": 49,
     "type": "10-Day",
     "center": "Dhamma Adhara",
     "centerId": "dhamma-adhara",
@@ -1772,7 +1737,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 51,
+    "id": 50,
     "type": "10-Day",
     "center": "Dhamma Adhara",
     "centerId": "dhamma-adhara",
@@ -1808,7 +1773,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 52,
+    "id": 51,
     "type": "10-Day",
     "center": "Dhamma Adhara",
     "centerId": "dhamma-adhara",
@@ -1844,7 +1809,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 53,
+    "id": 52,
     "type": "1-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -1880,7 +1845,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 54,
+    "id": 53,
     "type": "1-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -1916,7 +1881,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 55,
+    "id": 54,
     "type": "1-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -1952,7 +1917,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 56,
+    "id": 55,
     "type": "1-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -1988,7 +1953,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 57,
+    "id": 56,
     "type": "3-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -2024,7 +1989,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 58,
+    "id": 57,
     "type": "1-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -2060,7 +2025,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 59,
+    "id": 58,
     "type": "1-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -2096,7 +2061,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 60,
+    "id": 59,
     "type": "10-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -2131,7 +2096,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 61,
+    "id": 60,
     "type": "10-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -2166,7 +2131,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 62,
+    "id": 61,
     "type": "10-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -2201,7 +2166,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 63,
+    "id": 62,
     "type": "10-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -2236,7 +2201,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 64,
+    "id": 63,
     "type": "10-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -2271,7 +2236,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 65,
+    "id": 64,
     "type": "10-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -2306,7 +2271,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 66,
+    "id": 65,
     "type": "10-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -2341,16 +2306,16 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 67,
-    "type": "10-Day",
+    "id": 66,
+    "type": "Satipatthana Sutta",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
     "city": "Chitwan",
     "country": "NP",
     "flag": "🇳🇵",
-    "dates": "Sep 01–Sep 12, 2026",
+    "dates": "Sep 01–Sep 10, 2026",
     "startDate": "2026-09-01",
-    "endDate": "2026-09-12",
+    "endDate": "2026-09-10",
     "languages": [
       "ne",
       "en"
@@ -2358,6 +2323,7 @@
     "needCount": 1,
     "genderRequired": "Any",
     "status": "not_yet_open",
+    "notes": "Note: New Dates!Old Student Course Qualification Requirements",
     "distanceKm": 0,
     "travelHrs": 0,
     "altitude": 210,
@@ -2376,16 +2342,16 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 68,
-    "type": "Satipatthana Sutta",
+    "id": 67,
+    "type": "10-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
     "city": "Chitwan",
     "country": "NP",
     "flag": "🇳🇵",
-    "dates": "Sep 16–Sep 25, 2026",
-    "startDate": "2026-09-16",
-    "endDate": "2026-09-25",
+    "dates": "Sep 15–Sep 26, 2026",
+    "startDate": "2026-09-15",
+    "endDate": "2026-09-26",
     "languages": [
       "ne",
       "en"
@@ -2393,7 +2359,6 @@
     "needCount": 1,
     "genderRequired": "Any",
     "status": "not_yet_open",
-    "notes": "Old Student Course Qualification Requirements",
     "distanceKm": 0,
     "travelHrs": 0,
     "altitude": 210,
@@ -2402,7 +2367,7 @@
       "male": 40,
       "female": 40
     },
-    "arrivalDate": "Sep 16",
+    "arrivalDate": "Sep 15",
     "arrivalTime": "5:00 PM",
     "coordinator": {
       "name": "Center Coordinator",
@@ -2412,7 +2377,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 69,
+    "id": 68,
     "type": "10-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -2448,7 +2413,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 70,
+    "id": 69,
     "type": "45-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -2484,7 +2449,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 71,
+    "id": 70,
     "type": "10-Day",
     "center": "Dhamma Janani",
     "centerId": "dhamma-janani",
@@ -2519,7 +2484,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 72,
+    "id": 71,
     "type": "1-Day",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -2555,7 +2520,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 73,
+    "id": 72,
     "type": "1-Day",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -2591,7 +2556,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 74,
+    "id": 73,
     "type": "1-Day",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -2627,7 +2592,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 75,
+    "id": 74,
     "type": "3-Day",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -2663,7 +2628,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 76,
+    "id": 75,
     "type": "10-Day",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -2698,7 +2663,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 77,
+    "id": 76,
     "type": "Satipatthana Sutta",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -2734,7 +2699,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 78,
+    "id": 77,
     "type": "10-Day",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -2769,7 +2734,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 79,
+    "id": 78,
     "type": "10-Day",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -2804,7 +2769,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 80,
+    "id": 79,
     "type": "Satipatthana Sutta",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -2840,7 +2805,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 81,
+    "id": 80,
     "type": "10-Day",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -2875,7 +2840,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 82,
+    "id": 81,
     "type": "10-Day",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -2911,7 +2876,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 83,
+    "id": 82,
     "type": "10-Day",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -2946,7 +2911,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 84,
+    "id": 83,
     "type": "10-Day",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -2981,7 +2946,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 85,
+    "id": 84,
     "type": "10-Day",
     "center": "Dhamma Agara",
     "centerId": "dhamma-agara",
@@ -3017,7 +2982,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 86,
+    "id": 85,
     "type": "Children's Anapana",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3052,7 +3017,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 87,
+    "id": 86,
     "type": "Children's Anapana",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3087,43 +3052,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 88,
-    "type": "1-Day",
-    "center": "Dhamma Birata",
-    "centerId": "dhamma-birata",
-    "city": "Biratnagar",
-    "country": "NP",
-    "flag": "🇳🇵",
-    "dates": "May 09, 2026",
-    "startDate": "2026-05-09",
-    "endDate": "2026-05-09",
-    "languages": [
-      "ne",
-      "en"
-    ],
-    "needCount": 1,
-    "genderRequired": "Any",
-    "status": "open",
-    "notes": "For old students",
-    "distanceKm": 0,
-    "travelHrs": 0,
-    "altitude": 72,
-    "students": {
-      "expected": 80,
-      "male": 40,
-      "female": 40
-    },
-    "arrivalDate": "May 9",
-    "arrivalTime": "5:00 PM",
-    "coordinator": {
-      "name": "Center Coordinator",
-      "role": "Course Coordinator",
-      "phone": "See dhamma.org"
-    },
-    "transport": "See dhamma.org for directions"
-  },
-  {
-    "id": 89,
+    "id": 87,
     "type": "1-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3139,7 +3068,7 @@
     ],
     "needCount": 1,
     "genderRequired": "Any",
-    "status": "not_yet_open",
+    "status": "open",
     "notes": "For old students",
     "distanceKm": 0,
     "travelHrs": 0,
@@ -3159,7 +3088,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 90,
+    "id": 88,
     "type": "1-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3195,7 +3124,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 91,
+    "id": 89,
     "type": "1-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3231,7 +3160,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 92,
+    "id": 90,
     "type": "1-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3267,7 +3196,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 93,
+    "id": 91,
     "type": "1-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3303,7 +3232,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 94,
+    "id": 92,
     "type": "1-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3339,7 +3268,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 95,
+    "id": 93,
     "type": "1-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3375,7 +3304,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 96,
+    "id": 94,
     "type": "1-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3411,7 +3340,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 97,
+    "id": 95,
     "type": "10-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3446,7 +3375,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 98,
+    "id": 96,
     "type": "10-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3481,7 +3410,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 99,
+    "id": 97,
     "type": "10-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3516,7 +3445,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 100,
+    "id": 98,
     "type": "10-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3551,7 +3480,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 101,
+    "id": 99,
     "type": "Satipatthana Sutta",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3587,7 +3516,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 102,
+    "id": 100,
     "type": "10-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3622,7 +3551,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 103,
+    "id": 101,
     "type": "10-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3657,7 +3586,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 104,
+    "id": 102,
     "type": "30-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3673,7 +3602,7 @@
     ],
     "needCount": 1,
     "genderRequired": "Any",
-    "status": "not_yet_open",
+    "status": "open",
     "notes": "Old Student Course Qualification Requirements",
     "distanceKm": 0,
     "travelHrs": 0,
@@ -3693,7 +3622,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 105,
+    "id": 103,
     "type": "10-Day",
     "center": "Dhamma Birata",
     "centerId": "dhamma-birata",
@@ -3728,7 +3657,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 106,
+    "id": 104,
     "type": "10-Day",
     "center": "Dhamma Citavana",
     "centerId": "dhamma-citavana",
@@ -3763,7 +3692,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 107,
+    "id": 105,
     "type": "10-Day",
     "center": "Dhamma Citavana",
     "centerId": "dhamma-citavana",
@@ -3798,7 +3727,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 108,
+    "id": 106,
     "type": "Satipatthana Sutta",
     "center": "Dhamma Citavana",
     "centerId": "dhamma-citavana",
@@ -3834,7 +3763,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 109,
+    "id": 107,
     "type": "10-Day",
     "center": "Dhamma Citavana",
     "centerId": "dhamma-citavana",
@@ -3869,7 +3798,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 110,
+    "id": 108,
     "type": "10-Day",
     "center": "Dhamma Citavana",
     "centerId": "dhamma-citavana",
@@ -3904,7 +3833,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 111,
+    "id": 109,
     "type": "10-Day",
     "center": "Dhamma Citavana",
     "centerId": "dhamma-citavana",
@@ -3940,7 +3869,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 112,
+    "id": 110,
     "type": "10-Day",
     "center": "Dhamma Citavana",
     "centerId": "dhamma-citavana",
@@ -3975,7 +3904,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 113,
+    "id": 111,
     "type": "10-Day",
     "center": "Dhamma Citavana",
     "centerId": "dhamma-citavana",
@@ -4010,7 +3939,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 114,
+    "id": 112,
     "type": "Teacher's Self Course",
     "center": "Dhamma Citavana",
     "centerId": "dhamma-citavana",
@@ -4046,7 +3975,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 115,
+    "id": 113,
     "type": "30-Day",
     "center": "Dhamma Citavana",
     "centerId": "dhamma-citavana",
@@ -4082,7 +4011,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 116,
+    "id": 114,
     "type": "1-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4118,7 +4047,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 117,
+    "id": 115,
     "type": "1-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4154,7 +4083,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 118,
+    "id": 116,
     "type": "1-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4190,7 +4119,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 119,
+    "id": 117,
     "type": "1-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4226,7 +4155,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 120,
+    "id": 118,
     "type": "3-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4262,7 +4191,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 121,
+    "id": 119,
     "type": "1-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4298,7 +4227,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 122,
+    "id": 120,
     "type": "1-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4334,7 +4263,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 123,
+    "id": 121,
     "type": "1-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4370,7 +4299,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 124,
+    "id": 122,
     "type": "1-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4406,7 +4335,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 125,
+    "id": 123,
     "type": "3-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4442,7 +4371,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 126,
+    "id": 124,
     "type": "1-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4478,7 +4407,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 127,
+    "id": 125,
     "type": "1-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4514,7 +4443,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 128,
+    "id": 126,
     "type": "10-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4530,7 +4459,7 @@
     ],
     "needCount": 1,
     "genderRequired": "Any",
-    "status": "open",
+    "status": "full",
     "distanceKm": 0,
     "travelHrs": 0,
     "altitude": 1300,
@@ -4549,7 +4478,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 129,
+    "id": 127,
     "type": "10-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4585,7 +4514,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 130,
+    "id": 128,
     "type": "10-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4621,7 +4550,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 131,
+    "id": 129,
     "type": "10-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4656,7 +4585,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 132,
+    "id": 130,
     "type": "10-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4691,7 +4620,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 133,
+    "id": 131,
     "type": "10-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4726,7 +4655,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 134,
+    "id": 132,
     "type": "Satipatthana Sutta",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4762,7 +4691,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 135,
+    "id": 133,
     "type": "10-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4797,7 +4726,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 136,
+    "id": 134,
     "type": "10-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4833,7 +4762,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 137,
+    "id": 135,
     "type": "10-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4868,7 +4797,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 138,
+    "id": 136,
     "type": "10-Day",
     "center": "Dhamma Kitti",
     "centerId": "dhamma-kitti",
@@ -4903,7 +4832,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 139,
+    "id": 137,
     "type": "Teen Course",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -4938,7 +4867,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 140,
+    "id": 138,
     "type": "Teen Course",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -4973,7 +4902,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 141,
+    "id": 139,
     "type": "Teen Course",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5008,7 +4937,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 142,
+    "id": 140,
     "type": "Teen Course",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5043,7 +4972,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 143,
+    "id": 141,
     "type": "Teen Course",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5078,7 +5007,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 144,
+    "id": 142,
     "type": "Teen Course",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5113,7 +5042,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 145,
+    "id": 143,
     "type": "Teen Course",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5148,7 +5077,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 146,
+    "id": 144,
     "type": "Teen Course",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5183,7 +5112,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 147,
+    "id": 145,
     "type": "Teen Course",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5218,7 +5147,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 148,
+    "id": 146,
     "type": "Teen Course",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5253,7 +5182,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 149,
+    "id": 147,
     "type": "Teen Course",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5288,7 +5217,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 150,
+    "id": 148,
     "type": "Teen Course",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5323,7 +5252,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 151,
+    "id": 149,
     "type": "1-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5359,7 +5288,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 152,
+    "id": 150,
     "type": "1-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5395,7 +5324,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 153,
+    "id": 151,
     "type": "1-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5431,7 +5360,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 154,
+    "id": 152,
     "type": "1-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5467,7 +5396,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 155,
+    "id": 153,
     "type": "1-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5503,7 +5432,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 156,
+    "id": 154,
     "type": "1-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5539,7 +5468,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 157,
+    "id": 155,
     "type": "1-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5575,7 +5504,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 158,
+    "id": 156,
     "type": "1-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5611,7 +5540,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 159,
+    "id": 157,
     "type": "1-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5647,7 +5576,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 160,
+    "id": 158,
     "type": "1-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5683,7 +5612,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 161,
+    "id": 159,
     "type": "3-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5719,7 +5648,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 162,
+    "id": 160,
     "type": "1-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5755,7 +5684,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 163,
+    "id": 161,
     "type": "10-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5790,7 +5719,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 164,
+    "id": 162,
     "type": "10-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5825,7 +5754,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 165,
+    "id": 163,
     "type": "10-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5860,7 +5789,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 166,
+    "id": 164,
     "type": "10-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5895,7 +5824,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 167,
+    "id": 165,
     "type": "10-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5930,7 +5859,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 168,
+    "id": 166,
     "type": "10-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -5965,7 +5894,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 169,
+    "id": 167,
     "type": "10-Day",
     "center": "Dhamma Nandana",
     "centerId": "dhamma-nandana",
@@ -6000,79 +5929,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 170,
-    "type": "10-Day",
-    "center": "Dhamma Nibha",
-    "centerId": "dhamma-nibha",
-    "city": "Kakani Village",
-    "country": "NP",
-    "flag": "🇳🇵",
-    "dates": "May 08–May 19, 2026",
-    "startDate": "2026-05-08",
-    "endDate": "2026-05-19",
-    "languages": [
-      "ne",
-      "en"
-    ],
-    "needCount": 1,
-    "genderRequired": "M",
-    "status": "full",
-    "notes": "For Male only",
-    "distanceKm": 0,
-    "travelHrs": 0,
-    "altitude": 2073,
-    "students": {
-      "expected": 80,
-      "male": 40,
-      "female": 40
-    },
-    "arrivalDate": "May 8",
-    "arrivalTime": "5:00 PM",
-    "coordinator": {
-      "name": "Center Coordinator",
-      "role": "Course Coordinator",
-      "phone": "See dhamma.org"
-    },
-    "transport": "See dhamma.org for directions"
-  },
-  {
-    "id": 171,
-    "type": "10-Day",
-    "center": "Dhamma Nibha",
-    "centerId": "dhamma-nibha",
-    "city": "Kakani Village",
-    "country": "NP",
-    "flag": "🇳🇵",
-    "dates": "Aug 08–Aug 19, 2026",
-    "startDate": "2026-08-08",
-    "endDate": "2026-08-19",
-    "languages": [
-      "ne",
-      "en"
-    ],
-    "needCount": 1,
-    "genderRequired": "M",
-    "status": "not_yet_open",
-    "notes": "For Male only",
-    "distanceKm": 0,
-    "travelHrs": 0,
-    "altitude": 2073,
-    "students": {
-      "expected": 80,
-      "male": 40,
-      "female": 40
-    },
-    "arrivalDate": "Aug 8",
-    "arrivalTime": "5:00 PM",
-    "coordinator": {
-      "name": "Center Coordinator",
-      "role": "Course Coordinator",
-      "phone": "See dhamma.org"
-    },
-    "transport": "See dhamma.org for directions"
-  },
-  {
-    "id": 172,
+    "id": 168,
     "type": "10-Day",
     "center": "Dhamma Nibha",
     "centerId": "dhamma-nibha",
@@ -6108,7 +5965,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 173,
+    "id": 169,
     "type": "10-Day",
     "center": "Dhamma Nibha",
     "centerId": "dhamma-nibha",
@@ -6143,7 +6000,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 174,
+    "id": 170,
     "type": "10-Day",
     "center": "Dhamma Paraga",
     "centerId": "dhamma-paraga",
@@ -6178,7 +6035,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 175,
+    "id": 171,
     "type": "10-Day",
     "center": "Dhamma Paraga",
     "centerId": "dhamma-paraga",
@@ -6213,7 +6070,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 176,
+    "id": 172,
     "type": "10-Day",
     "center": "Dhamma Paraga",
     "centerId": "dhamma-paraga",
@@ -6248,7 +6105,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 177,
+    "id": 173,
     "type": "10-Day",
     "center": "Dhamma Paraga",
     "centerId": "dhamma-paraga",
@@ -6283,7 +6140,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 178,
+    "id": 174,
     "type": "10-Day",
     "center": "Dhamma Paraga",
     "centerId": "dhamma-paraga",
@@ -6318,7 +6175,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 179,
+    "id": 175,
     "type": "10-Day",
     "center": "Dhamma Paraga",
     "centerId": "dhamma-paraga",
@@ -6353,7 +6210,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 180,
+    "id": 176,
     "type": "10-Day",
     "center": "Dhamma Sagar",
     "centerId": "dhamma-sagar",
@@ -6369,7 +6226,7 @@
     ],
     "needCount": 1,
     "genderRequired": "Any",
-    "status": "waitlist",
+    "status": "open",
     "distanceKm": 0,
     "travelHrs": 0,
     "altitude": 2860,
@@ -6388,7 +6245,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 181,
+    "id": 177,
     "type": "10-Day",
     "center": "Dhamma Sagar",
     "centerId": "dhamma-sagar",
@@ -6404,7 +6261,7 @@
     ],
     "needCount": 1,
     "genderRequired": "Any",
-    "status": "waitlist",
+    "status": "full",
     "distanceKm": 0,
     "travelHrs": 0,
     "altitude": 2860,
@@ -6423,7 +6280,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 182,
+    "id": 178,
     "type": "10-Day",
     "center": "Dhamma Sagar",
     "centerId": "dhamma-sagar",
@@ -6458,7 +6315,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 183,
+    "id": 179,
     "type": "10-Day",
     "center": "Dhamma Sagar",
     "centerId": "dhamma-sagar",
@@ -6493,7 +6350,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 184,
+    "id": 180,
     "type": "10-Day",
     "center": "Dhamma Sisa",
     "centerId": "dhamma-sisa",
@@ -6528,7 +6385,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 185,
+    "id": 181,
     "type": "10-Day",
     "center": "Dhamma Sisa",
     "centerId": "dhamma-sisa",
@@ -6563,7 +6420,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 186,
+    "id": 182,
     "type": "10-Day",
     "center": "Dhamma Sisa",
     "centerId": "dhamma-sisa",
@@ -6598,7 +6455,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 187,
+    "id": 183,
     "type": "10-Day",
     "center": "Dhamma Sisa",
     "centerId": "dhamma-sisa",
@@ -6633,7 +6490,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 188,
+    "id": 184,
     "type": "10-Day",
     "center": "Dhamma Sisa",
     "centerId": "dhamma-sisa",
@@ -6668,7 +6525,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 189,
+    "id": 185,
     "type": "10-Day",
     "center": "Dhamma Sisa",
     "centerId": "dhamma-sisa",
@@ -6703,7 +6560,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 190,
+    "id": 186,
     "type": "10-Day",
     "center": "Dhamma Sisa",
     "centerId": "dhamma-sisa",
@@ -6738,7 +6595,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 191,
+    "id": 187,
     "type": "10-Day",
     "center": "Dhamma Sisa",
     "centerId": "dhamma-sisa",
@@ -6773,7 +6630,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 192,
+    "id": 188,
     "type": "1-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -6809,7 +6666,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 193,
+    "id": 189,
     "type": "1-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -6845,7 +6702,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 194,
+    "id": 190,
     "type": "3-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -6881,7 +6738,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 195,
+    "id": 191,
     "type": "1-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -6917,7 +6774,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 196,
+    "id": 192,
     "type": "1-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -6953,7 +6810,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 197,
+    "id": 193,
     "type": "10-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -6989,7 +6846,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 198,
+    "id": 194,
     "type": "Satipatthana Sutta",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -7025,7 +6882,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 199,
+    "id": 195,
     "type": "10-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -7060,7 +6917,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 200,
+    "id": 196,
     "type": "10-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -7095,7 +6952,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 201,
+    "id": 197,
     "type": "10-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -7130,7 +6987,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 202,
+    "id": 198,
     "type": "10-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -7165,7 +7022,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 203,
+    "id": 199,
     "type": "10-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -7200,7 +7057,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 204,
+    "id": 200,
     "type": "10-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -7235,7 +7092,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 205,
+    "id": 201,
     "type": "10-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -7270,7 +7127,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 206,
+    "id": 202,
     "type": "10-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -7305,7 +7162,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 207,
+    "id": 203,
     "type": "10-Day",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -7340,7 +7197,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 208,
+    "id": 204,
     "type": "Satipatthana Sutta",
     "center": "Dhamma Surakhetta",
     "centerId": "dhamma-surakhetta",
@@ -7376,7 +7233,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 209,
+    "id": 205,
     "type": "1-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7412,7 +7269,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 210,
+    "id": 206,
     "type": "1-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7448,7 +7305,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 211,
+    "id": 207,
     "type": "1-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7484,7 +7341,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 212,
+    "id": 208,
     "type": "1-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7520,7 +7377,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 213,
+    "id": 209,
     "type": "1-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7556,7 +7413,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 214,
+    "id": 210,
     "type": "1-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7592,7 +7449,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 215,
+    "id": 211,
     "type": "3-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7628,7 +7485,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 216,
+    "id": 212,
     "type": "1-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7664,7 +7521,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 217,
+    "id": 213,
     "type": "3-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7700,7 +7557,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 218,
+    "id": 214,
     "type": "1-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7736,7 +7593,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 219,
+    "id": 215,
     "type": "10-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7771,7 +7628,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 220,
+    "id": 216,
     "type": "10-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7806,7 +7663,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 221,
+    "id": 217,
     "type": "10-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7841,7 +7698,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 222,
+    "id": 218,
     "type": "10-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7876,7 +7733,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 223,
+    "id": 219,
     "type": "10-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7912,7 +7769,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 224,
+    "id": 220,
     "type": "10-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7947,7 +7804,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 225,
+    "id": 221,
     "type": "10-Day",
     "center": "Dhamma Suriyo",
     "centerId": "dhamma-suriyo",
@@ -7982,7 +7839,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 226,
+    "id": 222,
     "type": "1-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8018,7 +7875,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 227,
+    "id": 223,
     "type": "1-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8054,7 +7911,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 228,
+    "id": 224,
     "type": "1-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8090,7 +7947,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 229,
+    "id": 225,
     "type": "1-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8126,7 +7983,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 230,
+    "id": 226,
     "type": "1-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8162,7 +8019,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 231,
+    "id": 227,
     "type": "1-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8198,7 +8055,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 232,
+    "id": 228,
     "type": "1-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8234,7 +8091,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 233,
+    "id": 229,
     "type": "1-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8270,7 +8127,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 234,
+    "id": 230,
     "type": "10-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8305,7 +8162,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 235,
+    "id": 231,
     "type": "10-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8340,7 +8197,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 236,
+    "id": 232,
     "type": "10-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8375,7 +8232,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 237,
+    "id": 233,
     "type": "10-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8410,7 +8267,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 238,
+    "id": 234,
     "type": "10-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8446,7 +8303,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 239,
+    "id": 235,
     "type": "20-Day",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8482,7 +8339,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 240,
+    "id": 236,
     "type": "Satipatthana Sutta",
     "center": "Dhamma Tarai",
     "centerId": "dhamma-tarai",
@@ -8518,7 +8375,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 241,
+    "id": 237,
     "type": "3-Day",
     "center": "Dhamma Yana",
     "centerId": "dhamma-yana",
@@ -8554,7 +8411,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 242,
+    "id": 238,
     "type": "10-Day",
     "center": "Dhamma Yana",
     "centerId": "dhamma-yana",
@@ -8589,7 +8446,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 243,
+    "id": 239,
     "type": "10-Day",
     "center": "Dhamma Yana",
     "centerId": "dhamma-yana",
@@ -8624,7 +8481,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 244,
+    "id": 240,
     "type": "10-Day",
     "center": "Dhamma Yana",
     "centerId": "dhamma-yana",
@@ -8659,7 +8516,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 245,
+    "id": 241,
     "type": "Satipatthana Sutta",
     "center": "Dhamma Yana",
     "centerId": "dhamma-yana",
@@ -8695,7 +8552,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 246,
+    "id": 242,
     "type": "10-Day",
     "center": "Dhamma Yana",
     "centerId": "dhamma-yana",
@@ -8730,7 +8587,7 @@
     "transport": "See dhamma.org for directions"
   },
   {
-    "id": 247,
+    "id": 243,
     "type": "10-Day",
     "center": "Dhamma Yana",
     "centerId": "dhamma-yana",

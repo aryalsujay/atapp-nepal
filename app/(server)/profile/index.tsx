@@ -16,7 +16,7 @@ import { SERVICE_AREAS } from '@/data/serviceAreas';
 const SV_GRADIENT: [string, string, string] = ['#5A3800', '#8B5E14', '#C8900A'];
 
 const FALLBACK_HISTORY = [
-  { center: 'Dhamma Shringa', type: '10-Day', year: 2025, areas: ['kitchen', 'dining'] },
+  { center: 'Dharma Shringa', type: '10-Day', year: 2025, areas: ['kitchen', 'dining'] },
   { center: 'Dhamma Pokhara', type: '10-Day', year: 2024, areas: ['dhamma', 'compound'] },
 ];
 
