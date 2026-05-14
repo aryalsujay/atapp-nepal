@@ -123,7 +123,7 @@ function NavRow({
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   return (
-    <View style={[s.navRow, { paddingBottom: insets.bottom + 16 }]}>
+    <View style={[s.navRow, { paddingBottom: insets.bottom + 6 }]}>
       <TouchableOpacity onPress={onBack} style={s.backBtn} activeOpacity={0.7}>
         <Text style={s.backBtnText}>← {t('common.back')}</Text>
       </TouchableOpacity>
@@ -507,15 +507,13 @@ const s = StyleSheet.create({
     fontWeight: '600',
   },
   langChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 20,
   },
   langChipText: {
     fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    fontWeight: '600',
   },
 
   // StepHero (steps 1..5)
@@ -574,7 +572,8 @@ const s = StyleSheet.create({
     borderRadius: 2,
   },
 
-  // Placeholder NavRow
+  // NavRow — matches prototype `.btn.sm` (padding 7 15, font 12.5, radius 10)
+  // wrapper padding 18 18 6 per app.html:1749
   navRow: {
     flexDirection: 'row',
     paddingHorizontal: 18,
@@ -583,29 +582,31 @@ const s = StyleSheet.create({
   },
   backBtn: {
     flex: 1,
-    paddingVertical: 13,
-    borderRadius: 12,
-    borderWidth: 1.5,
+    paddingVertical: 7,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    borderWidth: 2,
     borderColor: Colors.bd2,
-    backgroundColor: Colors.white,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
   backBtnText: {
-    fontSize: 14,
+    fontSize: 12.5,
     fontWeight: '700',
-    color: Colors.tx2,
+    color: Colors.tx,
   },
-  continueBtnWrap: { flex: 2, borderRadius: 12, overflow: 'hidden' },
+  continueBtnWrap: { flex: 2, borderRadius: 10, overflow: 'hidden' },
   continueDisabled: { opacity: 0.45 },
   continueBtn: {
-    paddingVertical: 13,
+    paddingVertical: 7,
+    paddingHorizontal: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
   continueBtnText: {
     color: Colors.white,
-    fontSize: 14,
+    fontSize: 12.5,
     fontWeight: '700',
   },
 });

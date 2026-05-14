@@ -237,8 +237,8 @@
         "card_tail": "Now let's set up your scheduling preferences"
       },
       "step1": {
-        "title": "Which languages can you teach in?",
-        "subtitle": "Mark each as Primary, Secondary, or Don't teach.",
+        "title": "Which languages can you conduct courses in?",
+        "subtitle": "Mark each as Primary, Secondary, or Don't teach",
         "primary": "Primary",
         "secondary": "Secondary",
         "off": "Don't teach"
