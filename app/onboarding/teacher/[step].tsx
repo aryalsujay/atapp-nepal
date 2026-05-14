@@ -113,11 +113,8 @@ function StepWelcome({ onContinue }: { onContinue: () => void }) {
         <View style={s.cardWrap}>
           <View style={s.adminCard}>
             <Text style={s.adminSectionLabel}>{t('onboarding.teacher.step0.admin_section')}</Text>
-            {fields.map((f, idx) => (
-              <View
-                key={f.labelKey}
-                style={[s.adminRow, idx < fields.length - 1 && s.adminRowBorder]}
-              >
+            {fields.map((f) => (
+              <View key={f.labelKey} style={[s.adminRow, s.adminRowBorder]}>
                 <Text style={s.adminIcon}>{f.icon}</Text>
                 <View style={s.adminTextWrap}>
                   <Text style={s.adminFieldLabel}>{t(f.labelKey)}</Text>
@@ -322,8 +319,8 @@ const s = StyleSheet.create({
     marginTop: 10,
   },
 
-  // Welcome CTA flush under the card — no top gap, per user
-  ctaWrap: { paddingHorizontal: 18, paddingTop: 0 },
+  // Welcome CTA — comfortable gap below the card
+  ctaWrap: { paddingHorizontal: 18, paddingTop: 14 },
   ctaTouchable: { borderRadius: 14, overflow: 'hidden' },
   ctaBtn: {
     width: '100%',
