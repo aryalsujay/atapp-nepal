@@ -36,8 +36,9 @@ This screen is a **6-step wizard** (step 0 through step 5), each step a full-scr
 `linear-gradient(160deg, #6B3600, #D4760E)` — teacher saffron, two stops.
 
 1. **SBar** — light-content status bar, transparent.
-2. **Top row** — left-aligned only (no right-side widget):
-   - `STEP N OF 4` (uppercase, 11 px, white 70 %, `letterSpacing: .06em`, `fontWeight: 700`). N = current step (1–4).
+2. **Top row** (`flex justify-between align-center`):
+   - Left: `STEP N OF 4` (uppercase, 11 px, white 70 %, `letterSpacing: .06em`, `fontWeight: 700`). N = current step (1–4). Step counter localizes (EN: `STEP 1 OF 4`, NE: `चरण 1 मध्ये 4`).
+   - Right: `🌐 <alt language>` pill — 4 × 11 px padding, white 18 % bg, 1 px white 30 % border, 10.5 px bold text. Shows the *alternative* language label (`नेपाली` when EN active, `English` when NE active). Tap → `settingsStore.setLanguage` toggle.
 3. **Title** — 22 px, `fontWeight: 800`, white, `lineHeight: 1.15`.
 4. **Subtitle** — 13 px, white 78 %, `lineHeight: 1.5`, ~6 px margin-top.
 5. **Progress bar** — 5 segments, 4 px tall, 2 px radius, `gap: 5px`, full-bleed (each `flex: 1`). Segment `i` is `white` if `i <= step - 1`, else `white 25 %`. *(Yes — 5 segments for steps 1–5; step 0 has no progress bar.)*
@@ -339,7 +340,7 @@ The 12-cell `av` array is converted via `fromAvailabilityArray()` (already in `@
 |---|---|---|---|
 | Course types step | Prototype has no such step | Existing v1 had 7 steps including a course-types selector — **removed** | Course authorizations are admin-set per §2; the teacher cannot self-declare them |
 | Font sizes | Prototype 11–14 px body | **Use prototype literals as-is** on this screen, ignoring the +2 px `FontSize` bump | Decided 2026-05-14 — user wants this flow visually identical to prototype |
-| Language toggle (🌐 EN \| NE in hero) | Present on every step | **Removed** | Not in prototype — was incorrectly added in earlier draft |
+| ~~Language toggle removed~~ | — | **Kept** — restored after user confirmed it's needed for translator review and bilingual users | — |
 | 🙏 emoji vs SVG | Prototype uses 🙏 emoji glyph | Keep emoji on welcome/done heroes | Decorative — emoji renders fine here at large sizes and a custom SVG isn't worth the cost |
 | Festival glyph 🎑 | Prototype uses `🎑` emoji in month cells | Keep emoji | Same rationale |
 | Hardware back on step 0 | Prototype is a web SPA; no system back | Show confirm dialog before discarding | Native app convention |

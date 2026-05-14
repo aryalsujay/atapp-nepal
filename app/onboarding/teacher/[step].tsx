@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Routes, routeTo } from '@/routes';
 import { useAuthStore } from '@/store/authStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { useTeachersStore } from '@/store/teachersStore';
 import { useOnboardingDraftStore, type LangLevel } from '@/store/onboardingDraftStore';
 import { Colors, Gradients, GradientDirection } from '@/theme/colors';
@@ -59,6 +60,13 @@ export default function OnboardingStep() {
 
 function StepHero({ step, title, subtitle }: { step: number; title: string; subtitle: string }) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  const language = useSettingsStore((st) => st.language);
+  const setLanguage = useSettingsStore((st) => st.setLanguage);
+  const toggleLang = () => setLanguage(language === 'en' ? 'ne' : 'en');
+  // Pill always shows the *alternative* language so the action is obvious.
+  const altLangLabel = language === 'en' ? 'नेपाली' : 'English';
+
   return (
     <LinearGradient
       colors={['#6B3600', Colors.sf] as [string, string]}
@@ -68,9 +76,20 @@ function StepHero({ step, title, subtitle }: { step: number; title: string; subt
     >
       <LotusHero color="white" opacity={0.08} size={200} right={-30} bottom={-30} />
       <MountainSilhouette color="rgba(255,255,255,0.07)" />
-      <Text style={s.stepCounter}>
-        STEP {step} OF {TOTAL_STEPS - 2}
-      </Text>
+      <View style={s.heroTopRow}>
+        <Text style={s.stepCounter}>
+          {t('onboarding.teacher.step_counter', { step, total: TOTAL_STEPS - 2 })}
+        </Text>
+        <TouchableOpacity
+          onPress={toggleLang}
+          activeOpacity={0.7}
+          style={s.langTogglePill}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel="Toggle language"
+        >
+          <Text style={s.langToggleText}>🌐 {altLangLabel}</Text>
+        </TouchableOpacity>
+      </View>
       <Text style={s.stepTitle}>{title}</Text>
       <Text style={s.stepSub}>{subtitle}</Text>
       <View style={s.progressRow}>
@@ -506,13 +525,31 @@ const s = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
+  heroTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
   stepCounter: {
     fontSize: 11,
     color: 'rgba(255,255,255,0.7)',
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.66,
-    marginBottom: 14,
+  },
+  langTogglePill: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    paddingVertical: 4,
+    paddingHorizontal: 11,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  langToggleText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: Colors.white,
   },
   stepTitle: {
     fontSize: 22,

@@ -224,6 +224,7 @@
   },
   "onboarding": {
     "teacher": {
+      "step_counter": "STEP {{step}} OF {{total}}",
       "step0": {
         "title_en": "Welcome, Teacher",
         "title_ne": "स्वागत छ",
@@ -237,10 +238,10 @@
       },
       "step1": {
         "title": "Which languages can you teach in?",
-        "subtitle": "Tap a language to cycle through Primary, Secondary, and Off.",
+        "subtitle": "Mark each as Primary, Secondary, or Don't teach.",
         "primary": "Primary",
         "secondary": "Secondary",
-        "off": "Off"
+        "off": "Don't teach"
       },
       "step1_legacy": {
         "title": "Welcome to\nDhamma AT",
