@@ -100,6 +100,50 @@ describe('teachersRepo', () => {
   });
 });
 
+describe('coursesRepo.syncUpsert', () => {
+  it('preserves admin-set fields (coTeacher, coordinator, transport, notes) on re-sync', () => {
+    const db = bootedDb();
+    const [first] = coursesRepo.list(db);
+
+    // Simulate admin assignment writing rich fields via full upsert.
+    coursesRepo.upsert(db, {
+      ...first,
+      coTeacher: {
+        name: 'Maya Shrestha',
+        gender: 'F',
+        languages: ['Nepali'],
+        phone: '+977 98••• ••661',
+      },
+      coordinator: { name: 'Ramesh Adhikari', role: 'Center Manager', phone: '+977 98••• ••456' },
+      transport: 'Taxi 30 min from Ring Road',
+      notes: 'Course opens evening of June 13.',
+    });
+
+    // Simulate a sync re-upserting the same id with stripped fields.
+    coursesRepo.syncUpsert(db, {
+      ...first,
+      coTeacher: undefined,
+      coordinator: {
+        name: 'Center Coordinator',
+        role: 'Course Coordinator',
+        phone: 'See dhamma.org',
+      },
+      transport: 'See dhamma.org for directions',
+      notes: undefined,
+      // Sync also "freshens" scrape fields, which we still expect to take.
+      status: 'open',
+    });
+
+    const after = coursesRepo.findById(db, first.id);
+    expect(after?.coTeacher?.name).toBe('Maya Shrestha');
+    expect(after?.coordinator.name).toBe('Ramesh Adhikari');
+    expect(after?.transport).toBe('Taxi 30 min from Ring Road');
+    expect(after?.notes).toBe('Course opens evening of June 13.');
+    // Scrape-derived field DID update.
+    expect(after?.status).toBe('open');
+  });
+});
+
 describe('coursesRepo', () => {
   it('lists seeded courses sorted by start_date', () => {
     const db = bootedDb();

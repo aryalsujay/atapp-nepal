@@ -1,6 +1,6 @@
 # Spec: Teacher Course Brief
 
-> **Status:** `draft`
+> **Status:** `code_done`
 > **Owner of approval:** Sujay
 > **Last updated:** 2026-05-14
 

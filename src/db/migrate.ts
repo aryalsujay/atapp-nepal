@@ -18,6 +18,7 @@ import type { MigrationRow } from './types';
 import { logger } from '@/utils/logger';
 import { migration0001Initial } from './migrations/0001_initial';
 import { migration0002TeacherPhone } from './migrations/0002_teacher_phone';
+import { migration0003CourseCoteacher } from './migrations/0003_course_coteacher';
 
 export interface Migration {
   name: string;
@@ -25,7 +26,11 @@ export interface Migration {
 }
 
 /** Append new migrations to the END of this array. Order is load-bearing. */
-const MIGRATIONS: Migration[] = [migration0001Initial, migration0002TeacherPhone];
+const MIGRATIONS: Migration[] = [
+  migration0001Initial,
+  migration0002TeacherPhone,
+  migration0003CourseCoteacher,
+];
 
 const ENSURE_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS _migrations (
