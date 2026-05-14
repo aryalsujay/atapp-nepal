@@ -17,8 +17,15 @@
  */
 
 import React, { useEffect, useMemo } from 'react';
-import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Image } from 'expo-image';
+import {
+  Image,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -265,7 +272,7 @@ export default function TeacherHome() {
             </View>
             <View style={s.heroRightCol}>
               <View style={s.avatarTile}>
-                <Image source={DHAMMA_WHEEL} style={s.avatarImage} contentFit="contain" />
+                <Image source={DHAMMA_WHEEL} style={s.avatarImage} resizeMode="contain" />
               </View>
               <TouchableOpacity
                 onPress={() => setLanguage(language === 'en' ? 'ne' : 'en')}

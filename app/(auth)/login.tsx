@@ -13,6 +13,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -23,7 +24,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { useRouter } from 'expo-router';
@@ -237,7 +237,7 @@ export default function LoginScreen() {
           <MountainSilhouette color="rgba(255,255,255,0.07)" />
 
           <View style={styles.logoWrap}>
-            <Image source={DHAMMA_LOGO} style={styles.logo} contentFit="contain" />
+            <Image source={DHAMMA_LOGO} style={styles.logo} resizeMode="contain" />
           </View>
           <Text style={styles.title}>{t('login.title')}</Text>
           <Text style={styles.subtitleNe}>{t('login.subtitle_ne')}</Text>

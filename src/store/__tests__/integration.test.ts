@@ -175,6 +175,7 @@ describe('hallsStore', () => {
       centreId: centreIds[0],
       name: 'Test Hall',
       teacherSlots: 1,
+      genderRequired: 'Any',
     });
     expect(useHallsStore.getState().halls.find((h) => h.id === created.id)).toBeDefined();
   });
