@@ -37,13 +37,18 @@ export default function OnboardingStep() {
   const step = Math.max(0, Math.min(TOTAL_STEPS - 1, parseInt(stepStr ?? '0', 10)));
   const router = useRouter();
 
+  // Use explicit pushes (rather than router.back) so the navigation works
+  // identically on web — where the browser history may not contain prior
+  // step URLs if login routed in with `replace`.
   const goNext = () => {
     if (step < TOTAL_STEPS - 1) {
       router.push(routeTo.onboardingTeacher(step + 1));
     }
   };
   const goBack = () => {
-    if (step > 0) router.back();
+    if (step > 0) {
+      router.push(routeTo.onboardingTeacher(step - 1));
+    }
   };
 
   if (step === 0) {
