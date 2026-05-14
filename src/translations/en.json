@@ -224,6 +224,17 @@
   },
   "onboarding": {
     "teacher": {
+      "step0": {
+        "title_en": "Welcome",
+        "title_ne": "स्वागत छ",
+        "subtitle": "Just a few quick questions to help us match you to the right courses.",
+        "admin_section": "Your administrator has set",
+        "field_name_gender": "Name & Gender",
+        "field_authorizations": "Course Authorizations",
+        "field_since": "Authorized Since",
+        "field_home_region": "Home Region",
+        "card_tail": "Now let's set up your scheduling preferences"
+      },
       "step1": {
         "title": "Welcome to\nDhamma AT",
         "subtitle": "Set up your teacher profile to get matched with courses across Nepal."

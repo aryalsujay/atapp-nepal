@@ -36,9 +36,8 @@ This screen is a **6-step wizard** (step 0 through step 5), each step a full-scr
 `linear-gradient(160deg, #6B3600, #D4760E)` — teacher saffron, two stops.
 
 1. **SBar** — light-content status bar, transparent.
-2. **Top row** (`flex justify-between align-center`):
-   - Left: `STEP N OF 4` (uppercase, 11 px, white 70 %, `letterSpacing: .06em`, `fontWeight: 700`). N = current step (1–4).
-   - Right: `🌐 EN | NE` pill — 4 px × 11 px, white 18 % background, 1 px white 30 % border, 10.5 px text. Toggles app language.
+2. **Top row** — left-aligned only (no right-side widget):
+   - `STEP N OF 4` (uppercase, 11 px, white 70 %, `letterSpacing: .06em`, `fontWeight: 700`). N = current step (1–4).
 3. **Title** — 22 px, `fontWeight: 800`, white, `lineHeight: 1.15`.
 4. **Subtitle** — 13 px, white 78 %, `lineHeight: 1.5`, ~6 px margin-top.
 5. **Progress bar** — 5 segments, 4 px tall, 2 px radius, `gap: 5px`, full-bleed (each `flex: 1`). Segment `i` is `white` if `i <= step - 1`, else `white 25 %`. *(Yes — 5 segments for steps 1–5; step 0 has no progress bar.)*
@@ -286,8 +285,8 @@ State is **lifted into the screen** (not split per step file), so navigating Bac
 | Step 2 → Continue when `regions.length === 0` | button disabled | no nav |
 | Step 3 → tap month cell | `cycleMonth(i)` | local state advances `1 → 'f' → 0 → 1`; cell bg + glyph update |
 | Step 4 → type in note | `setNote` | textarea updates; no validation |
+| ~~Hero → tap 🌐 lang toggle~~ | **removed** — not in prototype | — |
 | Step 5 → tap "Enter the app" | `await profileStore.savePreferences({ langs, regions, av, note }); await profileStore.markOnboarded(); router.replace(Routes.teacherHome)` | profile persisted, `authStore.isOnboarded=true`, route to home |
-| Hero → tap 🌐 lang toggle | `settingsStore.toggleLanguage()` | app i18n switches between EN and NE in place; route unchanged |
 | Hardware back (Android) | matches in-hero Back button when `step>0`; on step 0 ⇒ confirm dialog `"Discard onboarding?"` (Yes → `router.replace(Routes.login)`) | |
 
 **Validation summary:** the only blocking condition is `regions.length === 0` on step 2.
@@ -339,7 +338,8 @@ The 12-cell `av` array is converted via `fromAvailabilityArray()` (already in `@
 | Delta | Prototype | Our app | Why |
 |---|---|---|---|
 | Course types step | Prototype has no such step | Existing v1 had 7 steps including a course-types selector — **removed** | Course authorizations are admin-set per §2; the teacher cannot self-declare them |
-| Font sizes | Prototype 11–14 px body | Inherits `FontSize` tokens (+2 px bump) where the spec calls for body text | Decided 2026-05-13 — see `01-login.md` |
+| Font sizes | Prototype 11–14 px body | **Use prototype literals as-is** on this screen, ignoring the +2 px `FontSize` bump | Decided 2026-05-14 — user wants this flow visually identical to prototype |
+| Language toggle (🌐 EN \| NE in hero) | Present on every step | **Removed** | Not in prototype — was incorrectly added in earlier draft |
 | 🙏 emoji vs SVG | Prototype uses 🙏 emoji glyph | Keep emoji on welcome/done heroes | Decorative — emoji renders fine here at large sizes and a custom SVG isn't worth the cost |
 | Festival glyph 🎑 | Prototype uses `🎑` emoji in month cells | Keep emoji | Same rationale |
 | Hardware back on step 0 | Prototype is a web SPA; no system back | Show confirm dialog before discarding | Native app convention |
