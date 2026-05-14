@@ -14,6 +14,7 @@ import { create } from 'zustand';
 import { getDb } from '@/db';
 import { coursesRepo, settingsRepo } from '@/db/repositories';
 import { parseSchedulePage, NEPAL_CENTERS } from '@/utils/scraper';
+import { stableCourseId } from '@/utils/courseId';
 import { SYNC_MIN_AGE_MS } from '@/config/app';
 import type { Course } from '@/types/course';
 import { logger } from '@/utils/logger';
@@ -30,10 +31,13 @@ interface CoursesState {
   shouldAutoSync: () => boolean;
 }
 
-function scrapedToCourse(
-  scraped: ReturnType<typeof parseSchedulePage>[number],
-  id: number,
-): Course {
+function scrapedToCourse(scraped: ReturnType<typeof parseSchedulePage>[number]): Course {
+  const id = stableCourseId(
+    scraped.centerId,
+    scraped.startDate,
+    scraped.type,
+    scraped.genderRequired,
+  );
   const months = [
     '',
     'Jan',
@@ -135,16 +139,27 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
         return { added: 0, error: 'No courses returned from dhamma.org' };
       }
 
-      const courses = allScraped.map((s, i) => scrapedToCourse(s, i + 1));
+      // Dedupe by stable ID — dhamma.org occasionally lists the same logical
+      // course twice (e.g. a paired male+female slot rendered as one row).
+      const byId = new Map<number, Course>();
+      for (const s of allScraped) {
+        const c = scrapedToCourse(s);
+        if (!byId.has(c.id)) byId.set(c.id, c);
+      }
+      const courses = [...byId.values()];
       const now = new Date();
       const db = getDb();
 
-      // Replace the table contents in one transaction: clear + upsert. Keeps
-      // the table consistent with the current schedule (course IDs are scrape
-      // ordinals, not stable across runs).
+      // Atomic replace: upsert new rows + delete any rows whose IDs aren't in
+      // the fresh set. No "empty list" window because we never truncate the
+      // table first.
+      const freshIds = new Set(courses.map((c) => c.id));
       db.transaction(() => {
-        coursesRepo.clear(db);
         coursesRepo.upsertMany(db, courses);
+        const existing = coursesRepo.list(db);
+        for (const c of existing) {
+          if (!freshIds.has(c.id)) coursesRepo.deleteById(db, c.id);
+        }
         settingsRepo.set(db, LAST_SYNC_KEY, now.toISOString());
       });
 

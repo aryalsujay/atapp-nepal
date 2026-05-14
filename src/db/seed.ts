@@ -426,3 +426,45 @@ export function seedDatabase(db: DB): { inserted: Record<string, number> } {
 export function resetSeedFlag(db: DB): void {
   db.exec('DELETE FROM settings WHERE key = ?', [SEED_KEY]);
 }
+
+/**
+ * Backfill teacher.phone for rows that have it in the seed JSON but were
+ * inserted before migration 0002 added the column.
+ *
+ * Idempotent + gated by its own settings flag so it only runs once per
+ * install. Doesn't touch user-edited fields — only writes `phone` when the
+ * row's current value is NULL.
+ */
+const PHONE_BACKFILL_KEY = 'backfill.teacherPhone';
+const PHONE_BACKFILL_VALUE = 'v1';
+
+export function backfillTeacherPhone(db: DB): { backfilled: number } {
+  const flag = db.queryOne<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    PHONE_BACKFILL_KEY,
+  ]);
+  if (flag?.value === PHONE_BACKFILL_VALUE) return { backfilled: 0 };
+
+  const seeds = teachersJson as unknown as { id: string; phone?: string }[];
+  const now = new Date().toISOString();
+  let count = 0;
+
+  db.transaction(() => {
+    for (const t of seeds) {
+      if (!t.phone) continue;
+      const row = db.queryOne<{ phone: string | null }>('SELECT phone FROM teachers WHERE id = ?', [
+        t.id,
+      ]);
+      if (!row || row.phone) continue; // missing teacher OR already has a phone
+      db.exec('UPDATE teachers SET phone = ?, updated_at = ? WHERE id = ?', [t.phone, now, t.id]);
+      count++;
+    }
+    db.exec('INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, ?)', [
+      PHONE_BACKFILL_KEY,
+      PHONE_BACKFILL_VALUE,
+      now,
+    ]);
+  });
+
+  logger.info('[db] phone backfill complete', { backfilled: count });
+  return { backfilled: count };
+}
