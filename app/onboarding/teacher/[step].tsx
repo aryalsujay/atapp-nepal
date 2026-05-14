@@ -123,7 +123,7 @@ function NavRow({
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   return (
-    <View style={[s.navRow, { paddingBottom: insets.bottom + 6 }]}>
+    <View style={[s.navRow, { paddingBottom: insets.bottom + 24 }]}>
       <TouchableOpacity onPress={onBack} style={s.backBtn} activeOpacity={0.7}>
         <Text style={s.backBtnText}>← {t('common.back')}</Text>
       </TouchableOpacity>
@@ -586,8 +586,9 @@ const s = StyleSheet.create({
   },
   backBtn: {
     flex: 1,
-    paddingVertical: 7,
+    paddingVertical: 9,
     paddingHorizontal: 15,
+    minHeight: 40,
     borderRadius: 10,
     borderWidth: 2,
     borderColor: Colors.bd2,
@@ -600,11 +601,13 @@ const s = StyleSheet.create({
     fontWeight: '700',
     color: Colors.tx,
   },
-  continueBtnWrap: { flex: 2, borderRadius: 10, overflow: 'hidden' },
+  continueBtnWrap: { flex: 2 },
   continueDisabled: { opacity: 0.45 },
   continueBtn: {
-    paddingVertical: 7,
+    paddingVertical: 11,
     paddingHorizontal: 15,
+    minHeight: 40,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
