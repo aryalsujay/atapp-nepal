@@ -47,6 +47,13 @@ function rowToDomain(r: CourseRow): Course {
       role: '',
       phone: '',
     }),
+    coTeacher: r.coteacher_json
+      ? jsonParse<NonNullable<Course['coTeacher']>>(r.coteacher_json, {
+          name: '',
+          gender: 'M',
+          languages: [],
+        })
+      : undefined,
     transport: r.transport ?? '',
     status: r.status ?? undefined,
     notes: r.notes ?? undefined,
@@ -71,8 +78,8 @@ export function upsert(db: DB, course: Course): void {
        dates, start_date, end_date, languages_json, need_count,
        gender_required, status, distance_km, travel_hrs, altitude,
        students_json, arrival_date, arrival_time, coordinator_json,
-       transport, notes, created_at, updated_at
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+       coteacher_json, transport, notes, created_at, updated_at
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
      ON CONFLICT(id) DO UPDATE SET
        type             = excluded.type,
        center           = excluded.center,
@@ -94,6 +101,7 @@ export function upsert(db: DB, course: Course): void {
        arrival_date     = excluded.arrival_date,
        arrival_time     = excluded.arrival_time,
        coordinator_json = excluded.coordinator_json,
+       coteacher_json   = excluded.coteacher_json,
        transport        = excluded.transport,
        notes            = excluded.notes,
        updated_at       = excluded.updated_at`,
@@ -119,6 +127,7 @@ export function upsert(db: DB, course: Course): void {
       course.arrivalDate || null,
       course.arrivalTime || null,
       JSON.stringify(course.coordinator),
+      course.coTeacher ? JSON.stringify(course.coTeacher) : null,
       course.transport || null,
       course.notes ?? null,
       now,
@@ -130,6 +139,93 @@ export function upsert(db: DB, course: Course): void {
 export function upsertMany(db: DB, courses: Course[]): void {
   db.transaction(() => {
     for (const c of courses) upsert(db, c);
+  });
+}
+
+/**
+ * Sync-time upsert — writes ONLY the fields derived from the dhamma.org
+ * scrape and leaves admin-set fields untouched on existing rows. New rows
+ * still insert all fields the scrape ships (no admin data to preserve).
+ *
+ * Admin-set fields preserved across sync:
+ *   - coteacher_json
+ *   - coordinator_json (admin replaces "See dhamma.org" placeholder with
+ *     real coordinator name + phone)
+ *   - transport prose
+ *   - notes
+ *   - students breakdown (admin sets male/female once registrations close)
+ *   - arrival_date / arrival_time (admin-controlled per course)
+ *   - distance_km / travel_hrs (admin overrides per teacher's home centre)
+ *
+ * Scrape-derived fields that DO update on every sync:
+ *   - type, center, center_id, city, country, flag
+ *   - dates, start_date, end_date
+ *   - languages_json
+ *   - need_count, gender_required, status
+ *   - altitude (scraped from centre meta, not admin)
+ */
+export function syncUpsert(db: DB, course: Course): void {
+  const now = new Date().toISOString();
+  // Insert clause shipped with sane defaults for first-time inserts; the
+  // ON CONFLICT clause is intentionally narrow.
+  db.exec(
+    `INSERT INTO courses (
+       id, type, center, center_id, city, country, flag,
+       dates, start_date, end_date, languages_json, need_count,
+       gender_required, status, distance_km, travel_hrs, altitude,
+       students_json, arrival_date, arrival_time, coordinator_json,
+       coteacher_json, transport, notes, created_at, updated_at
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     ON CONFLICT(id) DO UPDATE SET
+       type             = excluded.type,
+       center           = excluded.center,
+       center_id        = excluded.center_id,
+       city             = excluded.city,
+       country          = excluded.country,
+       flag             = excluded.flag,
+       dates            = excluded.dates,
+       start_date       = excluded.start_date,
+       end_date         = excluded.end_date,
+       languages_json   = excluded.languages_json,
+       need_count       = excluded.need_count,
+       gender_required  = excluded.gender_required,
+       status           = excluded.status,
+       altitude         = excluded.altitude,
+       updated_at       = excluded.updated_at`,
+    [
+      course.id,
+      course.type,
+      course.center,
+      course.centerId || null,
+      course.city || null,
+      course.country || null,
+      course.flag ?? null,
+      course.dates || null,
+      course.startDate,
+      course.endDate,
+      JSON.stringify(course.languages),
+      course.needCount,
+      course.genderRequired,
+      course.status ?? null,
+      course.distanceKm ?? null,
+      course.travelHrs ?? null,
+      course.altitude ?? null,
+      JSON.stringify(course.students),
+      course.arrivalDate || null,
+      course.arrivalTime || null,
+      JSON.stringify(course.coordinator),
+      course.coTeacher ? JSON.stringify(course.coTeacher) : null,
+      course.transport || null,
+      course.notes ?? null,
+      now,
+      now,
+    ],
+  );
+}
+
+export function syncUpsertMany(db: DB, courses: Course[]): void {
+  db.transaction(() => {
+    for (const c of courses) syncUpsert(db, c);
   });
 }
 

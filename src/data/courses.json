@@ -483,22 +483,32 @@
     "needCount": 1,
     "genderRequired": "Any",
     "status": "open",
-    "distanceKm": 0,
-    "travelHrs": 0,
-    "altitude": 1337,
+    "distanceKm": 12,
+    "travelHrs": 0.5,
+    "altitude": 1450,
     "students": {
-      "expected": 80,
-      "male": 40,
-      "female": 40
+      "expected": 90,
+      "male": 48,
+      "female": 42
     },
-    "arrivalDate": "Jun 14",
+    "arrivalDate": "Jun 13, 2026",
     "arrivalTime": "5:00 PM",
     "coordinator": {
-      "name": "Center Coordinator",
-      "role": "Course Coordinator",
-      "phone": "See dhamma.org"
+      "name": "Ramesh Adhikari",
+      "role": "Center Manager",
+      "phone": "+977 98••• ••456"
     },
-    "transport": "See dhamma.org for directions"
+    "transport": "Taxi ~30 min from Ring Road, or microbus from Sundarijal. Park inside the gate; staff will help with luggage.",
+    "coTeacher": {
+      "name": "Maya Shrestha",
+      "gender": "F",
+      "languages": [
+        "Nepali",
+        "English"
+      ],
+      "phone": "+977 98••• ••661"
+    },
+    "notes": "Course opens evening of June 13. Group sit at 6 PM. Metta on Day 10. Please carry citizenship copy + 2 passport photos for the centre record."
   },
   {
     "id": 1324192656,
@@ -1259,22 +1269,33 @@
     "needCount": 1,
     "genderRequired": "Any",
     "status": "full",
-    "distanceKm": 0,
-    "travelHrs": 0,
-    "altitude": 827,
+    "distanceKm": 207,
+    "travelHrs": 6,
+    "altitude": 822,
     "students": {
-      "expected": 80,
-      "male": 40,
-      "female": 40
+      "expected": 60,
+      "male": 28,
+      "female": 32
     },
-    "arrivalDate": "Jun 1",
-    "arrivalTime": "5:00 PM",
+    "arrivalDate": "May 31, 2026",
+    "arrivalTime": "4:00 PM",
     "coordinator": {
-      "name": "Center Coordinator",
-      "role": "Course Coordinator",
-      "phone": "See dhamma.org"
+      "name": "Bina Gurung",
+      "role": "Center Manager",
+      "phone": "+977 98••• ••711"
     },
-    "transport": "See dhamma.org for directions"
+    "transport": "Microbus or tourist bus Kathmandu → Pokhara (early morning). Last 8 km by taxi. Centre car can pick up from Lakeside if requested in advance.",
+    "coTeacher": {
+      "name": "Bhikkhu Sumedha",
+      "gender": "M",
+      "languages": [
+        "English",
+        "Hindi",
+        "Nepali"
+      ],
+      "phone": "+977 98••• ••211"
+    },
+    "notes": "AT seat reserved at front-right. Local coordinator Bina ji will receive at the gate. Course opens evening of May 31; please arrive by afternoon."
   },
   {
     "id": 201424264,

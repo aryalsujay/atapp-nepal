@@ -11,12 +11,16 @@ describe('runMigrations', () => {
     const db = getDb();
     const result = runMigrations(db);
 
-    expect(result.applied).toEqual(['0001_initial', '0002_teacher_phone']);
+    expect(result.applied).toEqual(['0001_initial', '0002_teacher_phone', '0003_course_coteacher']);
     expect(result.alreadyApplied).toEqual([]);
 
     const rows = db.query<MigrationRow>('SELECT id, name, applied_at FROM _migrations');
-    expect(rows).toHaveLength(2);
-    expect(rows.map((r) => r.name)).toEqual(['0001_initial', '0002_teacher_phone']);
+    expect(rows).toHaveLength(3);
+    expect(rows.map((r) => r.name)).toEqual([
+      '0001_initial',
+      '0002_teacher_phone',
+      '0003_course_coteacher',
+    ]);
   });
 
   it('is idempotent — re-running does nothing', () => {
@@ -25,7 +29,11 @@ describe('runMigrations', () => {
     const second = runMigrations(db);
 
     expect(second.applied).toEqual([]);
-    expect(second.alreadyApplied).toEqual(['0001_initial', '0002_teacher_phone']);
+    expect(second.alreadyApplied).toEqual([
+      '0001_initial',
+      '0002_teacher_phone',
+      '0003_course_coteacher',
+    ]);
   });
 
   it('creates the expected tables', () => {

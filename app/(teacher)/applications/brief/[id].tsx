@@ -1,518 +1,834 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+/**
+ * Teacher Course Brief — implements `specs/07-teacher-course-brief.md`.
+ *
+ * Prototype-faithful port of `app.html:1225–1382`. Forest-green hero,
+ * source-aware status pills (applied vs admin-assigned), arrival card,
+ * co-teacher with gendered avatar, coordinator, students gender-split bar,
+ * 3-tile travel stats + transport prose, 7-item what-to-bring checklist,
+ * conditional notes-from-center, source-aware step-down CTA backed by
+ * `useConfirm` + `applicationsStore.requestWithdrawal`.
+ *
+ * Inline literal font sizes match the prototype; no FontSize tokens used.
+ */
+
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
+  Image,
+  Linking,
   ScrollView,
-  TouchableOpacity,
-  TextInput,
+  StatusBar,
   StyleSheet,
-  Alert,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { useConfirm } from '@/components/ui/ConfirmDialog';
-import { Routes, routeTo } from '@/routes';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path } from 'react-native-svg';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+
+import { Routes } from '@/routes';
 import { useAuthStore } from '@/store/authStore';
 import { useApplicationsStore } from '@/store/applicationsStore';
-import { useNotificationsStore } from '@/store/notificationsStore';
-import { useTeachersStore } from '@/store/teachersStore';
-import { Colors } from '@/theme/colors';
-import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { useCoursesStore } from '@/store/coursesStore';
+import { Colors, GradientDirection } from '@/theme/colors';
 import { Shadows } from '@/theme/shadows';
-import { HeroSection } from '@/components/layout/HeroSection';
-import { Chip } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { courses as coursesData } from '@/data';
-import { Course } from '@/types';
+import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
+import { useTeachersStore } from '@/store/teachersStore';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { useToast } from '@/components/ui/Toast';
+import type { Course } from '@/types';
 
-const WHAT_TO_BRING = [
-  { key: 'dhamma', emoji: '👘' },
-  { key: 'toiletries', emoji: '🧴' },
-  { key: 'medicine', emoji: '💊' },
-  { key: 'phone', emoji: '📱' },
-  { key: 'notebook', emoji: '📓' },
-  { key: 'warm', emoji: '🧥' },
-  { key: 'cash', emoji: '💵' },
-];
+const DHAMMA_WHEEL = require('../../../../assets/logo-dhamma.gif');
+
+interface ChecklistItem {
+  icon: string;
+  text: string;
+}
 
 export default function CourseBriefScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, back } = useLocalSearchParams<{ id: string; back?: string }>();
   const { t } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const confirm = useConfirm();
-  const userId = useAuthStore((s) => s.userId);
-  const { applications, requestWithdrawal, getCoTeachersForCourse } = useApplicationsStore();
-  const { addNotification } = useNotificationsStore();
-  const { findTeacher } = useTeachersStore();
-  const [requestSent, setRequestSent] = useState(false);
-  const [withdrawNote, setWithdrawNote] = useState('');
-  const [showWithdrawInput, setShowWithdrawInput] = useState(false);
-  const [coTeacherIds, setCoTeacherIds] = useState<string[]>([]);
+  const toast = useToast();
 
-  const application = applications.find((a) => a.id === Number(id));
-  const course = application
-    ? (coursesData as Course[]).find((c) => c.id === application.courseId)
-    : null;
+  const userId = useAuthStore((s) => s.userId) ?? '';
+  const applications = useApplicationsStore((s) => s.applications);
+  const loadApplications = useApplicationsStore((s) => s.loadApplications);
+  const requestWithdrawal = useApplicationsStore((s) => s.requestWithdrawal);
+  const courses = useCoursesStore((s) => s.courses) as Course[];
+  const findTeacher = useTeachersStore((s) => s.findTeacher);
+  const teacher = userId ? findTeacher(userId) : undefined;
+  // Origin city for the Travel header — extract the city portion of the
+  // teacher's home region (e.g. "Kathmandu Valley" → "Kathmandu").
+  const homeCity =
+    (teacher?.preferredRegions?.[0] ?? teacher?.region ?? '').split(' ')[0] || 'home';
 
-  useFocusEffect(
-    useCallback(() => {
-      if (application && course && userId) {
-        getCoTeachersForCourse(course.id, userId).then(setCoTeacherIds);
-      }
-    }, [application?.id, course?.id, userId]),
+  useEffect(() => {
+    if (userId) loadApplications(userId);
+  }, [userId, loadApplications]);
+
+  const courseId = Number(id);
+  const course = useMemo(() => courses.find((c) => c.id === courseId), [courses, courseId]);
+  const application = useMemo(
+    () => applications.find((a) => a.courseId === courseId && a.teacherId === userId),
+    [applications, courseId, userId],
   );
 
-  // Hooks must run unconditionally — keep all useMemo / useEffect calls above
-  // any early returns to satisfy `react-hooks/rules-of-hooks`.
-  const coTeachers = useMemo(
-    () => coTeacherIds.map((tid) => findTeacher(tid)).filter(Boolean),
-    [coTeacherIds, findTeacher],
-  );
+  const [localSent, setLocalSent] = useState(false);
+  const sent = localSent || application?.status === 'withdrawal_requested';
 
-  if (!course || !application) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: Colors.cr,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={{ color: Colors.tx3 }}>Brief not found</Text>
-      </View>
-    );
-  }
-
-  const isWithdrawalPending = application.status === 'withdrawal_requested';
-
-  const handleStepDown = () => {
-    if (!userId) return;
-    if (showWithdrawInput) {
-      confirm({
-        title: t('brief.stepDown'),
-        message: t('brief.stepDownConfirm'),
-        confirmText: 'Send Request',
-        destructive: true,
-        onConfirm: async () => {
-          await requestWithdrawal(application.id, userId, withdrawNote.trim() || undefined);
-          await addNotification({
-            targetUserId: 'admin',
-            type: 'update',
-            center: course.center,
-            course: `${course.center} — ${course.type}`,
-            courseId: course.id,
-            subjectEn: 'Teacher requested step-down',
-            bodyEn: `A teacher has requested to step down from the ${course.type} course at ${course.center} (${course.dates}).${withdrawNote.trim() ? '\n\nReason: ' + withdrawNote.trim() : ''}\n\nPlease review and approve or reject this request.`,
-            bodyNe: `एक शिक्षकले ${course.center}को ${course.type} पाठ्यक्रमबाट पछि हट्न अनुरोध गरेका छन्। कृपया समीक्षा गर्नुहोस्।`,
-          });
-          setRequestSent(true);
-        },
-      });
+  const goBack = () => {
+    if (back === 'applications') {
+      router.replace(Routes.teacherApplications);
+      return;
+    }
+    if (router.canGoBack()) {
+      router.back();
     } else {
-      setShowWithdrawInput(true);
+      router.replace(Routes.teacherHome);
     }
   };
 
-  if (requestSent) {
+  if (!course) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: Colors.cr,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 32,
-        }}
-      >
-        <Text style={{ fontSize: 48, marginBottom: 16 }}>🙏</Text>
-        <Text
-          style={{
-            fontSize: FontSize.xl,
-            fontWeight: FontWeight.bold,
-            color: Colors.tx,
-            textAlign: 'center',
-            marginBottom: 8,
-          }}
+      <View style={[s.flex, s.notFoundWrap]}>
+        <Text style={s.notFoundText}>{t('brief.course_not_found')}</Text>
+        <TouchableOpacity
+          onPress={() => router.replace(Routes.teacherHome)}
+          style={s.outlineBtn}
+          activeOpacity={0.7}
         >
-          Request Sent
-        </Text>
-        <Text
-          style={{
-            fontSize: FontSize.smPlus,
-            color: Colors.tx3,
-            textAlign: 'center',
-            marginBottom: 32,
-          }}
-        >
-          Your step-down request has been sent to admin for approval.
-        </Text>
-        <Button
-          label="Back to Applications"
-          variant="primary"
-          onPress={() => router.replace(Routes.teacherApplications)}
-        />
+          <Text style={s.outlineBtnText}>← {t('brief.back_to_home')}</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
-  const langLabel = (code: string) =>
-    code === 'ne' ? 'Nepali' : code === 'en' ? 'English' : code === 'hi' ? 'Hindi' : code;
+  const isAssigned = application?.source === 'assigned';
+
+  const handleCall = async (phone: string) => {
+    const url = `tel:${phone.replace(/[\s•]/g, '')}`;
+    try {
+      const can = await Linking.canOpenURL(url);
+      if (can) await Linking.openURL(url);
+    } catch {
+      // Silent — Linking failures are not user-facing here.
+    }
+  };
+
+  const handleStepDown = () => {
+    if (!application) return;
+    confirm({
+      title: t('brief.step_down_dialog_title'),
+      message: t('brief.step_down_dialog_body'),
+      confirmText: t('brief.step_down_applied_cta'),
+      destructive: true,
+      onConfirm: async () => {
+        await requestWithdrawal(application.id, userId);
+        setLocalSent(true);
+        toast.success(t('brief.step_down_sent'));
+      },
+    });
+  };
+
+  // Checklist comes from i18n as an array of { icon, text } objects.
+  const checklist = (t('brief.checklist', { returnObjects: true }) ?? []) as ChecklistItem[];
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.cr }}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Hero */}
-        <HeroSection
-          title={course.center}
-          subtitle={course.type}
-          gradient="approved"
-          onBack={() => router.back()}
-          badge={
-            <View style={styles.confirmedBadge}>
-              <Text style={styles.confirmedText}>
-                {isWithdrawalPending ? '⏸ Step-down Pending' : `✓ ${t('brief.confirmed')}`}
-              </Text>
-            </View>
-          }
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <ScrollView
+        style={s.flex}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ─── Hero ─────────────────────────────────────────────────────────── */}
+        <LinearGradient
+          colors={['#2A4A30', Colors.fo] as [string, string]}
+          start={GradientDirection.hero.start}
+          end={GradientDirection.hero.end}
+          style={[s.hero, { paddingTop: Math.max(56, insets.top + 16) }]}
         >
-          <Text style={styles.heroDates}>📅 {course.dates}</Text>
-        </HeroSection>
+          <LotusHero color="white" opacity={0.08} size={210} right={-30} bottom={-30} />
+          <MountainSilhouette color="rgba(255,255,255,0.07)" />
 
-        {/* Withdrawal pending banner */}
-        {isWithdrawalPending && (
-          <View style={styles.withdrawalBanner}>
-            <Text style={styles.withdrawalBannerText}>
-              ⏸ Your step-down request is awaiting admin approval. You are still assigned until
-              approved.
+          <TouchableOpacity
+            onPress={goBack}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={s.heroBackRow}
+          >
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M15 18L9 12L15 6"
+                stroke="rgba(255,255,255,0.85)"
+                strokeWidth={2.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+            <Text style={s.heroBackText}>{t('brief.back')}</Text>
+          </TouchableOpacity>
+
+          <Text style={s.heroKicker}>{t('brief.title')}</Text>
+          <Text style={s.heroTitle}>{course.center}</Text>
+          <Text style={s.heroSub}>
+            {course.type} · {course.dates}
+          </Text>
+          {course.city ? (
+            <Text style={s.heroCity}>
+              {course.city}
+              {course.country === 'NP' ? ' · Nepal' : course.country ? ` · ${course.country}` : ''}
+              {course.flag ? ` ${course.flag}` : ''}
             </Text>
-          </View>
-        )}
+          ) : null}
 
-        {/* Arrival Info */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('brief.arrivalInfo')}</Text>
-          <InfoRow
-            label={t('brief.arriveBy')}
-            value={`${course.arrivalDate}, ${course.arrivalTime}`}
-          />
-          <InfoRow label={t('brief.transport')} value={course.transport} />
-          <InfoRow
-            label={t('brief.students')}
-            value={`${course.students.expected} (${course.students.male}M / ${course.students.female}F)`}
-          />
+          <View style={s.heroPillRow}>
+            <View style={s.pillConfirmed}>
+              <Text style={s.pillConfirmedText}>✓ {t('brief.confirmed')}</Text>
+            </View>
+            {isAssigned ? (
+              <View style={s.pillAssigned}>
+                <Text style={s.pillAssignedText}>📨 {t('brief.assigned_by_admin')}</Text>
+              </View>
+            ) : application ? (
+              <View style={s.pillApplied}>
+                <Text style={s.pillAppliedText}>✋ {t('brief.you_applied')}</Text>
+              </View>
+            ) : null}
+          </View>
+        </LinearGradient>
+
+        {/* ─── Arrival ─────────────────────────────────────────────────────── */}
+        <Text style={s.sectionHeader}>🛬 {t('brief.arrival_label')}</Text>
+        <View style={[s.card, s.arrivalCard]}>
+          <Text style={s.arrivalSublabel}>{t('brief.arrive_by')}</Text>
+          <Text style={s.arrivalValue}>
+            {course.arrivalDate}
+            {course.arrivalTime ? ` · ${course.arrivalTime}` : ''}
+          </Text>
+          <Text style={s.arrivalContext}>{t('brief.arrival_context')}</Text>
         </View>
 
-        {/* Coordinator */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('brief.coordinator')}</Text>
-          <View style={styles.contactCard}>
-            <View style={styles.contactAvatar}>
-              <Text style={styles.contactAvatarText}>{course.coordinator.name.charAt(0)}</Text>
+        {/* ─── Co-Teacher ──────────────────────────────────────────────────── */}
+        <Text style={s.sectionHeader}>🧘 {t('brief.co_teacher_label')}</Text>
+        <View style={s.card}>
+          {course.coTeacher ? (
+            <CoTeacherRow
+              co={course.coTeacher}
+              onCall={() => {
+                if (course.coTeacher?.phone) handleCall(course.coTeacher.phone);
+              }}
+              confirmedLabel={t('brief.co_teacher_confirmed')}
+              callLabel={t('brief.call')}
+              femaleLabel={t('brief.female_at')}
+              maleLabel={t('brief.male_at')}
+            />
+          ) : (
+            <Text style={s.emptyText}>{t('brief.no_co_teacher')}</Text>
+          )}
+        </View>
+
+        {/* ─── Coordinator ─────────────────────────────────────────────────── */}
+        <Text style={s.sectionHeader}>👤 {t('brief.coordinator_label')}</Text>
+        <View style={s.card}>
+          <View style={s.coTeacherRow}>
+            <View style={s.coordinatorAvatar}>
+              <Text style={{ fontSize: 18 }}>📋</Text>
             </View>
-            <View style={styles.contactInfo}>
-              <Text style={styles.contactName}>{course.coordinator.name}</Text>
-              <Text style={styles.contactRole}>{course.coordinator.role}</Text>
-              <Text style={styles.contactPhone}>{course.coordinator.phone}</Text>
+            <View style={s.coTeacherMid}>
+              <Text style={s.coTeacherName}>{course.coordinator.name}</Text>
+              <Text style={s.coTeacherSub}>{course.coordinator.role}</Text>
+            </View>
+          </View>
+          {course.coordinator.phone ? (
+            <TouchableOpacity
+              onPress={() => handleCall(course.coordinator.phone ?? '')}
+              activeOpacity={0.7}
+              style={s.phoneRow}
+            >
+              <Text style={s.phoneText}>📞 {course.coordinator.phone}</Text>
+              <Text style={[s.callLink, { color: Colors.sf }]}>{t('brief.call')}</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {/* ─── Students ────────────────────────────────────────────────────── */}
+        <Text style={s.sectionHeader}>👥 {t('brief.students_expected')}</Text>
+        <View style={s.card}>
+          <View style={s.studentsTopRow}>
+            <Text style={s.studentsCount}>{course.students.expected}</Text>
+            <Text style={s.studentsWord}>{t('brief.students_word')}</Text>
+          </View>
+          <Text style={s.studentsSplitLabel}>{t('brief.students_split')}</Text>
+          <View style={s.splitBar}>
+            <View style={[s.splitBarMale, { flex: Math.max(course.students.male, 0.001) }]}>
+              <Text style={s.splitBarText}>♂ {course.students.male}</Text>
+            </View>
+            <View style={[s.splitBarFemale, { flex: Math.max(course.students.female, 0.001) }]}>
+              <Text style={s.splitBarText}>♀ {course.students.female}</Text>
             </View>
           </View>
         </View>
 
-        {/* Static co-teacher (only when no dynamic co-teachers from approvals) */}
-        {course.coTeacher && coTeachers.length === 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('brief.coTeacher')}</Text>
-            <View style={styles.contactCard}>
-              <View style={[styles.contactAvatar, { backgroundColor: Colors.bll }]}>
-                <Text style={[styles.contactAvatarText, { color: Colors.bl }]}>
-                  {course.coTeacher.name.charAt(0)}
-                </Text>
-              </View>
-              <View style={styles.contactInfo}>
-                <Text style={styles.contactName}>{course.coTeacher.name}</Text>
-                <View style={styles.langRow}>
-                  {course.coTeacher.languages.map((l) => (
-                    <Chip key={l} label={langLabel(l)} variant="blue" style={styles.langChip} />
-                  ))}
-                </View>
-                {course.coTeacher.phone && (
-                  <Text style={styles.contactPhone}>{course.coTeacher.phone}</Text>
-                )}
-              </View>
-            </View>
+        {/* ─── Travel ──────────────────────────────────────────────────────── */}
+        <Text style={s.sectionHeader}>
+          🚌 {t('brief.travel')} {t('brief.travel_from', { city: homeCity })}
+        </Text>
+        <View style={s.card}>
+          <View style={s.travelStatRow}>
+            <StatTile
+              value={`${course.distanceKm ?? 0} ${t('brief.km_short')}`}
+              label={t('brief.distance')}
+            />
+            <StatTile value={`~${course.travelHrs ?? 0}`} label={t('brief.hrs_short')} />
+            <StatTile
+              value={`${course.altitude ?? 0} ${t('brief.m_alt')}`}
+              label={t('brief.altitude')}
+            />
           </View>
-        )}
+          <Text style={s.transportLabel}>{t('brief.transport_label')}</Text>
+          <Text style={s.transportProse}>{course.transport}</Text>
+        </View>
 
-        {/* Co-teachers from applications store */}
-        {coTeachers.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              {coTeachers.length === 1 ? 'Your Co-Teacher' : 'Your Co-Teachers'}
-            </Text>
-            {coTeachers.map(
-              (ct) =>
-                ct && (
-                  <View key={ct.id} style={styles.contactCard}>
-                    <View style={[styles.contactAvatar, { backgroundColor: Colors.sfl }]}>
-                      <Text style={[styles.contactAvatarText, { color: Colors.sf }]}>
-                        {ct.name.charAt(0)}
-                      </Text>
-                    </View>
-                    <View style={styles.contactInfo}>
-                      <Text style={styles.contactName}>{ct.name}</Text>
-                      <Text style={styles.contactRole}>
-                        {ct.gender === 'F' ? '👩 Female AT' : '👨 Male AT'} · {ct.totalCourses}{' '}
-                        courses
-                      </Text>
-                      <View style={styles.langRow}>
-                        {Object.entries(ct.languages)
-                          .filter(([, v]) => v !== 'off')
-                          .map(([lang, level]) => (
-                            <Chip
-                              key={lang}
-                              label={lang}
-                              variant={level === 'primary' ? 'orange' : 'gray'}
-                            />
-                          ))}
-                      </View>
-                    </View>
-                  </View>
-                ),
-            )}
-          </View>
-        )}
-
-        {/* What to bring */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('brief.whatToBring')}</Text>
-          {WHAT_TO_BRING.map(({ key, emoji }) => (
-            <View key={key} style={styles.bringItem}>
-              <Text style={styles.bringEmoji}>{emoji}</Text>
-              <Text style={styles.bringLabel}>{t(`brief.checklist.${key}`)}</Text>
+        {/* ─── What to bring ───────────────────────────────────────────────── */}
+        <Text style={s.sectionHeader}>🎒 {t('brief.what_to_bring_at')}</Text>
+        <View style={s.card}>
+          {checklist.map((item, idx) => (
+            <View
+              key={idx}
+              style={[s.checklistRow, idx < checklist.length - 1 && s.checklistRowBorder]}
+            >
+              <Text style={s.checklistIcon}>{item.icon}</Text>
+              <Text style={s.checklistText}>{item.text}</Text>
             </View>
           ))}
         </View>
 
-        {/* Notes */}
+        {/* ─── Notes (conditional) ─────────────────────────────────────────── */}
         {course.notes ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('brief.notes')}</Text>
-            <Text style={styles.notesText}>{course.notes}</Text>
-          </View>
+          <>
+            <Text style={s.sectionHeader}>💬 {t('brief.notes_from_center')}</Text>
+            <View style={[s.card, s.notesCard]}>
+              <Text style={s.notesText}>{`"${course.notes}"`}</Text>
+            </View>
+          </>
         ) : null}
 
-        {/* Step down */}
-        {!isWithdrawalPending && (
-          <View style={styles.stepDownSection}>
-            <Text style={styles.stepDownWarning}>⚠️ {t('brief.stepDownWarning')}</Text>
-
-            {showWithdrawInput && (
-              <TextInput
-                value={withdrawNote}
-                onChangeText={setWithdrawNote}
-                style={styles.withdrawInput}
-                placeholder="Reason for stepping down (optional)"
-                placeholderTextColor={Colors.tx3}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
-            )}
-
-            <Button
-              label={showWithdrawInput ? 'Send Step-Down Request' : t('brief.stepDown')}
-              variant="danger"
-              fullWidth
-              onPress={handleStepDown}
-            />
-
-            {showWithdrawInput && (
-              <TouchableOpacity onPress={() => setShowWithdrawInput(false)}>
-                <Text style={styles.cancelLink}>Cancel</Text>
+        {/* ─── Step-down action ────────────────────────────────────────────── */}
+        {application ? (
+          <View style={s.stepDownWrap}>
+            {sent ? (
+              <View style={s.sentBadge}>
+                <Text style={s.sentBadgeText}>✓ {t('brief.step_down_sent')}</Text>
+              </View>
+            ) : (
+              <TouchableOpacity onPress={handleStepDown} activeOpacity={0.7} style={s.outlineBtn}>
+                <Text style={s.outlineBtnText}>{t('brief.step_down_applied_cta')}</Text>
               </TouchableOpacity>
             )}
           </View>
-        )}
+        ) : null}
       </ScrollView>
     </View>
   );
 }
 
-const InfoRow = ({ label, value }: { label: string; value: string }) => (
-  <View style={styles.infoRow}>
-    <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={styles.infoValue}>{value}</Text>
-  </View>
-);
+// ─── Sub-components ──────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  confirmedBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: Radius.full,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    marginBottom: 8,
-  },
-  confirmedText: {
-    color: Colors.white,
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-  },
-  heroDates: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: FontSize.sm,
-    marginTop: 6,
-  },
+function CoTeacherRow({
+  co,
+  onCall,
+  confirmedLabel,
+  callLabel,
+  femaleLabel,
+  maleLabel,
+}: {
+  co: NonNullable<Course['coTeacher']>;
+  onCall: () => void;
+  confirmedLabel: string;
+  callLabel: string;
+  femaleLabel: string;
+  maleLabel: string;
+}) {
+  const isFemale = co.gender === 'F';
+  const genderLabel = isFemale ? femaleLabel : maleLabel;
+  return (
+    <View>
+      <View style={s.coTeacherRow}>
+        <View
+          style={[s.coTeacherAvatar, isFemale ? s.coTeacherAvatarFemale : s.coTeacherAvatarMale]}
+        >
+          {isFemale ? (
+            <Text style={{ fontSize: 22 }}>🙏🏻</Text>
+          ) : (
+            <Image source={DHAMMA_WHEEL} style={s.coTeacherDhammaWheel} resizeMode="contain" />
+          )}
+        </View>
+        <View style={s.coTeacherMid}>
+          <Text style={s.coTeacherName}>{co.name}</Text>
+          <Text style={s.coTeacherSub}>
+            {genderLabel}
+            {co.languages && co.languages.length > 0 ? ` · ${co.languages.join(', ')}` : ''}
+          </Text>
+        </View>
+        <View style={s.coTeacherConfirmedChip}>
+          <Text style={s.coTeacherConfirmedChipText}>{confirmedLabel}</Text>
+        </View>
+      </View>
+      {co.phone ? (
+        <TouchableOpacity onPress={onCall} activeOpacity={0.7} style={s.phoneRow}>
+          <Text style={s.phoneText}>📞 {co.phone}</Text>
+          <Text style={[s.callLink, { color: Colors.fo }]}>{callLabel}</Text>
+        </TouchableOpacity>
+      ) : null}
+    </View>
+  );
+}
 
-  withdrawalBanner: {
-    backgroundColor: '#EDE9FE',
-    marginHorizontal: Layout.horizontalPad,
-    marginTop: Spacing.md,
-    borderRadius: Radius.md,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#C4B5FD',
-  },
-  withdrawalBannerText: {
-    fontSize: FontSize.sm,
-    color: '#7C3AED',
-    lineHeight: FontSize.sm * 1.5,
-  },
+function StatTile({ value, label }: { value: string; label: string }) {
+  return (
+    <View style={s.travelStatTile}>
+      <Text style={s.travelStatValue}>{value}</Text>
+      <Text style={s.travelStatLabel}>{label}</Text>
+    </View>
+  );
+}
 
-  section: {
-    backgroundColor: Colors.white,
-    marginHorizontal: Layout.horizontalPad,
-    marginTop: Spacing.md,
-    borderRadius: Radius.lg,
-    padding: Layout.cardPad,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    ...Shadows.card,
-    gap: 4,
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
+const s = StyleSheet.create({
+  flex: { flex: 1 },
+
+  // Hero
+  hero: {
+    paddingHorizontal: 18,
+    paddingBottom: 22,
+    overflow: 'hidden',
+    position: 'relative',
   },
-  sectionTitle: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx,
-    marginBottom: Spacing.sm,
-  },
-  infoRow: {
+  heroBackRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.bd,
-    gap: 8,
-  },
-  infoLabel: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx3,
-    fontWeight: FontWeight.medium,
-    flex: 1,
-  },
-  infoValue: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx,
-    fontWeight: FontWeight.semibold,
-    flex: 2,
-    textAlign: 'right',
-  },
-
-  contactCard: {
-    flexDirection: 'row',
-    gap: Spacing.md,
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
+    gap: 4,
+    marginBottom: 14,
+    marginLeft: -2, // pulls the chevron just past the hero edge, like prototype
+    position: 'relative',
   },
-  contactAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.md,
+  heroBackText: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  heroKicker: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '700',
+    letterSpacing: 0.66,
+    textTransform: 'uppercase',
+    position: 'relative',
+  },
+  heroTitle: {
+    fontSize: 21,
+    fontWeight: '800',
+    color: Colors.white,
+    lineHeight: 25,
+    marginTop: 3,
+    position: 'relative',
+  },
+  heroSub: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.78)',
+    marginTop: 2,
+    position: 'relative',
+  },
+  heroCity: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.62)',
+    marginTop: 1,
+    position: 'relative',
+  },
+  heroPillRow: {
+    flexDirection: 'row',
+    gap: 7,
+    flexWrap: 'wrap',
+    marginTop: 13,
+    position: 'relative',
+  },
+  pillConfirmed: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 11,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  pillConfirmedText: {
+    color: Colors.white,
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  pillAssigned: {
+    backgroundColor: 'rgba(91,111,168,0.55)',
+    paddingHorizontal: 11,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  pillAssignedText: {
+    color: Colors.white,
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  pillApplied: {
+    backgroundColor: 'rgba(255,255,255,0.13)',
+    paddingHorizontal: 11,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  pillAppliedText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
+
+  // Section header — same as home `.sph`
+  sectionHeader: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.tx2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.84,
+    marginHorizontal: 18,
+    marginTop: 18,
+    marginBottom: 9,
+  },
+
+  // Card chrome — same as home `.card`
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 11,
+    ...Shadows.card,
+  },
+
+  // Arrival
+  arrivalCard: {
+    backgroundColor: Colors.fol,
+    borderWidth: 1.5,
+    borderColor: Colors.fom,
+  },
+  arrivalSublabel: {
+    fontSize: 11,
+    color: Colors.tx3,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.55,
+  },
+  arrivalValue: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: Colors.fo,
+    marginTop: 3,
+  },
+  arrivalContext: {
+    fontSize: 11.5,
+    color: Colors.tx2,
+    marginTop: 4,
+    lineHeight: 17,
+  },
+
+  // Co-Teacher
+  emptyText: {
+    fontSize: 12.5,
+    color: Colors.tx2,
+    fontStyle: 'italic',
+  },
+  coTeacherRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  coTeacherAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    borderWidth: 1.5,
+  },
+  coTeacherAvatarFemale: {
+    backgroundColor: '#FBE8F0',
+    borderColor: '#F0C8D8',
+  },
+  coTeacherAvatarMale: {
+    backgroundColor: Colors.fol,
+    borderColor: Colors.fom,
+  },
+  coTeacherDhammaWheel: {
+    width: 30,
+    height: 30,
+  },
+  coordinatorAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
     backgroundColor: Colors.sfl,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  contactAvatarText: {
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
-    color: Colors.sf,
-  },
-  contactInfo: {
-    flex: 1,
-    gap: 3,
-  },
-  contactName: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
+  coTeacherMid: { flex: 1 },
+  coTeacherName: {
+    fontSize: 14.5,
+    fontWeight: '800',
     color: Colors.tx,
   },
-  contactRole: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-  },
-  contactPhone: {
-    fontSize: FontSize.sm,
+  coTeacherSub: {
+    fontSize: 11.5,
     color: Colors.tx2,
+    marginTop: 1,
   },
-  langRow: {
-    flexDirection: 'row',
-    gap: 5,
-    flexWrap: 'wrap',
+  coTeacherConfirmedChip: {
+    backgroundColor: Colors.fol,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 20,
   },
-  langChip: {},
+  coTeacherConfirmedChipText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.fo,
+  },
 
-  bringItem: {
+  // Phone row
+  phoneRow: {
+    marginTop: 11,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: Colors.cr,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: 9,
+    justifyContent: 'space-between',
+  },
+  phoneText: {
+    fontSize: 12.5,
+    color: Colors.tx2,
+  },
+  callLink: {
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+
+  // Students
+  studentsTopRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 9,
+  },
+  studentsCount: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: Colors.tx,
+  },
+  studentsWord: {
+    fontSize: 12,
+    color: Colors.tx2,
+  },
+  studentsSplitLabel: {
+    fontSize: 11,
+    color: Colors.tx3,
+    marginTop: 6,
+    marginBottom: 6,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.55,
+  },
+  splitBar: {
+    flexDirection: 'row',
+    gap: 6,
+    height: 32,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: Colors.cr3,
+  },
+  splitBarMale: {
+    backgroundColor: Colors.bl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  splitBarFemale: {
+    backgroundColor: '#C8527A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  splitBarText: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  // Travel
+  travelStatRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  travelStatTile: {
+    flex: 1,
+    backgroundColor: Colors.cr,
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  travelStatValue: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: Colors.tx,
+  },
+  travelStatLabel: {
+    fontSize: 9.5,
+    color: Colors.tx3,
+    marginTop: 1,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  transportLabel: {
+    fontSize: 11,
+    color: Colors.tx3,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.55,
+    marginBottom: 5,
+  },
+  transportProse: {
+    fontSize: 12.5,
+    color: Colors.tx2,
+    lineHeight: 19,
+  },
+
+  // Checklist
+  checklistRow: {
+    flexDirection: 'row',
+    gap: 11,
+    paddingVertical: 7,
+    alignItems: 'flex-start',
+  },
+  checklistRowBorder: {
     borderBottomWidth: 1,
     borderBottomColor: Colors.bd,
+    borderStyle: 'dashed',
   },
-  bringEmoji: {
+  checklistIcon: {
     fontSize: 18,
+    width: 24,
+    textAlign: 'center',
+    flexShrink: 0,
   },
-  bringLabel: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx,
-    fontWeight: FontWeight.medium,
+  checklistText: {
+    fontSize: 12.5,
+    color: Colors.tx2,
+    lineHeight: 18,
     flex: 1,
   },
 
+  // Notes
+  notesCard: {
+    backgroundColor: Colors.sfl,
+    borderWidth: 1,
+    borderColor: Colors.sfm,
+  },
   notesText: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx2,
-    lineHeight: FontSize.smPlus * 1.55,
+    fontSize: 12.5,
+    fontStyle: 'italic',
+    lineHeight: 19,
+    color: Colors.tx,
   },
 
-  stepDownSection: {
-    padding: Layout.horizontalPad,
-    paddingTop: Spacing.lg,
-    paddingBottom: 40,
-    gap: Spacing.sm,
+  // Step-down
+  stepDownWrap: {
+    paddingHorizontal: 18,
+    paddingTop: 14,
   },
-  stepDownWarning: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-    textAlign: 'center',
+  outlineBtn: {
+    width: '100%',
+    paddingVertical: 13,
+    paddingHorizontal: 22,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: Colors.bd2,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  withdrawInput: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.md,
-    borderWidth: 1.5,
-    borderColor: '#C4B5FD',
-    padding: 12,
-    fontSize: FontSize.smPlus,
+  outlineBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
     color: Colors.tx,
-    minHeight: 80,
   },
-  cancelLink: {
-    textAlign: 'center',
-    color: Colors.tx3,
-    fontSize: FontSize.sm,
-    paddingTop: 4,
+  assignedInset: {
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(91,111,168,0.3)',
+    backgroundColor: 'rgba(91,111,168,0.07)',
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 12,
+  },
+  assignedInsetText: {
+    fontSize: 12,
+    color: '#5B6FA8',
+    lineHeight: 19,
+    marginBottom: 12,
+  },
+  assignedBtn: {
+    width: '100%',
+    paddingVertical: 13,
+    paddingHorizontal: 22,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: 'rgba(91,111,168,0.5)',
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  assignedBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#5B6FA8',
+  },
+  sentBadge: {
+    backgroundColor: Colors.fol,
+    borderWidth: 1,
+    borderColor: Colors.fom,
+    borderRadius: 13,
+    paddingVertical: 13,
+    paddingHorizontal: 18,
+    alignItems: 'center',
+  },
+  sentBadgeText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: Colors.fo,
+  },
+
+  // Course-not-found state
+  notFoundWrap: {
+    backgroundColor: Colors.cr,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    gap: 16,
+  },
+  notFoundText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.tx2,
   },
 });

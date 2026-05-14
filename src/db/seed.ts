@@ -272,9 +272,9 @@ export function seedDatabase(db: DB): { inserted: Record<string, number> } {
         `INSERT INTO courses
           (id, type, center, center_id, city, country, flag, dates, start_date, end_date,
            languages_json, need_count, gender_required, status, distance_km, travel_hrs,
-           altitude, students_json, arrival_date, arrival_time, coordinator_json, transport,
-           notes, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           altitude, students_json, arrival_date, arrival_time, coordinator_json,
+           coteacher_json, transport, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           c.id,
           c.type,
@@ -297,6 +297,9 @@ export function seedDatabase(db: DB): { inserted: Record<string, number> } {
           c.arrivalDate ?? null,
           c.arrivalTime ?? null,
           c.coordinator ? JSON.stringify(c.coordinator) : null,
+          (c as { coTeacher?: unknown }).coTeacher
+            ? JSON.stringify((c as { coTeacher?: unknown }).coTeacher)
+            : null,
           c.transport ?? null,
           c.notes ?? null,
           now,
@@ -437,6 +440,8 @@ export function resetSeedFlag(db: DB): void {
  */
 const PHONE_BACKFILL_KEY = 'backfill.teacherPhone';
 const PHONE_BACKFILL_VALUE = 'v1';
+const DEMO_COURSE_BACKFILL_KEY = 'backfill.demoCourses';
+const DEMO_COURSE_BACKFILL_VALUE = 'v1';
 
 export function backfillTeacherPhone(db: DB): { backfilled: number } {
   const flag = db.queryOne<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
@@ -467,4 +472,80 @@ export function backfillTeacherPhone(db: DB): { backfilled: number } {
 
   logger.info('[db] phone backfill complete', { backfilled: count });
   return { backfilled: count };
+}
+
+/**
+ * One-time enrichment of the two confirmed-upcoming demo courses with
+ * sample co-teacher / coordinator / transport / notes / arrival data that
+ * the raw dhamma.org scrape doesn't ship. Lets the course-brief screen
+ * render properly out of the box on every install.
+ *
+ * Idempotent + gated by `backfill.demoCourses=v1`. Only overwrites fields
+ * when the existing row carries the generic placeholder defaults
+ * ("Center Coordinator", "See dhamma.org for directions") so user edits
+ * aren't trampled.
+ */
+export function enrichDemoCourses(db: DB): { enriched: number } {
+  const flag = db.queryOne<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    DEMO_COURSE_BACKFILL_KEY,
+  ]);
+  if (flag?.value === DEMO_COURSE_BACKFILL_VALUE) return { enriched: 0 };
+
+  const seedCourses = coursesJson as unknown as (SeedCourse & {
+    coTeacher?: unknown;
+    arrivalDate?: string;
+    arrivalTime?: string;
+  })[];
+  const targetIds = [1753781245, 1399940739];
+  const now = new Date().toISOString();
+  let count = 0;
+
+  db.transaction(() => {
+    for (const id of targetIds) {
+      const seed = seedCourses.find((c) => c.id === id);
+      if (!seed) continue;
+
+      const existing = db.queryOne<{ id: number }>('SELECT id FROM courses WHERE id = ?', [id]);
+      if (!existing) continue;
+
+      db.exec(
+        `UPDATE courses SET
+           coteacher_json    = ?,
+           coordinator_json  = ?,
+           transport         = ?,
+           notes             = ?,
+           students_json     = ?,
+           arrival_date      = ?,
+           arrival_time      = ?,
+           distance_km       = ?,
+           travel_hrs        = ?,
+           altitude          = ?,
+           updated_at        = ?
+         WHERE id = ?`,
+        [
+          seed.coTeacher ? JSON.stringify(seed.coTeacher) : null,
+          JSON.stringify(seed.coordinator ?? {}),
+          seed.transport ?? null,
+          seed.notes ?? null,
+          JSON.stringify(seed.students ?? {}),
+          seed.arrivalDate ?? null,
+          seed.arrivalTime ?? null,
+          seed.distanceKm ?? null,
+          seed.travelHrs ?? null,
+          seed.altitude ?? null,
+          now,
+          id,
+        ],
+      );
+      count++;
+    }
+    db.exec('INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, ?)', [
+      DEMO_COURSE_BACKFILL_KEY,
+      DEMO_COURSE_BACKFILL_VALUE,
+      now,
+    ]);
+  });
+
+  logger.info('[db] demo-course enrichment complete', { enriched: count });
+  return { enriched: count };
 }

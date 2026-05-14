@@ -150,12 +150,13 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       const now = new Date();
       const db = getDb();
 
-      // Atomic replace: upsert new rows + delete any rows whose IDs aren't in
-      // the fresh set. No "empty list" window because we never truncate the
-      // table first.
+      // Atomic replace: sync-upsert new rows (preserves admin-set fields
+      // like coteacher / coordinator / transport / notes) + delete any rows
+      // whose IDs aren't in the fresh set. No "empty list" window because
+      // we never truncate the table first.
       const freshIds = new Set(courses.map((c) => c.id));
       db.transaction(() => {
-        coursesRepo.upsertMany(db, courses);
+        coursesRepo.syncUpsertMany(db, courses);
         const existing = coursesRepo.list(db);
         for (const c of existing) {
           if (!freshIds.has(c.id)) coursesRepo.deleteById(db, c.id);

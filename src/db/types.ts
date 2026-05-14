@@ -93,6 +93,7 @@ export interface CourseRow {
   arrival_date: string | null;
   arrival_time: string | null;
   coordinator_json: string | null;
+  coteacher_json: string | null;
   transport: string | null;
   notes: string | null;
   created_at: string;

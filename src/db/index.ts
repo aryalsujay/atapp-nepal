@@ -248,13 +248,32 @@ function createMemoryDb(): DB {
         return;
       }
     }
-    // ON CONFLICT DO UPDATE shorthand — if INSERT carries the pk and a row
-    // with that pk exists, treat as upsert (real SQLite would need the full
-    // ON CONFLICT clause; for shim purposes the behavior is equivalent).
-    if (table.pkColumn && row[table.pkColumn] !== undefined && /ON\s+CONFLICT/i.test(sql)) {
+    // ON CONFLICT DO UPDATE — when the INSERT carries the pk and a row with
+    // that pk already exists, apply ONLY the columns listed in the
+    // `DO UPDATE SET` clause. Honors the `excluded.<col>` value-source the
+    // real SQLite uses.
+    const conflictMatch = sql.match(
+      /ON\s+CONFLICT(?:\([^)]+\))?\s+DO\s+UPDATE\s+SET\s+(.+?)(?:\s+WHERE\s+.+)?$/is,
+    );
+    if (table.pkColumn && row[table.pkColumn] !== undefined && conflictMatch) {
       const existing = table.rows.findIndex((r) => r[table.pkColumn!] === row[table.pkColumn!]);
       if (existing !== -1) {
-        table.rows[existing] = { ...table.rows[existing], ...row };
+        const assignments = conflictMatch[1].split(',').map((s) => s.trim());
+        const merged = { ...table.rows[existing] };
+        for (const a of assignments) {
+          const [colRaw, valRaw] = a.split('=').map((s) => s.trim());
+          if (!colRaw || !valRaw) continue;
+          const excludedMatch = valRaw.match(/^excluded\.(\w+)$/i);
+          if (excludedMatch) {
+            merged[colRaw] = row[excludedMatch[1]];
+          } else if (valRaw === '?') {
+            // Unsupported in this shim — DO UPDATE SET with ? params is rare.
+            continue;
+          } else {
+            merged[colRaw] = parseLiteral(valRaw);
+          }
+        }
+        table.rows[existing] = merged;
         return;
       }
     }
