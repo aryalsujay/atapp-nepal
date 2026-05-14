@@ -93,7 +93,7 @@ function StepHero({ step, title, subtitle }: { step: number; title: string; subt
       <Text style={s.stepTitle}>{title}</Text>
       <Text style={s.stepSub}>{subtitle}</Text>
       <View style={s.progressRow}>
-        {Array.from({ length: TOTAL_STEPS - 1 }).map((_, i) => (
+        {Array.from({ length: TOTAL_STEPS - 2 }).map((_, i) => (
           <View
             key={i}
             style={[
@@ -158,16 +158,16 @@ function StepLanguages({ onBack, onContinue }: { onBack: () => void; onContinue:
   return (
     <View style={[s.flex, { backgroundColor: Colors.cr }]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <StepHero
-        step={1}
-        title={t('onboarding.teacher.step1.title')}
-        subtitle={t('onboarding.teacher.step1.subtitle')}
-      />
       <ScrollView
         style={s.flex}
-        contentContainerStyle={{ paddingBottom: 12 }}
+        contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
+        <StepHero
+          step={1}
+          title={t('onboarding.teacher.step1.title')}
+          subtitle={t('onboarding.teacher.step1.subtitle')}
+        />
         <View style={s.langCard}>
           {LANG_KEYS.map((key, idx) => {
             const level: LangLevel = langs[key] ?? 'off';
@@ -216,9 +216,8 @@ function StepLanguages({ onBack, onContinue }: { onBack: () => void; onContinue:
             );
           })}
         </View>
+        <NavRow onBack={onBack} onContinue={onContinue} />
       </ScrollView>
-
-      <NavRow onBack={onBack} onContinue={onContinue} />
     </View>
   );
 }
@@ -341,17 +340,23 @@ function StepPlaceholder({
   return (
     <View style={[s.flex, { backgroundColor: Colors.cr }]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <StepHero
-        step={step}
-        title={`Step ${step} — coming next`}
-        subtitle="This step will be implemented in the next iteration."
-      />
-      <View style={{ flex: 1 }} />
-      <NavRow
-        onBack={onBack}
-        onContinue={isLast ? handleFinish : onContinue}
-        continueLabel={isLast ? '✓ Enter Dhamma AT' : undefined}
-      />
+      <ScrollView
+        style={s.flex}
+        contentContainerStyle={s.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        <StepHero
+          step={step}
+          title={`Step ${step} — coming next`}
+          subtitle="This step will be implemented in the next iteration."
+        />
+        <View style={{ flex: 1, minHeight: 120 }} />
+        <NavRow
+          onBack={onBack}
+          onContinue={isLast ? handleFinish : onContinue}
+          continueLabel={isLast ? '✓ Enter Dhamma AT' : undefined}
+        />
+      </ScrollView>
     </View>
   );
 }
