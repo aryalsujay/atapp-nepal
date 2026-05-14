@@ -19,7 +19,9 @@ const DEFAULT_LANGS: Record<string, LangLevel> = {
   German: 'off',
 };
 
-const DEFAULT_REGIONS: string[] = ['Kathmandu Valley'];
+// Region keys (not display labels) so the screen can translate at render
+// time without coupling persisted data to whatever language is active.
+const DEFAULT_REGIONS: string[] = ['kathmandu_valley'];
 
 const DEFAULT_AV: AvCell[] = [1, 1, 1, 1, 'f', 0, 1, 1, 1, 'f', 'f', 0];
 

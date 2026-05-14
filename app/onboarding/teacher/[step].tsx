@@ -57,6 +57,12 @@ export default function OnboardingStep() {
   if (step === 1) {
     return <StepLanguages onBack={goBack} onContinue={goNext} />;
   }
+  if (step === 2) {
+    return <StepRegions onBack={goBack} onContinue={goNext} />;
+  }
+  if (step === 3) {
+    return <StepAvailability onBack={goBack} onContinue={goNext} />;
+  }
 
   return <StepPlaceholder step={step} onBack={goBack} onContinue={goNext} />;
 }
@@ -221,6 +227,158 @@ function StepLanguages({ onBack, onContinue }: { onBack: () => void; onContinue:
             );
           })}
         </View>
+        <NavRow onBack={onBack} onContinue={onContinue} />
+      </ScrollView>
+    </View>
+  );
+}
+
+// ─── Step 2: Regions ─────────────────────────────────────────────────────────
+
+const REGION_KEYS = [
+  'kathmandu_valley',
+  'pokhara',
+  'lumbini_terai',
+  'koshi',
+  'gandaki',
+  'madhesh',
+  'international',
+];
+
+function StepRegions({ onBack, onContinue }: { onBack: () => void; onContinue: () => void }) {
+  const { t } = useTranslation();
+  const regions = useOnboardingDraftStore((d) => d.regions);
+  const toggleRegion = useOnboardingDraftStore((d) => d.toggleRegion);
+  const canContinue = regions.length > 0;
+
+  return (
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <ScrollView
+        style={s.flex}
+        contentContainerStyle={s.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        <StepHero
+          step={2}
+          title={t('onboarding.teacher.step2.title')}
+          subtitle={t('onboarding.teacher.step2.subtitle')}
+        />
+
+        {/* Chip row */}
+        <View style={s.regionChipRow}>
+          {REGION_KEYS.map((key) => {
+            const label = t(`onboarding.teacher.step2.regions.${key}`);
+            const on = regions.includes(key);
+            return (
+              <TouchableOpacity
+                key={key}
+                onPress={() => toggleRegion(key)}
+                activeOpacity={0.7}
+                style={[s.regionChip, on && s.regionChipOn]}
+              >
+                <Text style={[s.regionChipText, on && s.regionChipTextOn]}>
+                  {on ? '✓ ' : '+ '}
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Selected card */}
+        {regions.length > 0 ? (
+          <View style={s.selectedCard}>
+            <Text style={s.selectedLabel}>{t('onboarding.teacher.step2.selected_label')}</Text>
+            {regions.map((r, i) => (
+              <View key={r} style={[s.selectedRow, i < regions.length - 1 && s.selectedRowBorder]}>
+                <View style={s.selectedBadge}>
+                  <Text style={s.selectedBadgeText}>{i + 1}</Text>
+                </View>
+                <Text style={s.selectedRowText}>{t(`onboarding.teacher.step2.regions.${r}`)}</Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={s.regionEmptyHint}>{t('onboarding.teacher.step2.empty_hint')}</Text>
+        )}
+
+        <NavRow onBack={onBack} onContinue={onContinue} continueDisabled={!canContinue} />
+      </ScrollView>
+    </View>
+  );
+}
+
+// ─── Step 3: Availability ────────────────────────────────────────────────────
+
+function StepAvailability({ onBack, onContinue }: { onBack: () => void; onContinue: () => void }) {
+  const { t, i18n: i18nInst } = useTranslation();
+  const av = useOnboardingDraftStore((d) => d.av);
+  const cycleMonth = useOnboardingDraftStore((d) => d.cycleMonth);
+
+  const months = (i18nInst.t('onboarding.teacher.step3.months_short', { returnObjects: true }) ??
+    []) as string[];
+  const availableCount = av.filter((v) => v === 1).length;
+  const festivalCount = av.filter((v) => v === 'f').length;
+
+  return (
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <ScrollView
+        style={s.flex}
+        contentContainerStyle={s.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        <StepHero
+          step={3}
+          title={t('onboarding.teacher.step3.title')}
+          subtitle={t('onboarding.teacher.step3.subtitle')}
+        />
+
+        <View style={s.avCard}>
+          <View style={s.avSummary}>
+            <Text style={[s.avSummaryStrong, { color: Colors.fo }]}>
+              {t('onboarding.teacher.step3.summary_available', { count: availableCount })}
+            </Text>
+            {festivalCount > 0 && (
+              <Text style={[s.avSummarySoft]}>
+                {' · '}
+                <Text style={{ color: Colors.gd, fontWeight: '700' }}>
+                  {t('onboarding.teacher.step3.summary_festival', { count: festivalCount })}
+                </Text>
+              </Text>
+            )}
+          </View>
+
+          {[0, 6].map((rowStart) => (
+            <View key={rowStart} style={s.avGridRow}>
+              {Array.from({ length: 6 }).map((_, j) => {
+                const i = rowStart + j;
+                const state = av[i];
+                const tone =
+                  state === 1
+                    ? { bg: Colors.fo, fg: Colors.white, glyph: '✓' }
+                    : state === 'f'
+                      ? { bg: Colors.gd, fg: Colors.white, glyph: '🎑' }
+                      : { bg: Colors.cr3, fg: Colors.tx3, glyph: '✗' };
+                return (
+                  <TouchableOpacity
+                    key={i}
+                    onPress={() => cycleMonth(i)}
+                    activeOpacity={0.75}
+                    style={[s.avCell, { backgroundColor: tone.bg }, state === 0 && s.avCellEmpty]}
+                  >
+                    <Text style={[s.avCellMonth, { color: tone.fg }]}>{months[i] ?? ''}</Text>
+                    <Text style={[s.avCellGlyph, { color: tone.fg }]}>{tone.glyph}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ))}
+
+          <Text style={s.avHint}>{t('onboarding.teacher.step3.tap_hint')}</Text>
+        </View>
+
         <NavRow onBack={onBack} onContinue={onContinue} />
       </ScrollView>
     </View>
@@ -478,6 +636,148 @@ const s = StyleSheet.create({
     color: Colors.white,
     fontSize: 15,
     fontWeight: '700',
+  },
+
+  // Step 3: Availability
+  avCard: {
+    margin: 18,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.bd,
+  },
+  avSummary: {
+    fontSize: 12,
+    color: Colors.tx2,
+    marginBottom: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  avSummaryStrong: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  avSummarySoft: {
+    fontSize: 12,
+    color: Colors.tx2,
+  },
+  avGridRow: {
+    flexDirection: 'row',
+    gap: 5,
+    marginBottom: 5,
+  },
+  avCell: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 46,
+  },
+  avCellEmpty: {
+    borderWidth: 1.5,
+    borderColor: Colors.bd,
+  },
+  avCellMonth: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  avCellGlyph: {
+    fontSize: 11,
+    marginTop: 2,
+    opacity: 0.9,
+  },
+  avHint: {
+    fontSize: 10.5,
+    color: Colors.tx3,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+
+  // Step 2: Regions
+  regionChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    gap: 8,
+  },
+  regionChip: {
+    backgroundColor: Colors.white,
+    borderWidth: 1.5,
+    borderColor: Colors.bd2,
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: 13,
+  },
+  regionChipOn: {
+    backgroundColor: Colors.sf,
+    borderColor: Colors.sf,
+  },
+  regionChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.tx2,
+  },
+  regionChipTextOn: {
+    color: Colors.white,
+  },
+  selectedCard: {
+    margin: 18,
+    marginTop: 14,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.bd,
+  },
+  selectedLabel: {
+    fontSize: 11,
+    color: Colors.tx3,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  selectedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    paddingVertical: 7,
+  },
+  selectedRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.bd,
+  },
+  selectedBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+    backgroundColor: Colors.sf,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedBadgeText: {
+    color: Colors.white,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  selectedRowText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.tx,
+    flex: 1,
+  },
+  regionEmptyHint: {
+    fontSize: 12,
+    color: Colors.tx3,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 14,
+    marginHorizontal: 18,
   },
 
   // Step 1: Languages card

@@ -243,35 +243,44 @@
         "secondary": "Secondary",
         "off": "Don't teach"
       },
-      "step1_legacy": {
-        "title": "Welcome to\nDhamma AT",
-        "subtitle": "Set up your teacher profile to get matched with courses across Nepal."
+      "step3": {
+        "title": "Mark your available months for 2026",
+        "subtitle": "You can change this anytime",
+        "summary_available": "{{count}} months available",
+        "summary_festival": "{{count}} festival",
+        "tap_hint": "Tap a month to cycle: Available → Festival → Unavailable",
+        "state_available": "Available",
+        "state_festival": "Festival",
+        "state_unavailable": "Unavailable",
+        "months_short": [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec"
+        ]
       },
       "step2": {
-        "title": "Languages",
-        "subtitle": "Which languages can you teach in?",
-        "hint": "Tap once for Primary, twice for Secondary, three times to remove"
-      },
-      "step3": {
-        "title": "Preferred Regions",
-        "subtitle": "Which regions of Nepal are you willing to travel to?"
-      },
-      "step4": {
-        "title": "Availability",
-        "subtitle": "Tap each month to mark your availability.",
-        "available": "Available",
-        "festival": "Festival/Retreat",
-        "unavailable": "Unavailable"
-      },
-      "step5": {
-        "title": "Personal Note",
-        "subtitle": "Share any additional information for course coordinators.",
-        "placeholder": "E.g., available Oct–May, prefer Kathmandu area courses..."
-      },
-      "summary": {
-        "title": "Profile Ready",
-        "subtitle": "Your profile has been set up. You can update it anytime.",
-        "goToDashboard": "Go to Dashboard"
+        "title": "Where are you willing to travel?",
+        "subtitle": "Tap to add. Drag to reorder later in Profile.",
+        "selected_label": "Selected",
+        "empty_hint": "Pick at least one region to continue.",
+        "regions": {
+          "kathmandu_valley": "Kathmandu Valley",
+          "pokhara": "Pokhara",
+          "lumbini_terai": "Lumbini & Terai",
+          "koshi": "Koshi",
+          "gandaki": "Gandaki",
+          "madhesh": "Madhesh",
+          "international": "International"
+        }
       }
     }
   },
