@@ -1,28 +1,37 @@
 [
   {
     "id": 1,
-    "courseId": 1,
+    "courseId": 15,
     "teacherId": "teacher-001",
     "status": "approved",
-    "appliedDate": "Mar 28, 2026",
+    "appliedDate": "May 02, 2026",
     "source": "applied",
     "rejectionReason": null
   },
   {
     "id": 2,
-    "courseId": 3,
+    "courseId": 37,
     "teacherId": "teacher-001",
-    "status": "pending",
-    "appliedDate": "Apr 15, 2026",
-    "source": "applied",
+    "status": "approved",
+    "appliedDate": "May 02, 2026",
+    "source": "assigned",
     "rejectionReason": null
   },
   {
     "id": 3,
-    "courseId": 5,
+    "courseId": 19,
+    "teacherId": "teacher-001",
+    "status": "pending",
+    "appliedDate": "May 06, 2026",
+    "source": "applied",
+    "rejectionReason": null
+  },
+  {
+    "id": 4,
+    "courseId": 23,
     "teacherId": "teacher-001",
     "status": "rejected",
-    "appliedDate": "Apr 2, 2026",
+    "appliedDate": "Apr 18, 2026",
     "source": "applied",
     "rejectionReason": "Another AT was confirmed before your application could be reviewed."
   }

@@ -13,18 +13,12 @@
     "totalCourses": 47,
     "centersServed": 12,
     "coursesThisYear": 3,
-    "authorizations": [
-      "10-Day",
-      "Satipatthana Sutta",
-      "Children's Anapana",
-      "Teen Course",
-      "Executive"
-    ],
+    "authorizations": ["10-Day"],
     "languages": {
       "Nepali": "primary",
       "English": "primary",
-      "Hindi": "primary",
-      "Gujarati": "secondary",
+      "Hindi": "secondary",
+      "Gujarati": "off",
       "German": "off"
     },
     "preferredRegions": ["Kathmandu Valley", "Pokhara & Gandaki", "Lumbini & Terai"],
@@ -32,7 +26,7 @@
     "teachingHistory": [
       {
         "date": "Mar 2026",
-        "center": "Dhamma Shringa",
+        "center": "Dharma Shringa",
         "country": "🇳🇵",
         "type": "10-Day",
         "students": 90
@@ -53,8 +47,8 @@
       }
     ],
     "isOnboarded": true,
-    "availableMonths": [2, 3, 6, 7],
-    "festivalMonths": [4, 9, 10]
+    "availableMonths": [8],
+    "festivalMonths": [4, 5, 6, 7, 9, 10]
   },
   {
     "id": "teacher-002",
@@ -80,7 +74,7 @@
     "teachingHistory": [
       {
         "date": "Apr 2026",
-        "center": "Dhamma Shringa",
+        "center": "Dharma Shringa",
         "country": "🇳🇵",
         "type": "Children's Anapana",
         "students": 35
@@ -162,7 +156,7 @@
     "teachingHistory": [
       {
         "date": "Apr 2026",
-        "center": "Dhamma Shringa",
+        "center": "Dharma Shringa",
         "country": "🇳🇵",
         "type": "10-Day",
         "students": 80
@@ -210,7 +204,7 @@
       },
       {
         "date": "Feb 2026",
-        "center": "Dhamma Shringa",
+        "center": "Dharma Shringa",
         "country": "🇳🇵",
         "type": "20-Day",
         "students": 45
@@ -243,7 +237,7 @@
     "teachingHistory": [
       {
         "date": "Mar 2026",
-        "center": "Dhamma Shringa",
+        "center": "Dharma Shringa",
         "country": "🇳🇵",
         "type": "10-Day",
         "students": 75
@@ -284,7 +278,7 @@
       },
       {
         "date": "Feb 2026",
-        "center": "Dhamma Shringa",
+        "center": "Dharma Shringa",
         "country": "🇳🇵",
         "type": "10-Day",
         "students": 85
@@ -318,7 +312,7 @@
     "teachingHistory": [
       {
         "date": "Apr 2026",
-        "center": "Dhamma Shringa",
+        "center": "Dharma Shringa",
         "country": "🇳🇵",
         "type": "Executive",
         "students": 20
@@ -380,7 +374,7 @@
       },
       {
         "date": "Dec 2025",
-        "center": "Dhamma Shringa",
+        "center": "Dharma Shringa",
         "country": "🇳🇵",
         "type": "Satipatthana Sutta",
         "students": 55
@@ -414,7 +408,7 @@
     "teachingHistory": [
       {
         "date": "Feb 2026",
-        "center": "Dhamma Shringa",
+        "center": "Dharma Shringa",
         "country": "🇳🇵",
         "type": "10-Day",
         "students": 70
@@ -448,7 +442,7 @@
     "teachingHistory": [
       {
         "date": "May 2026",
-        "center": "Dhamma Shringa",
+        "center": "Dharma Shringa",
         "country": "🇳🇵",
         "type": "30-Day",
         "students": 35
@@ -489,7 +483,7 @@
     "teachingHistory": [
       {
         "date": "Apr 2026",
-        "center": "Dhamma Shringa",
+        "center": "Dharma Shringa",
         "country": "🇳🇵",
         "type": "10-Day",
         "students": 80

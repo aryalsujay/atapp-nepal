@@ -75,15 +75,22 @@
   },
   "home": {
     "greeting": "Namaste",
-    "subtitle": "Assistant Teacher",
-    "upcomingCourses": "Upcoming Courses",
-    "bestMatches": "Best Matches",
-    "restPeriod": "Rest Period",
-    "restComplete": "Rest period complete",
-    "lastCourse": "Last course",
-    "noUpcoming": "No upcoming courses",
-    "browseAll": "Browse All Courses",
-    "eligible": "Eligible to Serve"
+    "subtitle": "Assistant Teacher · Nepal 🇳🇵",
+    "stat_courses": "Courses",
+    "stat_nepal": "Nepal",
+    "stat_applied": "Applied",
+    "upcoming_title": "Upcoming Courses",
+    "confirmed_pill": "Confirmed",
+    "view_brief": "View Pre-Course Brief →",
+    "no_upcoming": "No upcoming courses",
+    "browse_all": "Browse All Courses",
+    "best_matches": "Best Matches for You",
+    "see_all": "See all →",
+    "match_basis": "Based on profile & availability",
+    "need_at": "{{count}} AT",
+    "rest_title": "Rest & Practice Reminder",
+    "rest_complete_template": "Last course: {{last}}. Now eligible again. Next suggested sit: {{next}}.",
+    "rest_pending_template": "Last course: {{last}}. Eligible after {{eligible}}."
   },
   "courses": {
     "title": "Open Courses",
@@ -304,7 +311,7 @@
   "admin": {
     "dashboard": {
       "title": "Admin",
-      "center": "Dhamma Shringa Nepal",
+      "center": "Dharma Shringa Nepal",
       "applications": "Applications",
       "pending": "Pending",
       "unscheduled": "Unscheduled",

@@ -31,11 +31,11 @@ const SEED_NOTIFICATIONS: Notification[] = [
     timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     read: false,
     courseId: 1,
-    center: 'Dhamma Shringa',
-    course: 'Dhamma Shringa — May 10-Day',
+    center: 'Dharma Shringa',
+    course: 'Dharma Shringa — May 10-Day',
     subjectEn: 'You have been assigned to teach',
     bodyEn:
-      'Dear Teacher,\n\nWith great joy we confirm your assignment to teach the 10-Day course at Dhamma Shringa from May 12–23, 2026.\n\nPlease arrive by May 11, 5:00 PM.\n\nSadhu! 🙏',
+      'Dear Teacher,\n\nWith great joy we confirm your assignment to teach the 10-Day course at Dharma Shringa from May 12–23, 2026.\n\nPlease arrive by May 11, 5:00 PM.\n\nSadhu! 🙏',
     bodyNe:
       'प्रिय शिक्षक,\n\nधम्म श्रृंगमा मे १२–२३, २०२६ को १०-दिन पाठ्यक्रममा शिक्षणको लागि तपाईंको नियुक्ति पुष्टि गर्दा हामी हर्षित छौं।\n\nमे ११ को साँझ ५:०० बजेसम्म आइपुग्नुहोस्।',
     status: 'approved',
@@ -77,11 +77,11 @@ const SEED_NOTIFICATIONS: Notification[] = [
     type: 'reminder',
     timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     read: true,
-    center: 'Dhamma Shringa',
+    center: 'Dharma Shringa',
     course: 'All Nepal ATs',
     subjectEn: 'Open course — AT needed urgently',
     bodyEn:
-      'Dear Teachers,\n\nDhamma Shringa has an open 10-Day course (Aug 15–26) still needing a Nepali-speaking AT.\n\nPlease apply via the Dhamma AT app.\n\nSadhu 🙏',
+      'Dear Teachers,\n\nDharma Shringa has an open 10-Day course (Aug 15–26) still needing a Nepali-speaking AT.\n\nPlease apply via the Dhamma AT app.\n\nSadhu 🙏',
     bodyNe:
       'प्रिय शिक्षकहरू,\n\nधम्म श्रृंगमा अगस्ट १५–२६ को खुला पाठ्यक्रमलाई नेपाली भाषी सहायक शिक्षक चाहिन्छ।',
   },
@@ -91,11 +91,11 @@ const SEED_NOTIFICATIONS: Notification[] = [
     type: 'approval',
     timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     read: false,
-    center: 'Dhamma Shringa',
-    course: 'Dhamma Shringa — Jul 10-Day',
+    center: 'Dharma Shringa',
+    course: 'Dharma Shringa — Jul 10-Day',
     subjectEn: 'Service application approved!',
     bodyEn:
-      'Dear Priya,\n\nWe are pleased to confirm your service at Dhamma Shringa from Jul 7–18, 2026 in the Kitchen and Dining Hall areas.\n\nPlease arrive by Jul 6, 7:00 AM. We look forward to serving together. Sadhu! 🙏',
+      'Dear Priya,\n\nWe are pleased to confirm your service at Dharma Shringa from Jul 7–18, 2026 in the Kitchen and Dining Hall areas.\n\nPlease arrive by Jul 6, 7:00 AM. We look forward to serving together. Sadhu! 🙏',
     bodyNe:
       'प्रिय प्रिया,\n\nधम्म श्रृंगमा जुलाई ७–१८, २०२६ को पाठ्यक्रममा भान्सा र भोजन कक्षमा तपाईंको सेवाको पुष्टि गर्दा हामी हर्षित छौं। जुलाई ६, बिहान ७ बजेसम्म आइपुग्नु होस्।',
     status: 'approved',

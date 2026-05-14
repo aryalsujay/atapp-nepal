@@ -1,16 +1,8 @@
 import type { Course, CourseType } from '@/types';
+import { LanguageLabels as LANG_LABELS, languageLabel } from '@/config/match';
 
-const LANG_LABELS: Record<string, string> = {
-  ne: 'Nepali',
-  en: 'English',
-  hi: 'Hindi',
-  gu: 'Gujarati',
-  de: 'German',
-};
-
-export function langLabel(code: string): string {
-  return LANG_LABELS[code] ?? code;
-}
+// Backwards-compatible re-export so callers don't break.
+export const langLabel = languageLabel;
 
 export interface EligibilityCheck {
   key: 'authorization' | 'language' | 'availability' | 'restGap' | 'gender';
