@@ -9,6 +9,7 @@ export interface StoredTeacher {
   name: string;
   gender: 'M' | 'F';
   email: string;
+  phone?: string;
   inviteCode: string;
   passwordHash: string;
   region: string;
@@ -68,6 +69,18 @@ export const useTeachersStore = create<TeachersState>((set, get) => ({
   findTeacher: (identifier) => {
     const all = get().allTeachers;
     const lower = identifier.toLowerCase();
-    return all.find((t) => t.id === identifier || t.email.toLowerCase() === lower);
+    const digits = identifier.replace(/[^\d]/g, '');
+    return all.find((t) => {
+      if (t.id === identifier) return true;
+      if (t.email.toLowerCase() === lower) return true;
+      if (t.inviteCode && t.inviteCode.toLowerCase() === lower) return true;
+      if (t.phone && digits.length >= 5) {
+        const tDigits = t.phone.replace(/[^\d]/g, '');
+        if (tDigits === digits || tDigits.endsWith(digits) || digits.endsWith(tDigits)) {
+          return true;
+        }
+      }
+      return false;
+    });
   },
 }));
