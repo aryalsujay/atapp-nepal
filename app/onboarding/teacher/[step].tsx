@@ -319,8 +319,8 @@ const s = StyleSheet.create({
     marginTop: 10,
   },
 
-  // Welcome CTA — comfortable gap below the card
-  ctaWrap: { paddingHorizontal: 18, paddingTop: 14 },
+  // Welcome CTA — generous gap below the card
+  ctaWrap: { paddingHorizontal: 18, paddingTop: 22 },
   ctaTouchable: { borderRadius: 14, overflow: 'hidden' },
   ctaBtn: {
     width: '100%',
