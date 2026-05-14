@@ -25,6 +25,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -304,7 +305,7 @@ export default function LoginScreen() {
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
               >
-                <Text style={[styles.eyeIcon, !showPassword && styles.eyeIconDim]}>👁</Text>
+                <EyeIcon open={showPassword} />
               </TouchableOpacity>
             </View>
           </View>
@@ -445,6 +446,45 @@ function RoleTab({
   );
 }
 
+/**
+ * Plain line-art eye glyph used in the password reveal toggle.
+ * `open=true` renders the eye; `open=false` adds a diagonal strike-through.
+ * Stroke color tracks the surrounding text style so it reads as part of the
+ * form, not as an emoji.
+ */
+function EyeIcon({
+  open,
+  size = 22,
+  color = Colors.tx2,
+}: {
+  open: boolean;
+  size?: number;
+  color?: string;
+}) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M2.5 12C4.5 7.5 8 5 12 5C16 5 19.5 7.5 21.5 12C19.5 16.5 16 19 12 19C8 19 4.5 16.5 2.5 12Z"
+        stroke={color}
+        strokeWidth={1.7}
+        strokeLinejoin="round"
+      />
+      <Circle cx={12} cy={12} r={3} stroke={color} strokeWidth={1.7} />
+      {!open && (
+        <Line
+          x1={4.5}
+          y1={4.5}
+          x2={19.5}
+          y2={19.5}
+          stroke={color}
+          strokeWidth={1.7}
+          strokeLinecap="round"
+        />
+      )}
+    </Svg>
+  );
+}
+
 /** Spring-scale press feedback for primary CTAs (prototype `.btn:active{scale .96}`). */
 function PressScale({
   onPress,
@@ -577,13 +617,12 @@ const styles = StyleSheet.create({
   },
   eyeBtn: {
     position: 'absolute',
-    right: 14,
+    right: 12,
     top: 0,
     bottom: 0,
     justifyContent: 'center',
+    paddingHorizontal: 4,
   },
-  eyeIcon: { fontSize: 20, color: Colors.tx2 },
-  eyeIconDim: { opacity: 0.55 },
 
   // Options row (save + forgot)
   optionsRow: {
