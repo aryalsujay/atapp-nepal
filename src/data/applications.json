@@ -1,7 +1,7 @@
 [
   {
     "id": 1,
-    "courseId": 15,
+    "courseId": 1753781245,
     "teacherId": "teacher-001",
     "status": "approved",
     "appliedDate": "May 02, 2026",
@@ -10,7 +10,7 @@
   },
   {
     "id": 2,
-    "courseId": 37,
+    "courseId": 1399940739,
     "teacherId": "teacher-001",
     "status": "approved",
     "appliedDate": "May 02, 2026",
@@ -19,7 +19,7 @@
   },
   {
     "id": 3,
-    "courseId": 19,
+    "courseId": 447285340,
     "teacherId": "teacher-001",
     "status": "pending",
     "appliedDate": "May 06, 2026",
@@ -28,7 +28,7 @@
   },
   {
     "id": 4,
-    "courseId": 23,
+    "courseId": 1921399652,
     "teacherId": "teacher-001",
     "status": "rejected",
     "appliedDate": "Apr 18, 2026",

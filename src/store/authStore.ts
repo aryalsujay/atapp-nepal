@@ -1,57 +1,82 @@
+/**
+ * Auth store — the active session (role + userId + onboarded flag).
+ * Persisted as a single JSON-serialised row in `settings` under `auth.session`.
+ */
+
 import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { getDb } from '@/db';
+import { settingsRepo } from '@/db/repositories';
+import { logger } from '@/utils/logger';
 
 export type Role = 'teacher' | 'admin' | 'server';
 
-interface AuthState {
+interface SessionPayload {
   role: Role | null;
   userId: string | null;
   isOnboarded: boolean;
-  isLoading: boolean;
+}
 
+interface AuthState extends SessionPayload {
+  isLoading: boolean;
   setAuth: (role: Role, userId: string, isOnboarded: boolean) => Promise<void>;
   setOnboarded: (value: boolean) => Promise<void>;
   restoreSession: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
-const AUTH_KEY = '@dhamma_auth';
+const KEY = 'auth.session';
 
-export const useAuthStore = create<AuthState>((set) => ({
+function persist(payload: SessionPayload): void {
+  try {
+    settingsRepo.setJson(getDb(), KEY, payload);
+  } catch (err) {
+    logger.warn('[authStore] persist failed', err);
+  }
+}
+
+export const useAuthStore = create<AuthState>((set, get) => ({
   role: null,
   userId: null,
   isOnboarded: false,
   isLoading: true,
 
   setAuth: async (role, userId, isOnboarded) => {
-    const data = { role, userId, isOnboarded };
-    await AsyncStorage.setItem(AUTH_KEY, JSON.stringify(data));
+    persist({ role, userId, isOnboarded });
     set({ role, userId, isOnboarded });
   },
 
   setOnboarded: async (value) => {
-    const { role, userId } = useAuthStore.getState();
-    const data = { role, userId, isOnboarded: value };
-    await AsyncStorage.setItem(AUTH_KEY, JSON.stringify(data));
+    const { role, userId } = get();
+    persist({ role, userId, isOnboarded: value });
     set({ isOnboarded: value });
   },
 
   restoreSession: async () => {
     try {
-      const raw = await AsyncStorage.getItem(AUTH_KEY);
-      if (raw) {
-        const { role, userId, isOnboarded } = JSON.parse(raw);
-        set({ role, userId, isOnboarded, isLoading: false });
+      const payload = settingsRepo.getJson<SessionPayload>(getDb(), KEY);
+      if (payload && payload.role && payload.userId) {
+        set({
+          role: payload.role,
+          userId: payload.userId,
+          isOnboarded: payload.isOnboarded,
+          isLoading: false,
+        });
       } else {
         set({ isLoading: false });
       }
-    } catch {
+    } catch (err) {
+      logger.warn('[authStore] restoreSession failed', err);
       set({ isLoading: false });
     }
   },
 
   signOut: async () => {
-    await AsyncStorage.removeItem(AUTH_KEY);
+    try {
+      settingsRepo.remove(getDb(), KEY);
+    } catch (err) {
+      logger.warn('[authStore] signOut failed', err);
+    }
     set({ role: null, userId: null, isOnboarded: false });
   },
 }));

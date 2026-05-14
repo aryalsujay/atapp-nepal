@@ -1,7 +1,17 @@
+/**
+ * Profile store — wraps `teachersRepo` for the single "logged-in user's
+ * profile" cursor. Same table as `teachersStore` reads, different access
+ * pattern (one row at a time, write-heavy).
+ *
+ * Onboarding writes here on step-5 completion. Edit-profile writes here on
+ * save. Home + course-detail read here.
+ */
+
 import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { TeacherProfile } from '@/types';
-import teachersData from '@/data/teachers.json';
+
+import { getDb } from '@/db';
+import { teachersRepo } from '@/db/repositories';
+import type { TeacherProfile, CourseType, LanguageLevel, HistoryEntry } from '@/types';
 import { logger } from '@/utils/logger';
 
 interface ProfileState {
@@ -12,56 +22,78 @@ interface ProfileState {
   clearProfile: () => void;
 }
 
-const PROFILE_KEY = '@dhamma_profile';
-
-/**
- * Defensively coerce availability fields to typed arrays. Handles legacy
- * payloads that may have `monthlyAvailability: (0 | 1 | 'f')[]` from earlier
- * builds.
- */
-function normalizeProfile(p: TeacherProfile): TeacherProfile {
-  const next = { ...p } as TeacherProfile & { monthlyAvailability?: unknown };
-  if (Array.isArray(next.monthlyAvailability) && (!p.availableMonths || !p.festivalMonths)) {
-    const arr = next.monthlyAvailability as (number | string)[];
-    next.availableMonths = arr.reduce<number[]>((acc, v, i) => (v === 1 ? [...acc, i] : acc), []);
-    next.festivalMonths = arr.reduce<number[]>((acc, v, i) => (v === 'f' ? [...acc, i] : acc), []);
-  }
-  next.availableMonths = Array.isArray(next.availableMonths) ? next.availableMonths : [];
-  next.festivalMonths = Array.isArray(next.festivalMonths) ? next.festivalMonths : [];
-  delete next.monthlyAvailability;
-  return next;
+function domainToProfile(t: ReturnType<typeof teachersRepo.findById>): TeacherProfile | null {
+  if (!t) return null;
+  return {
+    id: t.id,
+    name: t.name,
+    gender: (t.gender ?? 'M') as TeacherProfile['gender'],
+    email: t.email ?? '',
+    phone: t.phone ?? undefined,
+    region: t.region ?? '',
+    flag: t.flag ?? undefined,
+    authorizedSince: t.authorizedSince ?? 0,
+    totalCourses: t.totalCourses,
+    centersServed: t.centersServed,
+    coursesThisYear: t.coursesThisYear,
+    authorizations: t.authorizations as CourseType[],
+    languages: t.languages as Record<string, LanguageLevel>,
+    preferredRegions: t.preferredRegions,
+    availableMonths: t.availableMonths,
+    festivalMonths: t.festivalMonths,
+    personalNote: t.personalNote ?? '',
+    teachingHistory: t.teachingHistory as HistoryEntry[],
+    inviteCode: t.inviteCode ?? undefined,
+    isOnboarded: t.isOnboarded,
+  };
 }
 
 export const useProfileStore = create<ProfileState>((set, get) => ({
   profile: null,
 
   setProfile: async (profile) => {
-    await AsyncStorage.setItem(PROFILE_KEY + '_' + profile.id, JSON.stringify(profile));
-    set({ profile });
+    try {
+      teachersRepo.upsert(getDb(), {
+        id: profile.id,
+        role: 'teacher',
+        name: profile.name,
+        gender: profile.gender,
+        email: profile.email || null,
+        phone: profile.phone || null,
+        inviteCode: profile.inviteCode || null,
+        region: profile.region || null,
+        flag: profile.flag || null,
+        authorizedSince: profile.authorizedSince || null,
+        totalCourses: profile.totalCourses,
+        centersServed: profile.centersServed,
+        coursesThisYear: profile.coursesThisYear,
+        isOnboarded: profile.isOnboarded,
+        personalNote: profile.personalNote || null,
+        authorizations: profile.authorizations,
+        languages: profile.languages as Record<string, string>,
+        preferredRegions: profile.preferredRegions,
+        availableMonths: profile.availableMonths,
+        festivalMonths: profile.festivalMonths,
+        teachingHistory: profile.teachingHistory,
+      });
+      set({ profile });
+    } catch (err) {
+      logger.warn('[profileStore] setProfile failed', err);
+    }
   },
 
   updateProfile: async (partial) => {
     const current = get().profile;
     if (!current) return;
-    const updated = { ...current, ...partial };
-    await AsyncStorage.setItem(PROFILE_KEY + '_' + current.id, JSON.stringify(updated));
-    set({ profile: updated });
+    const updated: TeacherProfile = { ...current, ...partial };
+    await get().setProfile(updated);
   },
 
   loadProfile: async (userId) => {
     try {
-      const stored = await AsyncStorage.getItem(PROFILE_KEY + '_' + userId);
-      if (stored) {
-        const parsed = JSON.parse(stored) as TeacherProfile;
-        set({ profile: normalizeProfile(parsed) });
-        return;
-      }
-      const seed = (teachersData as unknown as TeacherProfile[]).find((t) => t.id === userId);
-      if (seed) {
-        const normalized = normalizeProfile(seed);
-        set({ profile: normalized });
-        await AsyncStorage.setItem(PROFILE_KEY + '_' + userId, JSON.stringify(normalized));
-      }
+      const fromDb = teachersRepo.findById(getDb(), userId);
+      const profile = domainToProfile(fromDb);
+      if (profile) set({ profile });
     } catch (err) {
       logger.warn('[profileStore] loadProfile failed', err);
     }

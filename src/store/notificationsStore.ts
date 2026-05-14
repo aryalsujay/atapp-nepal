@@ -1,3 +1,12 @@
+/**
+ * Notifications store — still AsyncStorage-backed pending the notifications
+ * screen spec. The `notifications` SQLite table has a leaner schema (kind /
+ * title / body / link) than the rich Notification type the existing screens
+ * use (type / subjectEn / bodyEn / center / course / status). When the
+ * teacher-notifications screen lands, migrate this store and add a schema
+ * extension at the same time (Phase F follow-up).
+ */
+
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Notification } from '@/types';

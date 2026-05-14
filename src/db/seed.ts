@@ -185,18 +185,19 @@ export function seedDatabase(db: DB): { inserted: Record<string, number> } {
     for (const t of teachers) {
       db.exec(
         `INSERT INTO teachers
-          (id, role, name, gender, email, invite_code, password_hash, region, flag,
+          (id, role, name, gender, email, phone, invite_code, password_hash, region, flag,
            authorized_since, total_courses, centers_served, courses_this_year, is_onboarded,
            personal_note, authorizations_json, languages_json, preferred_regions_json,
            available_months_json, festival_months_json, teaching_history_json,
            created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           t.id,
           t.role ?? 'teacher',
           t.name,
           t.gender ?? null,
           t.email ?? null,
+          (t as { phone?: string }).phone ?? null,
           t.inviteCode ?? null,
           t.passwordHash,
           t.region ?? null,
@@ -424,4 +425,46 @@ export function seedDatabase(db: DB): { inserted: Record<string, number> } {
  */
 export function resetSeedFlag(db: DB): void {
   db.exec('DELETE FROM settings WHERE key = ?', [SEED_KEY]);
+}
+
+/**
+ * Backfill teacher.phone for rows that have it in the seed JSON but were
+ * inserted before migration 0002 added the column.
+ *
+ * Idempotent + gated by its own settings flag so it only runs once per
+ * install. Doesn't touch user-edited fields — only writes `phone` when the
+ * row's current value is NULL.
+ */
+const PHONE_BACKFILL_KEY = 'backfill.teacherPhone';
+const PHONE_BACKFILL_VALUE = 'v1';
+
+export function backfillTeacherPhone(db: DB): { backfilled: number } {
+  const flag = db.queryOne<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    PHONE_BACKFILL_KEY,
+  ]);
+  if (flag?.value === PHONE_BACKFILL_VALUE) return { backfilled: 0 };
+
+  const seeds = teachersJson as unknown as { id: string; phone?: string }[];
+  const now = new Date().toISOString();
+  let count = 0;
+
+  db.transaction(() => {
+    for (const t of seeds) {
+      if (!t.phone) continue;
+      const row = db.queryOne<{ phone: string | null }>('SELECT phone FROM teachers WHERE id = ?', [
+        t.id,
+      ]);
+      if (!row || row.phone) continue; // missing teacher OR already has a phone
+      db.exec('UPDATE teachers SET phone = ?, updated_at = ? WHERE id = ?', [t.phone, now, t.id]);
+      count++;
+    }
+    db.exec('INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, ?)', [
+      PHONE_BACKFILL_KEY,
+      PHONE_BACKFILL_VALUE,
+      now,
+    ]);
+  });
+
+  logger.info('[db] phone backfill complete', { backfilled: count });
+  return { backfilled: count };
 }

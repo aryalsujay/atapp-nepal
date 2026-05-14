@@ -28,5 +28,6 @@ export const MATCH_HOME_THRESHOLD = 83;
 /**
  * Sync cadence — how stale `coursesStore` can be before we re-fetch from
  * dhamma.org. App boot and foregrounding check this against `lastSyncAt`.
+ * Currently 3 hours — a balance between fresh data and bandwidth.
  */
-export const SYNC_MIN_AGE_MS = 6 * 60 * 60 * 1000; // 6 hours
+export const SYNC_MIN_AGE_MS = 3 * 60 * 60 * 1000; // 3 hours

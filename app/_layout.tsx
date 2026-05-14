@@ -15,7 +15,8 @@ import { ConfirmDialogProvider } from '@/components/ui/ConfirmDialog';
 import { Colors } from '@/theme/colors';
 import { getDb } from '@/db';
 import { runMigrations } from '@/db/migrate';
-import { seedDatabase } from '@/db/seed';
+import { seedDatabase, backfillTeacherPhone } from '@/db/seed';
+import { legacyMigrate } from '@/db/legacyMigrate';
 import { logger } from '@/utils/logger';
 import {
   useFonts,
@@ -62,19 +63,25 @@ export default function RootLayout() {
     NotoSansDevanagari_700Bold,
   });
 
-  // Boot: open DB → run migrations → seed if empty → then hydrate stores.
+  // Boot: open DB → run migrations → seed if empty → backfill phone →
+  // migrate legacy AsyncStorage (one-time) → hydrate stores.
   useEffect(() => {
-    try {
-      const db = getDb();
-      runMigrations(db);
-      seedDatabase(db);
-      setDbReady(true);
-    } catch (err) {
-      logger.error('[boot] db init failed', err);
-      // Render the app anyway — stores still fall back to JSON imports until
-      // the SQLite store migration (Phase D of 00-data-layer.md) is complete.
-      setDbReady(true);
-    }
+    (async () => {
+      try {
+        const db = getDb();
+        runMigrations(db);
+        seedDatabase(db);
+        backfillTeacherPhone(db);
+        // Legacy AsyncStorage → SQLite migration. Idempotent + gated by a
+        // settings flag, so it's a no-op on subsequent boots and on new
+        // installs that never had the old keys in the first place.
+        await legacyMigrate(db);
+      } catch (err) {
+        logger.error('[boot] db init failed', err);
+      } finally {
+        setDbReady(true);
+      }
+    })();
   }, []);
 
   useEffect(() => {

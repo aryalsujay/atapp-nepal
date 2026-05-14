@@ -101,6 +101,9 @@ interface TableState {
 function createMemoryDb(): DB {
   const tables = new Map<string, TableState>();
   const indexes = new Set<string>();
+  // Track the last auto-incremented rowid so `SELECT last_insert_rowid()`
+  // works the same way as on native SQLite.
+  let lastInsertId = 0;
 
   const ensureTable = (name: string) => {
     if (!tables.has(name)) {
@@ -148,6 +151,16 @@ function createMemoryDb(): DB {
     if (upper.startsWith('DROP TABLE')) {
       const m = sql.match(/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?(\w+)/i);
       if (m) tables.delete(m[1]);
+      return undefined;
+    }
+    if (upper.startsWith('ALTER TABLE')) {
+      // ALTER TABLE <name> ADD COLUMN <col> <type...> — only the column-add
+      // variant is supported (the safest schema change).
+      const m = sql.match(/ALTER\s+TABLE\s+(\w+)\s+ADD\s+COLUMN\s+(\w+)\b/i);
+      if (m) {
+        const tbl = tables.get(m[1]);
+        if (tbl && !tbl.columns.includes(m[2])) tbl.columns.push(m[2]);
+      }
       return undefined;
     }
 
@@ -216,10 +229,32 @@ function createMemoryDb(): DB {
     });
 
     const table = ensureTable(tableName);
+    // Auto-increment integer PKs when the row doesn't supply one.
+    if (table.pkColumn && (row[table.pkColumn] === undefined || row[table.pkColumn] === null)) {
+      const nextId =
+        (table.rows
+          .map((r) => r[table.pkColumn!])
+          .filter((v): v is number => typeof v === 'number')
+          .reduce((acc, v) => Math.max(acc, v), 0) as number) + 1;
+      row[table.pkColumn] = nextId;
+      lastInsertId = nextId;
+    } else if (table.pkColumn && typeof row[table.pkColumn] === 'number') {
+      lastInsertId = row[table.pkColumn] as number;
+    }
     if (replace && table.pkColumn && row[table.pkColumn] !== undefined) {
       const existing = table.rows.findIndex((r) => r[table.pkColumn!] === row[table.pkColumn!]);
       if (existing !== -1) {
         table.rows[existing] = row;
+        return;
+      }
+    }
+    // ON CONFLICT DO UPDATE shorthand — if INSERT carries the pk and a row
+    // with that pk exists, treat as upsert (real SQLite would need the full
+    // ON CONFLICT clause; for shim purposes the behavior is equivalent).
+    if (table.pkColumn && row[table.pkColumn] !== undefined && /ON\s+CONFLICT/i.test(sql)) {
+      const existing = table.rows.findIndex((r) => r[table.pkColumn!] === row[table.pkColumn!]);
+      if (existing !== -1) {
+        table.rows[existing] = { ...table.rows[existing], ...row };
         return;
       }
     }
@@ -263,6 +298,25 @@ function createMemoryDb(): DB {
   };
 
   const handleSelect = (sql: string, params: readonly unknown[]): Record<string, unknown>[] => {
+    // ── Scalar selects without a FROM clause ────────────────────────────────
+    // `SELECT last_insert_rowid() AS id` is how repos retrieve the new id
+    // after an auto-increment INSERT.
+    const rowidMatch = sql.match(/^SELECT\s+last_insert_rowid\(\)\s+AS\s+(\w+)$/i);
+    if (rowidMatch) return [{ [rowidMatch[1]]: lastInsertId }];
+
+    // ── Aggregate: COUNT(*) AS alias FROM table [WHERE ...] ────────────────
+    const countMatch = sql.match(
+      /^SELECT\s+COUNT\(\*\)\s+AS\s+(\w+)\s+FROM\s+(\w+)(?:\s+WHERE\s+(.+))?$/is,
+    );
+    if (countMatch) {
+      const [, alias, tableName, whereClause] = countMatch;
+      const table = tables.get(tableName);
+      if (!table) return [{ [alias]: 0 }];
+      const pred = whereClause ? buildWherePredicate(whereClause, params, 0) : { test: () => true };
+      const n = table.rows.filter((r) => pred.test(r)).length;
+      return [{ [alias]: n }];
+    }
+
     const m = sql.match(
       /SELECT\s+(.+?)\s+FROM\s+(\w+)(?:\s+WHERE\s+(.+?))?(?:\s+ORDER\s+BY\s+(.+?))?(?:\s+LIMIT\s+(\d+))?$/is,
     );
@@ -311,21 +365,94 @@ function createMemoryDb(): DB {
     params: readonly unknown[],
     startIdx: number,
   ): { test: (row: Record<string, unknown>) => boolean; consumed: number } => {
-    // Minimal AND-only support: `col = ?` joined by AND.
+    // Supports clauses combined with AND. Each clause can be:
+    //   col = ?            equality (param or literal)
+    //   col = LITERAL
+    //   col LIKE ?
+    //   col IN (?, ?, …) | col IN ('a','b')
+    //   col IS NULL | col IS NOT NULL
+    //   LOWER(col) = LOWER(?)     case-insensitive equality
+    //   LOWER(col) = LOWER('lit') case-insensitive equality (literal)
     const parts = clause.split(/\s+AND\s+/i).map((p) => p.trim());
     let idx = startIdx;
     const checks: ((row: Record<string, unknown>) => boolean)[] = [];
+
     for (const p of parts) {
+      // LOWER(col) = LOWER(?) | LOWER(col) = LOWER('lit')
+      const lowerMatch = p.match(/^LOWER\((\w+)\)\s*=\s*LOWER\((.+)\)$/i);
+      if (lowerMatch) {
+        const col = lowerMatch[1];
+        const raw = lowerMatch[2].trim();
+        let expected: unknown;
+        if (raw === '?') expected = params[idx++];
+        else expected = parseLiteral(raw);
+        const expLower = typeof expected === 'string' ? expected.toLowerCase() : expected;
+        checks.push((row) => {
+          const v = row[col];
+          if (typeof v === 'string') return v.toLowerCase() === expLower;
+          return v === expected;
+        });
+        continue;
+      }
+
+      // col IS NULL | col IS NOT NULL
+      const isNullMatch = p.match(/^(\w+)\s+IS\s+(NOT\s+)?NULL$/i);
+      if (isNullMatch) {
+        const col = isNullMatch[1];
+        const negated = !!isNullMatch[2];
+        checks.push((row) => (row[col] == null) !== negated);
+        continue;
+      }
+
+      // col LIKE ?  → substring match (supports `%foo%` style)
+      const likeMatch = p.match(/^(\w+)\s+LIKE\s+(.+)$/i);
+      if (likeMatch) {
+        const col = likeMatch[1];
+        const raw = likeMatch[2].trim();
+        let pattern: unknown;
+        if (raw === '?') pattern = params[idx++];
+        else pattern = parseLiteral(raw);
+        if (typeof pattern !== 'string') {
+          checks.push(() => false);
+          continue;
+        }
+        // % is "any chars", _ is "any single char". Translate to regex.
+        const regex = new RegExp(
+          '^' +
+            pattern
+              .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+              .replace(/%/g, '.*')
+              .replace(/_/g, '.') +
+            '$',
+        );
+        checks.push((row) => {
+          const v = row[col];
+          return typeof v === 'string' && regex.test(v);
+        });
+        continue;
+      }
+
+      // col IN (?, ?, …) | col IN ('a','b')
+      const inMatch = p.match(/^(\w+)\s+IN\s*\(([^)]+)\)$/i);
+      if (inMatch) {
+        const col = inMatch[1];
+        const tokens = inMatch[2].split(',').map((t) => t.trim());
+        const values: unknown[] = tokens.map((t) => {
+          if (t === '?') return params[idx++];
+          return parseLiteral(t);
+        });
+        checks.push((row) => values.includes(row[col]));
+        continue;
+      }
+
+      // col = ? | col = LITERAL
       const eqMatch = p.match(/^(\w+)\s*=\s*(.+)$/);
       if (!eqMatch) throw new Error(`[memory-db] unsupported WHERE: ${p}`);
       const col = eqMatch[1];
       const raw = eqMatch[2].trim();
       let expected: unknown;
-      if (raw === '?') {
-        expected = params[idx++];
-      } else {
-        expected = parseLiteral(raw);
-      }
+      if (raw === '?') expected = params[idx++];
+      else expected = parseLiteral(raw);
       checks.push((row) => row[col] === expected);
     }
     return {

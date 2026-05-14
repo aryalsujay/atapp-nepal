@@ -339,10 +339,23 @@ function fetchPage(schId) {
   });
 }
 
+// Mirror src/utils/courseId.ts so the offline scraper produces the same
+// stable IDs the runtime sync uses.
+function stableCourseId(centerId, startDate, type, genderRequired) {
+  const key = `${centerId}|${startDate}|${type}|${genderRequired || 'Any'}`;
+  let h = 0x811c9dc5;
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i);
+    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+  }
+  const id = h & 0x7fffffff;
+  return id === 0 ? 1 : id;
+}
+
 async function run() {
   console.log('🔄 Scraping 19 Nepal Dhamma center schedules...\n');
   const allCourses = [];
-  let id = 1;
+  const seenIds = new Set();
 
   for (const schId of Object.keys(NEPAL_CENTERS)) {
     process.stdout.write(`  Fetching ${schId}... `);
@@ -350,7 +363,7 @@ async function run() {
     const parsed = parseHtml(html, schId);
 
     const mapped = parsed.map((c) => ({
-      id: id++,
+      id: stableCourseId(c.centerId, c.startDate, c.type, c.genderRequired),
       type: c.type,
       center: c.name,
       centerId: c.centerId,
@@ -400,7 +413,13 @@ async function run() {
     }));
 
     console.log(`${parsed.length} courses`);
-    allCourses.push(...mapped);
+    // Dedupe across runs and within a single page (dhamma.org occasionally
+    // emits the same row twice).
+    for (const c of mapped) {
+      if (seenIds.has(c.id)) continue;
+      seenIds.add(c.id);
+      allCourses.push(c);
+    }
 
     // Polite delay between requests
     await new Promise((r) => setTimeout(r, 800));

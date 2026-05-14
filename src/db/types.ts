@@ -24,6 +24,7 @@ export interface TeacherRow {
   name: string;
   gender: 'M' | 'F' | null;
   email: string | null;
+  phone: string | null;
   invite_code: string | null;
   password_hash: string;
   region: string | null;

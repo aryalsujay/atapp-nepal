@@ -12,7 +12,6 @@ const baseProfile = (): TeacherProfile => ({
   gender: 'M',
   email: 't@example.com',
   inviteCode: 'AT-TEST',
-  passwordHash: 'x',
   region: 'Nepal',
   flag: '🇳🇵',
   authorizedSince: 2020,
