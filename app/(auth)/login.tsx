@@ -194,9 +194,10 @@ export default function LoginScreen() {
           toast.error(t('login.error_invalid_server'), t('login.error_invalid_title'));
           return;
         }
-        await setAuth('server', serverUser.id, serverUser.isOnboarded ?? false);
+        // Demo mode: always route through onboarding so the flow is visible.
+        await setAuth('server', serverUser.id, false);
         await persistCreds();
-        router.replace(serverUser.isOnboarded ? Routes.serverHome : Routes.serverOnboarding);
+        router.replace(Routes.serverOnboarding);
         return;
       }
 
@@ -205,9 +206,10 @@ export default function LoginScreen() {
         toast.error(t('login.error_invalid_teacher'), t('login.error_invalid_title'));
         return;
       }
-      await setAuth('teacher', teacher.id, teacher.isOnboarded ?? false);
+      // Demo mode: always route through onboarding so the flow is visible.
+      await setAuth('teacher', teacher.id, false);
       await persistCreds();
-      router.replace(teacher.isOnboarded ? Routes.teacherHome : routeTo.onboardingTeacher(1));
+      router.replace(routeTo.onboardingTeacher(1));
     } finally {
       setLoading(false);
     }
