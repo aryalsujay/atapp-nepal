@@ -226,8 +226,8 @@
     "teacher": {
       "step0": {
         "title_en": "Welcome, Teacher",
-        "title_ne": "स्वागत छ, शिक्षक",
-        "subtitle": "Just a few quick questions to help us match you to the right courses.",
+        "title_ne": "स्वागत छ",
+        "subtitle": "A few one-time questions to set up your scheduling preferences",
         "admin_section": "Your administrator has set",
         "field_name_gender": "Name & Gender",
         "field_authorizations": "Course Authorizations",

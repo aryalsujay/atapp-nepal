@@ -220,8 +220,8 @@
     "teacher": {
       "step0": {
         "title_en": "Welcome, Teacher",
-        "title_ne": "स्वागत छ, शिक्षक",
-        "subtitle": "तपाईंलाई सही पाठ्यक्रमहरूमा मिलाउन केही द्रुत प्रश्नहरू।",
+        "title_ne": "स्वागत छ",
+        "subtitle": "A few one-time questions to set up your scheduling preferences",
         "admin_section": "व्यवस्थापकले सेट गरिसकेका छन्",
         "field_name_gender": "नाम र लिङ्ग",
         "field_authorizations": "शिविर प्राधिकरण",

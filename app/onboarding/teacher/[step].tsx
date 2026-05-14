@@ -322,8 +322,8 @@ const s = StyleSheet.create({
     marginTop: 10,
   },
 
-  // Welcome CTA — paddingTop 6 matches prototype's tight gap to the card
-  ctaWrap: { paddingHorizontal: 18, paddingTop: 6 },
+  // Welcome CTA flush under the card — no top gap, per user
+  ctaWrap: { paddingHorizontal: 18, paddingTop: 0 },
   ctaTouchable: { borderRadius: 14, overflow: 'hidden' },
   ctaBtn: {
     width: '100%',
