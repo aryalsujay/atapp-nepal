@@ -236,6 +236,13 @@
         "card_tail": "Now let's set up your scheduling preferences"
       },
       "step1": {
+        "title": "Which languages can you teach in?",
+        "subtitle": "Tap a language to cycle through Primary, Secondary, and Off.",
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "off": "Off"
+      },
+      "step1_legacy": {
         "title": "Welcome to\nDhamma AT",
         "subtitle": "Set up your teacher profile to get matched with courses across Nepal."
       },

@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { Routes, routeTo } from '@/routes';
 import { useAuthStore } from '@/store/authStore';
 import { useTeachersStore } from '@/store/teachersStore';
+import { useOnboardingDraftStore, type LangLevel } from '@/store/onboardingDraftStore';
 import { Colors, Gradients, GradientDirection } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
@@ -47,8 +48,161 @@ export default function OnboardingStep() {
   if (step === 0) {
     return <StepWelcome onContinue={goNext} />;
   }
+  if (step === 1) {
+    return <StepLanguages onBack={goBack} onContinue={goNext} />;
+  }
 
   return <StepPlaceholder step={step} onBack={goBack} onContinue={goNext} />;
+}
+
+// ─── Shared: StepHero + NavRow ───────────────────────────────────────────────
+
+function StepHero({ step, title, subtitle }: { step: number; title: string; subtitle: string }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <LinearGradient
+      colors={['#6B3600', Colors.sf] as [string, string]}
+      start={GradientDirection.hero.start}
+      end={GradientDirection.hero.end}
+      style={[s.stepHero, { paddingTop: Math.max(56, insets.top + 12) }]}
+    >
+      <LotusHero color="white" opacity={0.08} size={200} right={-30} bottom={-30} />
+      <MountainSilhouette color="rgba(255,255,255,0.07)" />
+      <Text style={s.stepCounter}>
+        STEP {step} OF {TOTAL_STEPS - 2}
+      </Text>
+      <Text style={s.stepTitle}>{title}</Text>
+      <Text style={s.stepSub}>{subtitle}</Text>
+      <View style={s.progressRow}>
+        {Array.from({ length: TOTAL_STEPS - 1 }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              s.progressSeg,
+              {
+                backgroundColor: i <= step - 1 ? Colors.white : 'rgba(255,255,255,0.25)',
+              },
+            ]}
+          />
+        ))}
+      </View>
+    </LinearGradient>
+  );
+}
+
+function NavRow({
+  onBack,
+  onContinue,
+  continueDisabled,
+  continueLabel,
+}: {
+  onBack: () => void;
+  onContinue: () => void;
+  continueDisabled?: boolean;
+  continueLabel?: string;
+}) {
+  const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
+  return (
+    <View style={[s.navRow, { paddingBottom: insets.bottom + 16 }]}>
+      <TouchableOpacity onPress={onBack} style={s.backBtn} activeOpacity={0.7}>
+        <Text style={s.backBtnText}>← {t('common.back')}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={onContinue}
+        activeOpacity={0.85}
+        disabled={continueDisabled}
+        style={[s.continueBtnWrap, continueDisabled && s.continueDisabled]}
+      >
+        <LinearGradient
+          colors={Gradients.primaryCta as unknown as [string, string, ...string[]]}
+          start={GradientDirection.button.start}
+          end={GradientDirection.button.end}
+          style={s.continueBtn}
+        >
+          <Text style={s.continueBtnText}>{continueLabel ?? `${t('common.continue')} →`}</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ─── Step 1: Languages ───────────────────────────────────────────────────────
+
+const LANG_KEYS = ['Nepali', 'English', 'Hindi', 'Gujarati', 'German'];
+
+function StepLanguages({ onBack, onContinue }: { onBack: () => void; onContinue: () => void }) {
+  const { t } = useTranslation();
+  const langs = useOnboardingDraftStore((d) => d.langs);
+  const cycleLang = useOnboardingDraftStore((d) => d.cycleLang);
+
+  return (
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <ScrollView
+        style={s.flex}
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <StepHero
+          step={1}
+          title={t('onboarding.teacher.step1.title')}
+          subtitle={t('onboarding.teacher.step1.subtitle')}
+        />
+
+        <View style={s.langCard}>
+          {LANG_KEYS.map((key, idx) => {
+            const level: LangLevel = langs[key] ?? 'off';
+            const tone =
+              level === 'primary'
+                ? {
+                    bg: Colors.fol,
+                    color: Colors.fo,
+                    icon: '★',
+                    chipBg: Colors.fol,
+                    chipColor: Colors.fo,
+                  }
+                : level === 'secondary'
+                  ? {
+                      bg: Colors.gdl,
+                      color: Colors.gd,
+                      icon: '·',
+                      chipBg: Colors.gdl,
+                      chipColor: Colors.gd,
+                    }
+                  : {
+                      bg: Colors.cr2,
+                      color: Colors.tx3,
+                      icon: '✗',
+                      chipBg: Colors.cr2,
+                      chipColor: Colors.tx3,
+                    };
+            const labelKey = `onboarding.teacher.step1.${level}`;
+            return (
+              <TouchableOpacity
+                key={key}
+                onPress={() => cycleLang(key)}
+                activeOpacity={0.7}
+                style={[s.langRow, idx < LANG_KEYS.length - 1 && s.langRowBorder]}
+              >
+                <View style={[s.langBadge, { backgroundColor: tone.bg }]}>
+                  <Text style={[s.langBadgeIcon, { color: tone.color }]}>{tone.icon}</Text>
+                </View>
+                <Text style={[s.langName, { color: level === 'off' ? Colors.tx3 : Colors.tx }]}>
+                  {key}
+                </Text>
+                <View style={[s.langChip, { backgroundColor: tone.chipBg }]}>
+                  <Text style={[s.langChipText, { color: tone.chipColor }]}>{t(labelKey)}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ScrollView>
+
+      <NavRow onBack={onBack} onContinue={onContinue} />
+    </View>
+  );
 }
 
 // ─── Step 0: Welcome ─────────────────────────────────────────────────────────
@@ -157,7 +311,6 @@ function StepPlaceholder({
   onBack: () => void;
   onContinue: () => void;
 }) {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const setOnboarded = useAuthStore((s) => s.setOnboarded);
   const isLast = step === TOTAL_STEPS - 1;
@@ -170,53 +323,17 @@ function StepPlaceholder({
   return (
     <View style={[s.flex, { backgroundColor: Colors.cr }]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <LinearGradient
-        colors={['#6B3600', Colors.sf] as [string, string]}
-        start={GradientDirection.hero.start}
-        end={GradientDirection.hero.end}
-        style={[s.stepHero, { paddingTop: Math.max(56, insets.top + 12) }]}
-      >
-        <LotusHero color="white" opacity={0.08} size={200} right={-30} bottom={-30} />
-        <MountainSilhouette color="rgba(255,255,255,0.07)" />
-        <Text style={s.stepCounter}>
-          STEP {step} OF {TOTAL_STEPS - 1}
-        </Text>
-        <Text style={s.stepTitle}>Step {step} — coming next</Text>
-        <Text style={s.stepSub}>This step will be implemented in the next iteration.</Text>
-        <View style={s.progressRow}>
-          {Array.from({ length: TOTAL_STEPS - 1 }).map((_, i) => (
-            <View
-              key={i}
-              style={[
-                s.progressSeg,
-                { backgroundColor: i <= step - 1 ? Colors.white : 'rgba(255,255,255,0.25)' },
-              ]}
-            />
-          ))}
-        </View>
-      </LinearGradient>
-
+      <StepHero
+        step={step}
+        title={`Step ${step} — coming next`}
+        subtitle="This step will be implemented in the next iteration."
+      />
       <View style={{ flex: 1 }} />
-
-      <View style={[s.navRow, { paddingBottom: insets.bottom + 16 }]}>
-        <TouchableOpacity onPress={onBack} style={s.backBtn} activeOpacity={0.7}>
-          <Text style={s.backBtnText}>← Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={isLast ? handleFinish : onContinue}
-          activeOpacity={0.85}
-          style={s.continueBtnWrap}
-        >
-          <LinearGradient
-            colors={Gradients.primaryCta as unknown as [string, string, ...string[]]}
-            start={GradientDirection.button.start}
-            end={GradientDirection.button.end}
-            style={s.continueBtn}
-          >
-            <Text style={s.continueBtnText}>{isLast ? '✓ Enter Dhamma AT' : 'Continue →'}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+      <NavRow
+        onBack={onBack}
+        onContinue={isLast ? handleFinish : onContinue}
+        continueLabel={isLast ? '✓ Enter Dhamma AT' : undefined}
+      />
     </View>
   );
 }
@@ -335,7 +452,54 @@ const s = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // Placeholder StepHero (steps 1..5)
+  // Step 1: Languages card
+  langCard: {
+    margin: 18,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.bd,
+  },
+  langRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    paddingVertical: 10,
+  },
+  langRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.bd,
+  },
+  langBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  langBadgeIcon: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  langName: {
+    flex: 1,
+    fontSize: 13.5,
+    fontWeight: '600',
+  },
+  langChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  langChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+
+  // StepHero (steps 1..5)
   stepHero: {
     paddingHorizontal: 18,
     paddingBottom: 22,
@@ -396,6 +560,7 @@ const s = StyleSheet.create({
     color: Colors.tx2,
   },
   continueBtnWrap: { flex: 2, borderRadius: 12, overflow: 'hidden' },
+  continueDisabled: { opacity: 0.45 },
   continueBtn: {
     paddingVertical: 13,
     alignItems: 'center',
