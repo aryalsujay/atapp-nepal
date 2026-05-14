@@ -320,7 +320,7 @@ const s = StyleSheet.create({
   },
 
   // Welcome CTA — generous gap below the card
-  ctaWrap: { paddingHorizontal: 18, paddingTop: 22 },
+  ctaWrap: { paddingHorizontal: 18, paddingTop: 32 },
   ctaTouchable: { borderRadius: 14, overflow: 'hidden' },
   ctaBtn: {
     width: '100%',
