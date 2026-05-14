@@ -237,6 +237,18 @@
         "secondary": "माध्यमिक",
         "off": "पढाउँदिन"
       },
+      "step5": {
+        "title": "सबै तयार, साधु! 🙏",
+        "subtitle": "तपाईं यी सबै आफ्नो प्रोफाइलबाट सम्पादन गर्न सक्नुहुन्छ।",
+        "summary_langs_label": "शिक्षण भाषाहरू",
+        "summary_regions_label": "मनपर्ने क्षेत्रहरू",
+        "summary_avail_label": "मेरो उपलब्धता २०२६",
+        "summary_note_label": "व्यक्तिगत नोट",
+        "summary_avail_template": "{{months}} महिना · {{festivals}} पर्व रोक",
+        "summary_avail_no_festival": "{{months}} महिना",
+        "summary_note_empty": "(छैन)",
+        "enter_app": "धम्म AT मा प्रवेश →"
+      },
       "step4": {
         "title": "व्यवस्थापकले जान्नु पर्ने केही छ? (वैकल्पिक)",
         "subtitle": "यात्रा प्राथमिकता, खानपान आवश्यकता, थप चाडपर्व रोकहरू",

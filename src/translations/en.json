@@ -243,6 +243,18 @@
         "secondary": "Secondary",
         "off": "Don't teach"
       },
+      "step5": {
+        "title": "All set, Sadhu! 🙏",
+        "subtitle": "You can edit any of this from your Profile.",
+        "summary_langs_label": "Teaching Languages",
+        "summary_regions_label": "Preferred Regions",
+        "summary_avail_label": "My Availability 2026",
+        "summary_note_label": "Personal Note",
+        "summary_avail_template": "{{months}} months · {{festivals}} festival blocks",
+        "summary_avail_no_festival": "{{months}} months",
+        "summary_note_empty": "(none)",
+        "enter_app": "Enter Dhamma AT →"
+      },
       "step4": {
         "title": "Anything the admin should know? (optional)",
         "subtitle": "Travel preferences, dietary needs, festival blocks beyond defaults",

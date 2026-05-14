@@ -33,12 +33,16 @@ import { useTranslation } from 'react-i18next';
 
 import { Routes, routeTo } from '@/routes';
 import { useAuthStore } from '@/store/authStore';
+import { useProfileStore } from '@/store/profileStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTeachersStore } from '@/store/teachersStore';
-import { useOnboardingDraftStore, type LangLevel } from '@/store/onboardingDraftStore';
+import { useOnboardingDraftStore, type LangLevel, type AvCell } from '@/store/onboardingDraftStore';
 import { Colors, Gradients, GradientDirection } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
+import { fromAvailabilityArray } from '@/utils/availability';
+import { logger } from '@/utils/logger';
+import type { LanguageLevel, AvailabilityState } from '@/types';
 
 const TOTAL_STEPS = 6; // 0..5
 
@@ -75,6 +79,9 @@ export default function OnboardingStep() {
   }
   if (step === 4) {
     return <StepNote onBack={goBack} onContinue={goNext} />;
+  }
+  if (step === 5) {
+    return <StepDone />;
   }
 
   return <StepPlaceholder step={step} onBack={goBack} onContinue={goNext} />;
@@ -537,6 +544,143 @@ function StepWelcome({ onContinue }: { onContinue: () => void }) {
   );
 }
 
+// ─── Step 5: Done / All set ──────────────────────────────────────────────────
+
+const REGION_LABELS: Record<string, string> = {
+  kathmandu_valley: 'Kathmandu Valley',
+  pokhara: 'Pokhara',
+  lumbini_terai: 'Lumbini & Terai',
+  koshi: 'Koshi',
+  gandaki: 'Gandaki',
+  madhesh: 'Madhesh',
+  international: 'International',
+};
+
+function StepDone() {
+  const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const userId = useAuthStore((st) => st.userId);
+  const setOnboarded = useAuthStore((st) => st.setOnboarded);
+  const { loadProfile, updateProfile } = useProfileStore();
+  const draft = useOnboardingDraftStore();
+  const resetDraft = useOnboardingDraftStore((d) => d.reset);
+
+  const activeLangs = Object.entries(draft.langs).filter(([, lvl]) => lvl !== 'off');
+  const langsSummary = activeLangs.map(([k, lvl]) => (lvl === 'primary' ? `${k} ★` : k)).join(', ');
+
+  const regionsSummary = draft.regions.map((k) => REGION_LABELS[k] ?? k).join(' › ');
+
+  const monthsCount = draft.av.filter((v) => v === 1).length;
+  const festivalCount = draft.av.filter((v) => v === 'f').length;
+  const availSummary =
+    festivalCount > 0
+      ? t('onboarding.teacher.step5.summary_avail_template', {
+          months: monthsCount,
+          festivals: festivalCount,
+        })
+      : t('onboarding.teacher.step5.summary_avail_no_festival', { months: monthsCount });
+
+  const noteSummary = draft.note.trim()
+    ? draft.note.length > 50
+      ? draft.note.slice(0, 50) + '…'
+      : draft.note
+    : t('onboarding.teacher.step5.summary_note_empty');
+
+  const handleEnter = async () => {
+    try {
+      if (userId) await loadProfile(userId);
+      const { availableMonths, festivalMonths } = fromAvailabilityArray(
+        draft.av as unknown as AvailabilityState[],
+      );
+      await updateProfile({
+        languages: draft.langs as Record<string, LanguageLevel>,
+        preferredRegions: draft.regions.map((k) => REGION_LABELS[k] ?? k),
+        availableMonths,
+        festivalMonths,
+        personalNote: draft.note,
+        isOnboarded: true,
+      });
+      await setOnboarded(true);
+      resetDraft();
+      router.replace(Routes.teacherHome);
+    } catch (err) {
+      logger.warn('[onboarding] failed to persist profile', err);
+    }
+  };
+
+  const rows: { icon: string; labelKey: string; value: string }[] = [
+    {
+      icon: '🗣',
+      labelKey: 'onboarding.teacher.step5.summary_langs_label',
+      value: langsSummary || '—',
+    },
+    {
+      icon: '📍',
+      labelKey: 'onboarding.teacher.step5.summary_regions_label',
+      value: regionsSummary || '—',
+    },
+    { icon: '📅', labelKey: 'onboarding.teacher.step5.summary_avail_label', value: availSummary },
+    { icon: '💬', labelKey: 'onboarding.teacher.step5.summary_note_label', value: noteSummary },
+  ];
+
+  return (
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <ScrollView
+        style={s.flex}
+        contentContainerStyle={s.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Forest hero — distinct from the saffron StepHero */}
+        <LinearGradient
+          colors={['#1C4228', Colors.fo] as [string, string]}
+          start={GradientDirection.hero.start}
+          end={GradientDirection.hero.end}
+          style={[s.doneHero, { paddingTop: Math.max(80, insets.top + 36) }]}
+        >
+          <LotusHero color="white" opacity={0.12} size={320} right={-70} bottom={-70} />
+          <MountainSilhouette color="rgba(255,255,255,0.09)" />
+          <Text style={s.doneNamaste}>🙏</Text>
+          <Text style={s.doneTitle}>{t('onboarding.teacher.step5.title')}</Text>
+          <Text style={s.doneSub}>{t('onboarding.teacher.step5.subtitle')}</Text>
+        </LinearGradient>
+
+        {/* Summary card */}
+        <View style={s.cardWrap}>
+          <View style={s.adminCard}>
+            {rows.map((r) => (
+              <View key={r.labelKey} style={[s.adminRow, s.adminRowBorder]}>
+                <Text style={s.adminIcon}>{r.icon}</Text>
+                <View style={s.adminTextWrap}>
+                  <Text style={s.adminFieldLabel}>{t(r.labelKey)}</Text>
+                  <Text style={s.adminFieldValue}>{r.value}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Single CTA — full-width, saffron gradient like the prototype `.btn.pr` */}
+        <View style={s.doneCtaWrap}>
+          <TouchableOpacity onPress={handleEnter} activeOpacity={0.85}>
+            <LinearGradient
+              colors={Gradients.primaryCta as unknown as [string, string, ...string[]]}
+              start={GradientDirection.button.start}
+              end={GradientDirection.button.end}
+              style={s.doneCtaBtn}
+            >
+              <Text style={s.doneCtaText}>{t('onboarding.teacher.step5.enter_app')}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ height: 24 + insets.bottom }} />
+      </ScrollView>
+    </View>
+  );
+}
+
 // ─── Step 1..5: placeholder (to be filled in step-by-step) ───────────────────
 
 function StepPlaceholder({
@@ -693,6 +837,53 @@ const s = StyleSheet.create({
     color: Colors.white,
     fontSize: 15,
     fontWeight: '700',
+  },
+
+  // Step 5: Done CTA — prototype .btn.pr style (full width, 15 px padding, 15 px font, radius 13)
+  doneCtaWrap: {
+    paddingHorizontal: 18,
+    paddingTop: 32,
+  },
+  doneCtaBtn: {
+    width: '100%',
+    paddingVertical: 15,
+    paddingHorizontal: 22,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  doneCtaText: {
+    color: Colors.white,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  // Step 5: Done
+  doneHero: {
+    paddingHorizontal: 24,
+    paddingBottom: 50,
+    overflow: 'hidden',
+    position: 'relative',
+    alignItems: 'center',
+  },
+  doneNamaste: {
+    fontSize: 64,
+    marginBottom: 14,
+  },
+  doneTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: Colors.white,
+    lineHeight: 30,
+    textAlign: 'center',
+  },
+  doneSub: {
+    fontSize: 13.5,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 14,
+    lineHeight: 21,
+    maxWidth: 300,
+    textAlign: 'center',
   },
 
   // Step 4: Personal Note
