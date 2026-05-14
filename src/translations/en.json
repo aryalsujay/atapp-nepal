@@ -225,8 +225,8 @@
   "onboarding": {
     "teacher": {
       "step0": {
-        "title_en": "Welcome",
-        "title_ne": "स्वागत छ",
+        "title_en": "Welcome, Teacher",
+        "title_ne": "स्वागत छ, शिक्षक",
         "subtitle": "Just a few quick questions to help us match you to the right courses.",
         "admin_section": "Your administrator has set",
         "field_name_gender": "Name & Gender",

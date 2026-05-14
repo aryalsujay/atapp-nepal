@@ -138,7 +138,7 @@ function StepWelcome({ onContinue }: { onContinue: () => void }) {
               end={GradientDirection.button.end}
               style={s.ctaBtn}
             >
-              <Text style={s.ctaText}>{t('common.continue')}</Text>
+              <Text style={s.ctaText}>{t('common.continue')} →</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -322,8 +322,8 @@ const s = StyleSheet.create({
     marginTop: 10,
   },
 
-  // Welcome CTA
-  ctaWrap: { paddingHorizontal: 18, paddingTop: 14 },
+  // Welcome CTA — paddingTop 6 matches prototype's tight gap to the card
+  ctaWrap: { paddingHorizontal: 18, paddingTop: 6 },
   ctaTouchable: { borderRadius: 14, overflow: 'hidden' },
   ctaBtn: {
     width: '100%',
