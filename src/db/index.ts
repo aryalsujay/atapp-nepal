@@ -153,6 +153,16 @@ function createMemoryDb(): DB {
       if (m) tables.delete(m[1]);
       return undefined;
     }
+    if (upper.startsWith('ALTER TABLE')) {
+      // ALTER TABLE <name> ADD COLUMN <col> <type...> — only the column-add
+      // variant is supported (the safest schema change).
+      const m = sql.match(/ALTER\s+TABLE\s+(\w+)\s+ADD\s+COLUMN\s+(\w+)\b/i);
+      if (m) {
+        const tbl = tables.get(m[1]);
+        if (tbl && !tbl.columns.includes(m[2])) tbl.columns.push(m[2]);
+      }
+      return undefined;
+    }
 
     throw new Error(`[memory-db] unsupported SQL: ${sql.slice(0, 100)}…`);
   };

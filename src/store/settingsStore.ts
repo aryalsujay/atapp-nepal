@@ -1,6 +1,14 @@
+/**
+ * Settings store — UI-level preferences (language, showCoTeacher).
+ * Persisted via the `settings` table (key/value).
+ */
+
 import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import i18n from '@/i18n';
+import { getDb } from '@/db';
+import { settingsRepo } from '@/db/repositories';
+import { logger } from '@/utils/logger';
 
 type Language = 'en' | 'ne';
 
@@ -13,7 +21,8 @@ interface SettingsState {
   restoreSettings: () => Promise<void>;
 }
 
-const SETTINGS_KEY = '@dhamma_settings';
+const KEY_LANGUAGE = 'ui.language';
+const KEY_SHOW_CO_TEACHER = 'ui.showCoTeacher';
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   language: 'en',
@@ -22,31 +31,35 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setLanguage: async (lang) => {
     i18n.changeLanguage(lang);
     set({ language: lang });
-    const raw = await AsyncStorage.getItem(SETTINGS_KEY);
-    const current = raw ? JSON.parse(raw) : {};
-    await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...current, language: lang }));
+    try {
+      settingsRepo.set(getDb(), KEY_LANGUAGE, lang);
+    } catch (err) {
+      logger.warn('[settingsStore] setLanguage failed', err);
+    }
   },
 
   toggleCoTeacher: async () => {
     const next = !get().showCoTeacher;
     set({ showCoTeacher: next });
     try {
-      const raw = await AsyncStorage.getItem(SETTINGS_KEY);
-      const current = raw ? JSON.parse(raw) : {};
-      await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...current, showCoTeacher: next }));
-    } catch {}
+      settingsRepo.set(getDb(), KEY_SHOW_CO_TEACHER, next ? '1' : '0');
+    } catch (err) {
+      logger.warn('[settingsStore] toggleCoTeacher failed', err);
+    }
   },
 
   restoreSettings: async () => {
     try {
-      const raw = await AsyncStorage.getItem(SETTINGS_KEY);
-      if (raw) {
-        const { language, showCoTeacher } = JSON.parse(raw);
-        if (language) {
-          i18n.changeLanguage(language);
-          set({ language, showCoTeacher: showCoTeacher ?? false });
-        }
+      const db = getDb();
+      const lang = settingsRepo.get(db, KEY_LANGUAGE) as Language | null;
+      const sct = settingsRepo.get(db, KEY_SHOW_CO_TEACHER);
+      if (lang === 'en' || lang === 'ne') {
+        i18n.changeLanguage(lang);
+        set({ language: lang });
       }
-    } catch {}
+      set({ showCoTeacher: sct === '1' });
+    } catch (err) {
+      logger.warn('[settingsStore] restoreSettings failed', err);
+    }
   },
 }));

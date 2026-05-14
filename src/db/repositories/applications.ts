@@ -9,7 +9,11 @@
 import type { DB } from '../index';
 import type { ApplicationRow } from '../types';
 
-export type ApplicationStatus = 'pending' | 'approved' | 'rejected' | 'withdrawn' | 'assigned';
+/**
+ * Mirrors `Status` from `@/types/common`. The repo stores status as TEXT, so
+ * extending this union is a code-only change (no migration needed).
+ */
+export type ApplicationStatus = 'pending' | 'approved' | 'rejected' | 'withdrawal_requested';
 
 export interface ApplicationDomain {
   id: number;

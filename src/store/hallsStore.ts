@@ -1,9 +1,13 @@
-import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Hall } from '@/types';
-import seedHalls from '@/data/halls.json';
+/**
+ * Halls store — wraps `hallsRepo`. Used by admin centre management.
+ */
 
-const HALLS_KEY = '@dhamma_halls_v1';
+import { create } from 'zustand';
+
+import { getDb } from '@/db';
+import { hallsRepo } from '@/db/repositories';
+import type { Hall } from '@/types';
+import { logger } from '@/utils/logger';
 
 interface HallsState {
   halls: Hall[];
@@ -15,15 +19,19 @@ interface HallsState {
   deleteHall: (id: string) => Promise<void>;
 }
 
-async function loadFromStorage(): Promise<Hall[]> {
-  const raw = await AsyncStorage.getItem(HALLS_KEY);
-  if (raw) return JSON.parse(raw);
-  await AsyncStorage.setItem(HALLS_KEY, JSON.stringify(seedHalls));
-  return seedHalls as Hall[];
+function toHall(h: ReturnType<typeof hallsRepo.list>[number]): Hall {
+  return {
+    id: h.id,
+    centreId: h.centreId,
+    name: h.name,
+    teacherSlots: h.teacherSlots,
+    genderRequired: h.genderRequired as Hall['genderRequired'],
+    notes: h.notes ?? undefined,
+  };
 }
 
-async function saveAll(halls: Hall[]) {
-  await AsyncStorage.setItem(HALLS_KEY, JSON.stringify(halls));
+function readAll(): Hall[] {
+  return hallsRepo.list(getDb()).map(toHall);
 }
 
 export const useHallsStore = create<HallsState>((set, get) => ({
@@ -32,10 +40,10 @@ export const useHallsStore = create<HallsState>((set, get) => ({
 
   loadHalls: async () => {
     try {
-      const halls = await loadFromStorage();
-      set({ halls, loaded: true });
-    } catch {
-      set({ halls: seedHalls as Hall[], loaded: true });
+      set({ halls: readAll(), loaded: true });
+    } catch (err) {
+      logger.warn('[hallsStore] loadHalls failed', err);
+      set({ loaded: true });
     }
   },
 
@@ -43,21 +51,35 @@ export const useHallsStore = create<HallsState>((set, get) => ({
 
   createHall: async (partial) => {
     const hall: Hall = { ...partial, id: `hall-${Date.now()}` };
-    const updated = [...get().halls, hall];
-    await saveAll(updated);
-    set({ halls: updated });
+    hallsRepo.upsert(getDb(), {
+      id: hall.id,
+      centreId: hall.centreId,
+      name: hall.name,
+      teacherSlots: hall.teacherSlots,
+      genderRequired: hall.genderRequired ?? null,
+      notes: hall.notes ?? null,
+    });
+    set({ halls: readAll() });
     return hall;
   },
 
   updateHall: async (id, patch) => {
-    const updated = get().halls.map((h) => (h.id === id ? { ...h, ...patch } : h));
-    await saveAll(updated);
-    set({ halls: updated });
+    const current = get().halls.find((h) => h.id === id);
+    if (!current) return;
+    const merged = { ...current, ...patch };
+    hallsRepo.upsert(getDb(), {
+      id: merged.id,
+      centreId: merged.centreId,
+      name: merged.name,
+      teacherSlots: merged.teacherSlots,
+      genderRequired: merged.genderRequired ?? null,
+      notes: merged.notes ?? null,
+    });
+    set({ halls: readAll() });
   },
 
   deleteHall: async (id) => {
-    const updated = get().halls.filter((h) => h.id !== id);
-    await saveAll(updated);
-    set({ halls: updated });
+    getDb().exec('DELETE FROM halls WHERE id = ?', [id]);
+    set({ halls: readAll() });
   },
 }));

@@ -185,18 +185,19 @@ export function seedDatabase(db: DB): { inserted: Record<string, number> } {
     for (const t of teachers) {
       db.exec(
         `INSERT INTO teachers
-          (id, role, name, gender, email, invite_code, password_hash, region, flag,
+          (id, role, name, gender, email, phone, invite_code, password_hash, region, flag,
            authorized_since, total_courses, centers_served, courses_this_year, is_onboarded,
            personal_note, authorizations_json, languages_json, preferred_regions_json,
            available_months_json, festival_months_json, teaching_history_json,
            created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           t.id,
           t.role ?? 'teacher',
           t.name,
           t.gender ?? null,
           t.email ?? null,
+          (t as { phone?: string }).phone ?? null,
           t.inviteCode ?? null,
           t.passwordHash,
           t.region ?? null,

@@ -1,7 +1,19 @@
+/**
+ * Applications store — wraps `applicationsRepo`. Drives the home upcoming
+ * list, the teacher applications screen, and the admin inbox.
+ *
+ * Queue ordering ("you are #N in line for this course") is recomputed in JS
+ * on every status change since SQLite doesn't have a clean way to express
+ * "rank pending applications by appliedDate within course". Cheap operation
+ * — bounded by # of pendings per course.
+ */
+
 import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Application } from '@/types';
-import seedData from '@/data/applications.json';
+
+import { getDb } from '@/db';
+import { applicationsRepo } from '@/db/repositories';
+import type { Application } from '@/types';
+import { logger } from '@/utils/logger';
 import { useNotificationsStore } from './notificationsStore';
 
 interface ApplicationsState {
@@ -21,14 +33,11 @@ interface ApplicationsState {
   getCoTeachersForCourse: (courseId: number, currentTeacherId: string) => Promise<string[]>;
 }
 
-const APPS_KEY = '@dhamma_applications_v2';
-
-// Allowed status transitions. Anything outside this map is rejected.
 const ALLOWED_TRANSITIONS: Record<Application['status'], Application['status'][]> = {
   pending: ['approved', 'rejected'],
   approved: ['withdrawal_requested', 'rejected'],
   rejected: [],
-  withdrawal_requested: ['approved'], // admin rejects step-down → revert to approved
+  withdrawal_requested: ['approved'],
 };
 
 function isValidTransition(from: Application['status'], to: Application['status']): boolean {
@@ -36,30 +45,40 @@ function isValidTransition(from: Application['status'], to: Application['status'
   return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-// Renumber pending applications for a single course by appliedDate order.
-function recalcQueueForCourse(apps: Application[], courseId: number): Application[] {
-  const pending = apps
-    .filter((a) => a.courseId === courseId && a.status === 'pending')
-    .sort((a, b) => new Date(a.appliedDate).getTime() - new Date(b.appliedDate).getTime());
-  const positions = new Map<number, number>();
-  pending.forEach((a, idx) => positions.set(a.id, idx + 1));
-  return apps.map((a) =>
-    a.courseId === courseId
-      ? { ...a, queuePosition: a.status === 'pending' ? positions.get(a.id) : undefined }
-      : a,
-  );
+function domainToApplication(d: ReturnType<typeof applicationsRepo.list>[number]): Application {
+  return {
+    id: d.id,
+    courseId: d.courseId,
+    teacherId: d.teacherId,
+    status: d.status as Application['status'],
+    appliedDate: d.appliedDate ?? '',
+    source: (d.source as Application['source']) ?? 'applied',
+    rejectionReason: d.rejectionReason ?? undefined,
+    queuePosition: d.queuePosition ?? undefined,
+    withdrawalNote: d.withdrawalNote ?? undefined,
+  };
 }
 
-async function persistAll(apps: Application[]) {
-  await AsyncStorage.setItem(APPS_KEY, JSON.stringify(apps));
-}
-
-async function loadFromStorage(): Promise<Application[]> {
-  const raw = await AsyncStorage.getItem(APPS_KEY);
-  if (raw) return JSON.parse(raw);
-  const seeded = seedData as Application[];
-  await AsyncStorage.setItem(APPS_KEY, JSON.stringify(seeded));
-  return seeded;
+/**
+ * Recompute queue_position for every pending row of a course, ordered by
+ * appliedDate. Writes the new positions in a single transaction.
+ */
+function recomputeQueue(courseId: number): void {
+  const db = getDb();
+  const forCourse = applicationsRepo.listByCourse(db, courseId);
+  const pendings = forCourse
+    .filter((a) => a.status === 'pending')
+    .sort((a, b) => (a.appliedDate ?? '').localeCompare(b.appliedDate ?? ''));
+  db.transaction(() => {
+    forCourse.forEach((a) => {
+      const pendingIdx = pendings.findIndex((p) => p.id === a.id);
+      const newPos = a.status === 'pending' && pendingIdx >= 0 ? pendingIdx + 1 : null;
+      applicationsRepo.upsert(db, {
+        ...a,
+        queuePosition: newPos,
+      });
+    });
+  });
 }
 
 export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
@@ -67,53 +86,58 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
 
   loadApplications: async (userId) => {
     try {
-      const all = await loadFromStorage();
-      set({ applications: all.filter((a) => a.teacherId === userId) });
-    } catch {}
+      const rows = applicationsRepo.listByTeacher(getDb(), userId).map(domainToApplication);
+      set({ applications: rows });
+    } catch (err) {
+      logger.warn('[applicationsStore] loadApplications failed', err);
+    }
   },
 
   loadAllApplications: async () => {
     try {
-      const all = await loadFromStorage();
-      set({ applications: all });
-    } catch {}
+      set({ applications: applicationsRepo.list(getDb()).map(domainToApplication) });
+    } catch (err) {
+      logger.warn('[applicationsStore] loadAllApplications failed', err);
+    }
   },
 
   submitApplication: async (courseId, userId) => {
-    const all = await loadFromStorage();
-    const pendingForCourse = all.filter(
-      (a) => a.courseId === courseId && a.status === 'pending',
-    ).length;
-    const newApp: Application = {
-      id: Date.now(),
+    const db = getDb();
+    const inserted = applicationsRepo.upsert(db, {
       courseId,
       teacherId: userId,
       status: 'pending',
-      appliedDate: new Date().toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
+      appliedDate: new Date().toISOString().slice(0, 10),
       source: 'applied',
-      queuePosition: pendingForCourse + 1,
-    };
-    const updated = recalcQueueForCourse([...all, newApp], courseId);
-    await persistAll(updated);
-    set({ applications: updated.filter((a) => a.teacherId === userId) });
-    return newApp;
+      rejectionReason: null,
+      queuePosition: null,
+      withdrawalNote: null,
+    });
+    recomputeQueue(courseId);
+
+    const persisted = applicationsRepo.findById(db, inserted.id);
+    const created: Application = persisted
+      ? domainToApplication(persisted)
+      : domainToApplication(inserted);
+    set({
+      applications: applicationsRepo.listByTeacher(db, userId).map(domainToApplication),
+    });
+    return created;
   },
 
-  // Teacher requests step-down — creates a pending withdrawal for admin review
-  requestWithdrawal: async (applicationId, userId, note) => {
-    const all = await loadFromStorage();
-    const target = all.find((a) => a.id === applicationId);
-    if (!target || !isValidTransition(target.status, 'withdrawal_requested')) return;
-    const updated = all.map((a) =>
-      a.id === applicationId
-        ? { ...a, status: 'withdrawal_requested' as const, withdrawalNote: note }
-        : a,
-    );
-    await persistAll(updated);
+  requestWithdrawal: async (applicationId, _userId, note) => {
+    const db = getDb();
+    const target = applicationsRepo.findById(db, applicationId);
+    if (
+      !target ||
+      !isValidTransition(target.status as Application['status'], 'withdrawal_requested')
+    )
+      return;
+    applicationsRepo.upsert(db, {
+      ...target,
+      status: 'withdrawal_requested',
+      withdrawalNote: note ?? null,
+    });
     set((state) => ({
       applications: state.applications.map((a) =>
         a.id === applicationId
@@ -123,77 +147,70 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
     }));
   },
 
-  // Hard delete — only called by admin when approving a withdrawal
   withdrawApplication: async (applicationId, userId) => {
-    const all = await loadFromStorage();
-    const target = all.find((a) => a.id === applicationId);
-    const courseId = target?.courseId;
-    let updated = all.filter((a) => a.id !== applicationId);
-    if (courseId !== undefined) updated = recalcQueueForCourse(updated, courseId);
-    await persistAll(updated);
-    // Drop notifications referencing the deleted application's course for that teacher
-    if (target) {
-      useNotificationsStore.getState().removeForApplication?.(target.teacherId, target.courseId);
-    }
-    set({ applications: updated.filter((a) => a.teacherId === userId) });
+    const db = getDb();
+    const target = applicationsRepo.findById(db, applicationId);
+    if (!target) return;
+    applicationsRepo.deleteById(db, applicationId);
+    recomputeQueue(target.courseId);
+    useNotificationsStore.getState().removeForApplication?.(target.teacherId, target.courseId);
+    set({
+      applications: applicationsRepo.listByTeacher(db, userId).map(domainToApplication),
+    });
   },
 
   updateStatus: async (applicationId, status, reason) => {
-    const all = await loadFromStorage();
-    const target = all.find((a) => a.id === applicationId);
+    const db = getDb();
+    const target = applicationsRepo.findById(db, applicationId);
     if (!target) return;
-    if (!isValidTransition(target.status, status)) {
-      // Silently no-op; surfacing alerts here would couple store to UI
-      return;
-    }
-    let updated = all.map((a) =>
-      a.id === applicationId ? { ...a, status, rejectionReason: reason } : a,
-    );
-    updated = recalcQueueForCourse(updated, target.courseId);
-    await persistAll(updated);
+    if (!isValidTransition(target.status as Application['status'], status)) return;
+    applicationsRepo.upsert(db, {
+      ...target,
+      status,
+      rejectionReason: reason ?? null,
+    });
+    recomputeQueue(target.courseId);
+    // Refresh the slice we currently hold (per-user OR all).
+    const all = applicationsRepo.list(db).map(domainToApplication);
     set((state) => {
-      const inSlice = state.applications.some((a) => a.id === applicationId);
-      // If we previously held a filtered (per-user) slice, only refresh that slice
-      if (inSlice && state.applications.length < updated.length) {
-        const userId = state.applications[0]?.teacherId;
-        return { applications: updated.filter((a) => a.teacherId === userId) };
-      }
-      return { applications: updated };
+      const sliceUserId = state.applications[0]?.teacherId;
+      const isFilteredSlice =
+        sliceUserId && state.applications.every((a) => a.teacherId === sliceUserId);
+      if (isFilteredSlice) return { applications: all.filter((a) => a.teacherId === sliceUserId) };
+      return { applications: all };
     });
   },
 
   addAssignment: async (courseId, teacherId) => {
-    const all = await loadFromStorage();
-    const newApp: Application = {
-      id: Date.now(),
+    const db = getDb();
+    const inserted = applicationsRepo.upsert(db, {
       courseId,
       teacherId,
       status: 'approved',
-      appliedDate: new Date().toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
+      appliedDate: new Date().toISOString().slice(0, 10),
       source: 'assigned',
-    };
-    const updated = recalcQueueForCourse([...all, newApp], courseId);
-    await persistAll(updated);
-    set((state) => ({ applications: [...state.applications, newApp] }));
-    return newApp;
+      rejectionReason: null,
+      queuePosition: null,
+      withdrawalNote: null,
+    });
+    recomputeQueue(courseId);
+
+    const persisted = applicationsRepo.findById(db, inserted.id);
+    const created: Application = persisted
+      ? domainToApplication(persisted)
+      : domainToApplication(inserted);
+    set((state) => ({ applications: [...state.applications, created] }));
+    return created;
   },
 
   getApprovedCountForCourse: async (courseId) => {
-    const all = await loadFromStorage();
-    return all.filter((a) => a.courseId === courseId && a.status === 'approved').length;
+    return applicationsRepo.countApprovedForCourse(getDb(), courseId);
   },
 
   getCoTeachersForCourse: async (courseId, currentTeacherId) => {
-    const all = await loadFromStorage();
-    return all
-      .filter(
-        (a) =>
-          a.courseId === courseId && a.teacherId !== currentTeacherId && a.status === 'approved',
-      )
+    return applicationsRepo
+      .listByCourse(getDb(), courseId)
+      .filter((a) => a.teacherId !== currentTeacherId && a.status === 'approved')
       .map((a) => a.teacherId);
   },
 }));

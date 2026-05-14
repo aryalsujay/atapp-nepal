@@ -18,6 +18,7 @@ export interface TeacherDomain {
   name: string;
   gender: 'M' | 'F' | null;
   email: string | null;
+  phone: string | null;
   inviteCode: string | null;
   passwordHash: string;
   region: string | null;
@@ -52,6 +53,7 @@ function rowToDomain(r: TeacherRow): TeacherDomain {
     name: r.name,
     gender: r.gender,
     email: r.email,
+    phone: r.phone ?? null,
     inviteCode: r.invite_code,
     passwordHash: r.password_hash,
     region: r.region,
@@ -112,6 +114,7 @@ export function upsert(db: DB, teacher: Partial<TeacherDomain> & { id: string })
     name: teacher.name ?? existing?.name ?? '',
     gender: teacher.gender ?? existing?.gender ?? null,
     email: teacher.email ?? existing?.email ?? null,
+    phone: teacher.phone ?? existing?.phone ?? null,
     inviteCode: teacher.inviteCode ?? existing?.inviteCode ?? null,
     passwordHash: teacher.passwordHash ?? existing?.passwordHash ?? '',
     region: teacher.region ?? existing?.region ?? null,
@@ -132,18 +135,19 @@ export function upsert(db: DB, teacher: Partial<TeacherDomain> & { id: string })
 
   db.exec(
     `INSERT INTO teachers (
-       id, role, name, gender, email, invite_code, password_hash,
+       id, role, name, gender, email, phone, invite_code, password_hash,
        region, flag, authorized_since, total_courses, centers_served,
        courses_this_year, is_onboarded, personal_note,
        authorizations_json, languages_json, preferred_regions_json,
        available_months_json, festival_months_json, teaching_history_json,
        created_at, updated_at
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
      ON CONFLICT(id) DO UPDATE SET
        role                    = excluded.role,
        name                    = excluded.name,
        gender                  = excluded.gender,
        email                   = excluded.email,
+       phone                   = excluded.phone,
        invite_code             = excluded.invite_code,
        password_hash           = excluded.password_hash,
        region                  = excluded.region,
@@ -167,6 +171,7 @@ export function upsert(db: DB, teacher: Partial<TeacherDomain> & { id: string })
       merged.name,
       merged.gender,
       merged.email,
+      merged.phone,
       merged.inviteCode,
       merged.passwordHash,
       merged.region,
