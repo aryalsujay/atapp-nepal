@@ -243,6 +243,11 @@
         "secondary": "Secondary",
         "off": "Don't teach"
       },
+      "step4": {
+        "title": "Anything the admin should know? (optional)",
+        "subtitle": "Travel preferences, dietary needs, festival blocks beyond defaults",
+        "placeholder": "Notes for the admin (e.g. travel preferences, dietary)"
+      },
       "step3": {
         "title": "Mark your available months for 2026",
         "subtitle": "You can change this anytime",

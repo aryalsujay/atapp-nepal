@@ -15,7 +15,17 @@
  */
 
 import React, { useMemo } from 'react';
-import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -62,6 +72,9 @@ export default function OnboardingStep() {
   }
   if (step === 3) {
     return <StepAvailability onBack={goBack} onContinue={goNext} />;
+  }
+  if (step === 4) {
+    return <StepNote onBack={goBack} onContinue={goNext} />;
   }
 
   return <StepPlaceholder step={step} onBack={goBack} onContinue={goNext} />;
@@ -385,6 +398,50 @@ function StepAvailability({ onBack, onContinue }: { onBack: () => void; onContin
   );
 }
 
+// ─── Step 4: Personal Note ───────────────────────────────────────────────────
+
+function StepNote({ onBack, onContinue }: { onBack: () => void; onContinue: () => void }) {
+  const { t } = useTranslation();
+  const note = useOnboardingDraftStore((d) => d.note);
+  const setNote = useOnboardingDraftStore((d) => d.setNote);
+
+  return (
+    <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+        <ScrollView
+          style={s.flex}
+          contentContainerStyle={s.scroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <StepHero
+            step={4}
+            title={t('onboarding.teacher.step4.title')}
+            subtitle={t('onboarding.teacher.step4.subtitle')}
+          />
+
+          <View style={s.noteCard}>
+            <TextInput
+              value={note}
+              onChangeText={setNote}
+              placeholder={t('onboarding.teacher.step4.placeholder')}
+              placeholderTextColor={Colors.tx3}
+              style={s.noteInput}
+              multiline
+              numberOfLines={6}
+              textAlignVertical="top"
+              autoCapitalize="sentences"
+            />
+          </View>
+
+          <NavRow onBack={onBack} onContinue={onContinue} />
+        </ScrollView>
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
 // ─── Step 0: Welcome ─────────────────────────────────────────────────────────
 
 function StepWelcome({ onContinue }: { onContinue: () => void }) {
@@ -636,6 +693,24 @@ const s = StyleSheet.create({
     color: Colors.white,
     fontSize: 15,
     fontWeight: '700',
+  },
+
+  // Step 4: Personal Note
+  noteCard: {
+    margin: 18,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.bd,
+  },
+  noteInput: {
+    fontSize: 14,
+    color: Colors.tx,
+    lineHeight: 21,
+    minHeight: 140,
+    textAlignVertical: 'top',
+    fontFamily: FontFamily.sans,
   },
 
   // Step 3: Availability
