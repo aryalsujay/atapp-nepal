@@ -1,17 +1,20 @@
 /**
  * Teacher Onboarding wizard — implements `specs/03-onboarding-teacher.md`.
  *
- * 6 steps (0-indexed) — Welcome (0) · Languages (1) · Regions (2) ·
- * Availability (3) · Personal Note (4) · Done (5).
+ * 6 steps (0-indexed):
+ *   0 Welcome           — admin-locked profile + intro
+ *   1 Languages         — Primary / Secondary / Don't teach cycle
+ *   2 Regions           — multi-select chips, ordered selection list
+ *   3 Availability      — 12-month grid, 3-state cycle
+ *   4 Personal Note     — optional free-text textarea
+ *   5 All set           — summary card + "Enter Dhamma AT" persist
  *
- * Font sizes are intentionally inline literals matching the prototype
- * (11–14 px body) rather than the bumped `FontSize` tokens, per the
- * spec §12 "Intentional Deltas" — this flow is meant to feel visually
- * identical to the prototype.
+ * State lives in `useOnboardingDraftStore` (Zustand) so it survives the
+ * per-step route remounts. Persisted to `profileStore` only on step 5.
  *
- * Step 0 is fully implemented. Steps 1–5 are placeholders that just
- * advance/retreat through the wizard; they will be filled in
- * iteratively (one screen review per step).
+ * Font sizes are intentional inline literals matching the prototype
+ * (11–14 px body) rather than the bumped `FontSize` tokens — see spec
+ * §12 "Intentional Deltas".
  */
 
 import React, { useMemo } from 'react';
