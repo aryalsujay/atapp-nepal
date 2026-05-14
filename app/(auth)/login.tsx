@@ -46,8 +46,8 @@ import { logger } from '@/utils/logger';
 type Role = 'teacher' | 'server' | 'admin';
 
 const DEMO_CREDS: Record<Role, { identifier: string; password: string }> = {
-  teacher: { identifier: 'ananda@dhamma.org.np', password: 'demo123' },
-  server: { identifier: 'priya@dhamma.org.np', password: 'demo123' },
+  teacher: { identifier: '+977 9841234567', password: 'demo123' },
+  server: { identifier: '+977 9851234567', password: 'demo123' },
   admin: { identifier: 'admin', password: 'dhamma2026' },
 };
 
@@ -106,10 +106,6 @@ export default function LoginScreen() {
   const [emailFocused, setEmailFocused] = useState(false);
   const [pwFocused, setPwFocused] = useState(false);
 
-  // Track whether the next mode change is from a user tap (auto-login) vs
-  // restoring saved creds (no auto-login).
-  const autoLoginRequested = useRef(false);
-
   // Restore saved creds on mount (if user previously checked "Save password").
   useEffect(() => {
     (async () => {
@@ -127,25 +123,13 @@ export default function LoginScreen() {
     })();
   }, []);
 
+  // Tab tap behaves like the prototype: switch mode + populate demo defaults
+  // for that role. No auto-login — the user clicks the CTA to sign in.
   const handleSelectMode = (next: Role) => {
     setMode(next);
     setIdentifier(DEMO_CREDS[next].identifier);
     setPassword(DEMO_CREDS[next].password);
-    autoLoginRequested.current = true;
   };
-
-  // When `autoLoginRequested` is set by a role tap, fire sign-in once the new
-  // values have propagated.
-  useEffect(() => {
-    if (!autoLoginRequested.current) return;
-    autoLoginRequested.current = false;
-    // Slight delay so the gradient crossfade is visible and the form re-renders.
-    const t = setTimeout(() => {
-      handleSignIn();
-    }, 250);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
 
   const ctaLabel = useMemo(() => {
     if (loading) return t('login.cta_loading');
@@ -294,13 +278,6 @@ export default function LoginScreen() {
                 autoCorrect={false}
                 keyboardType={idKind === 'phone' ? 'phone-pad' : 'email-address'}
               />
-              {idKind !== 'empty' && mode !== 'admin' && (
-                <View style={styles.inputBadge}>
-                  <Text style={styles.inputBadgeText}>
-                    {idKind === 'email' ? '✉️' : idKind === 'phone' ? '📱' : '🔑'}
-                  </Text>
-                </View>
-              )}
             </View>
           </View>
 
@@ -323,8 +300,9 @@ export default function LoginScreen() {
                 onPress={() => setShowPassword((v) => !v)}
                 style={styles.eyeBtn}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
               >
-                <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+                <Text style={[styles.eyeIcon, !showPassword && styles.eyeIconDim]}>👁</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -595,14 +573,6 @@ const styles = StyleSheet.create({
   inputWithEye: {
     paddingRight: 48,
   },
-  inputBadge: {
-    position: 'absolute',
-    right: 14,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-  },
-  inputBadgeText: { fontSize: 18 },
   eyeBtn: {
     position: 'absolute',
     right: 14,
@@ -610,7 +580,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
   },
-  eyeIcon: { fontSize: 20 },
+  eyeIcon: { fontSize: 20, color: Colors.tx2 },
+  eyeIconDim: { opacity: 0.55 },
 
   // Options row (save + forgot)
   optionsRow: {
