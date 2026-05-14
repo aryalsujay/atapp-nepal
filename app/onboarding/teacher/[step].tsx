@@ -158,17 +158,16 @@ function StepLanguages({ onBack, onContinue }: { onBack: () => void; onContinue:
   return (
     <View style={[s.flex, { backgroundColor: Colors.cr }]}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StepHero
+        step={1}
+        title={t('onboarding.teacher.step1.title')}
+        subtitle={t('onboarding.teacher.step1.subtitle')}
+      />
       <ScrollView
         style={s.flex}
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={{ paddingBottom: 12 }}
         showsVerticalScrollIndicator={false}
       >
-        <StepHero
-          step={1}
-          title={t('onboarding.teacher.step1.title')}
-          subtitle={t('onboarding.teacher.step1.subtitle')}
-        />
-
         <View style={s.langCard}>
           {LANG_KEYS.map((key, idx) => {
             const level: LangLevel = langs[key] ?? 'off';
