@@ -224,35 +224,80 @@
   },
   "onboarding": {
     "teacher": {
+      "step_counter": "STEP {{step}} OF {{total}}",
+      "step0": {
+        "title_en": "Welcome, Teacher",
+        "title_ne": "स्वागत छ",
+        "subtitle": "A few one-time questions to set up your scheduling preferences",
+        "admin_section": "Your administrator has set",
+        "field_name_gender": "Name & Gender",
+        "field_authorizations": "Course Authorizations",
+        "field_since": "Authorized Since",
+        "field_home_region": "Home Region",
+        "card_tail": "Now let's set up your scheduling preferences"
+      },
       "step1": {
-        "title": "Welcome to\nDhamma AT",
-        "subtitle": "Set up your teacher profile to get matched with courses across Nepal."
-      },
-      "step2": {
-        "title": "Languages",
-        "subtitle": "Which languages can you teach in?",
-        "hint": "Tap once for Primary, twice for Secondary, three times to remove"
-      },
-      "step3": {
-        "title": "Preferred Regions",
-        "subtitle": "Which regions of Nepal are you willing to travel to?"
-      },
-      "step4": {
-        "title": "Availability",
-        "subtitle": "Tap each month to mark your availability.",
-        "available": "Available",
-        "festival": "Festival/Retreat",
-        "unavailable": "Unavailable"
+        "title": "Which languages can you conduct courses in?",
+        "subtitle": "Mark each as Primary, Secondary, or Don't teach",
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "off": "Don't teach"
       },
       "step5": {
-        "title": "Personal Note",
-        "subtitle": "Share any additional information for course coordinators.",
-        "placeholder": "E.g., available Oct–May, prefer Kathmandu area courses..."
+        "title": "All set, Sadhu! 🙏",
+        "subtitle": "You can edit any of this from your Profile.",
+        "summary_langs_label": "Teaching Languages",
+        "summary_regions_label": "Preferred Regions",
+        "summary_avail_label": "My Availability 2026",
+        "summary_note_label": "Personal Note",
+        "summary_avail_template": "{{months}} months · {{festivals}} festival blocks",
+        "summary_avail_no_festival": "{{months}} months",
+        "summary_note_empty": "(none)",
+        "enter_app": "Enter Dhamma AT →"
       },
-      "summary": {
-        "title": "Profile Ready",
-        "subtitle": "Your profile has been set up. You can update it anytime.",
-        "goToDashboard": "Go to Dashboard"
+      "step4": {
+        "title": "Anything the admin should know? (optional)",
+        "subtitle": "Travel preferences, dietary needs, festival blocks beyond defaults",
+        "placeholder": "Notes for the admin (e.g. travel preferences, dietary)"
+      },
+      "step3": {
+        "title": "Mark your available months for 2026",
+        "subtitle": "You can change this anytime",
+        "summary_available": "{{count}} months available",
+        "summary_festival": "{{count}} festival",
+        "tap_hint": "Tap a month to cycle: Available → Festival → Unavailable",
+        "state_available": "Available",
+        "state_festival": "Festival",
+        "state_unavailable": "Unavailable",
+        "months_short": [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec"
+        ]
+      },
+      "step2": {
+        "title": "Where are you willing to travel?",
+        "subtitle": "Tap to add. Drag to reorder later in Profile.",
+        "selected_label": "Selected",
+        "empty_hint": "Pick at least one region to continue.",
+        "regions": {
+          "kathmandu_valley": "Kathmandu Valley",
+          "pokhara": "Pokhara",
+          "lumbini_terai": "Lumbini & Terai",
+          "koshi": "Koshi",
+          "gandaki": "Gandaki",
+          "madhesh": "Madhesh",
+          "international": "International"
+        }
       }
     }
   },

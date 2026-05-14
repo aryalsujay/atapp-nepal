@@ -218,35 +218,80 @@
   },
   "onboarding": {
     "teacher": {
+      "step_counter": "चरण {{step}} मध्ये {{total}}",
+      "step0": {
+        "title_en": "Welcome, Teacher",
+        "title_ne": "स्वागत छ",
+        "subtitle": "A few one-time questions to set up your scheduling preferences",
+        "admin_section": "व्यवस्थापकले सेट गरिसकेका छन्",
+        "field_name_gender": "नाम र लिङ्ग",
+        "field_authorizations": "शिविर प्राधिकरण",
+        "field_since": "प्राधिकरणको वर्ष",
+        "field_home_region": "गृह क्षेत्र",
+        "card_tail": "अब केही प्राथमिकताहरू सेट गरौं"
+      },
       "step1": {
-        "title": "धम्म AT मा\nस्वागत छ",
-        "subtitle": "नेपालभरका पाठ्यक्रमहरूसँग मिलाउन आफ्नो शिक्षक प्रोफाइल सेट अप गर्नुहोस्।"
-      },
-      "step2": {
-        "title": "भाषाहरू",
-        "subtitle": "तपाईं कुन भाषाहरूमा पढाउन सक्नुहुन्छ?",
-        "hint": "प्राथमिकका लागि एक पटक, माध्यमिकका लागि दुई पटक ट्याप गर्नुहोस्"
-      },
-      "step3": {
-        "title": "प्राथमिक क्षेत्रहरू",
-        "subtitle": "नेपालको कुन क्षेत्रहरूमा तपाईं जान इच्छुक हुनुहुन्छ?"
-      },
-      "step4": {
-        "title": "उपलब्धता",
-        "subtitle": "आफ्नो उपलब्धता चिन्ह लगाउन प्रत्येक महिना ट्याप गर्नुहोस्।",
-        "available": "उपलब्ध",
-        "festival": "उत्सव/एकान्त",
-        "unavailable": "अनुपलब्ध"
+        "title": "तपाईं कुन भाषाहरूमा शिविर सञ्चालन गर्न सक्नुहुन्छ?",
+        "subtitle": "प्रत्येकलाई मुख्य, माध्यमिक, वा पढाउँदिन भनेर चिन्ह लगाउनुहोस्।",
+        "primary": "मुख्य",
+        "secondary": "माध्यमिक",
+        "off": "पढाउँदिन"
       },
       "step5": {
-        "title": "व्यक्तिगत नोट",
-        "subtitle": "पाठ्यक्रम समन्वयकहरूका लागि कुनै थप जानकारी साझा गर्नुहोस्।",
-        "placeholder": "जस्तै, अक्टोबर–मे उपलब्ध, काठमाडौं क्षेत्र पाठ्यक्रम पसन्द..."
+        "title": "सबै तयार, साधु! 🙏",
+        "subtitle": "तपाईं यी सबै आफ्नो प्रोफाइलबाट सम्पादन गर्न सक्नुहुन्छ।",
+        "summary_langs_label": "शिक्षण भाषाहरू",
+        "summary_regions_label": "मनपर्ने क्षेत्रहरू",
+        "summary_avail_label": "मेरो उपलब्धता २०२६",
+        "summary_note_label": "व्यक्तिगत नोट",
+        "summary_avail_template": "{{months}} महिना · {{festivals}} पर्व रोक",
+        "summary_avail_no_festival": "{{months}} महिना",
+        "summary_note_empty": "(छैन)",
+        "enter_app": "धम्म AT मा प्रवेश →"
       },
-      "summary": {
-        "title": "प्रोफाइल तयार छ",
-        "subtitle": "तपाईंको प्रोफाइल सेट अप गरिएको छ। तपाईं जुनसुकै बेला अपडेट गर्न सक्नुहुन्छ।",
-        "goToDashboard": "ड्यासबोर्डमा जानुहोस्"
+      "step4": {
+        "title": "व्यवस्थापकले जान्नु पर्ने केही छ? (वैकल्पिक)",
+        "subtitle": "यात्रा प्राथमिकता, खानपान आवश्यकता, थप चाडपर्व रोकहरू",
+        "placeholder": "व्यवस्थापकका लागि टिप्पणीहरू (जस्तै यात्रा प्राथमिकता, खानपान)"
+      },
+      "step3": {
+        "title": "२०२६ का लागि आफ्ना उपलब्ध महिनाहरू चिन्ह लगाउनुहोस्",
+        "subtitle": "तपाईं यो जुनसुकै बेला परिवर्तन गर्न सक्नुहुन्छ",
+        "summary_available": "{{count}} महिना उपलब्ध",
+        "summary_festival": "{{count}} पर्व",
+        "tap_hint": "महिना थिच्नुहोस्: उपलब्ध → पर्व → अनुपलब्ध",
+        "state_available": "उपलब्ध",
+        "state_festival": "पर्व",
+        "state_unavailable": "अनुपलब्ध",
+        "months_short": [
+          "जन",
+          "फेब",
+          "मार्च",
+          "अप्रिल",
+          "मे",
+          "जुन",
+          "जुलाई",
+          "अग",
+          "सेप",
+          "अक्ट",
+          "नोभ",
+          "डिस"
+        ]
+      },
+      "step2": {
+        "title": "कहाँ यात्रा गर्न तयार हुनुहुन्छ?",
+        "subtitle": "थप्न टैप गर्नुहोस्। पछि प्रोफाइलबाट क्रम मिलाउन सकिन्छ।",
+        "selected_label": "छानिएका क्षेत्रहरू",
+        "empty_hint": "कम्तीमा एउटा क्षेत्र छान्नुहोस्।",
+        "regions": {
+          "kathmandu_valley": "Kathmandu Valley",
+          "pokhara": "Pokhara",
+          "lumbini_terai": "Lumbini & Terai",
+          "koshi": "Koshi",
+          "gandaki": "Gandaki",
+          "madhesh": "Madhesh",
+          "international": "International"
+        }
       }
     }
   },

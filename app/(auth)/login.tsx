@@ -210,7 +210,7 @@ export default function LoginScreen() {
       // Demo mode: always route through onboarding so the flow is visible.
       await setAuth('teacher', teacher.id, false);
       await persistCreds();
-      router.replace(routeTo.onboardingTeacher(1));
+      router.replace(routeTo.onboardingTeacher(0));
     } finally {
       setLoading(false);
     }
