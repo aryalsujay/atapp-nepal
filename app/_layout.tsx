@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTeachersStore } from '@/store/teachersStore';
 import { useCoursesStore } from '@/store/coursesStore';
+import { useApplicationsStore } from '@/store/applicationsStore';
 import { useNotificationsStore } from '@/store/notificationsStore';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -58,6 +59,9 @@ export default function RootLayout() {
   const shouldAutoSync = useCoursesStore((s) => s.shouldAutoSync);
   const loadNotifications = useNotificationsStore((s) => s.loadNotifications);
   const notifsLoaded = useNotificationsStore((s) => s.loaded);
+  const userId = useAuthStore((s) => s.userId);
+  const loadApplications = useApplicationsStore((s) => s.loadApplications);
+  const applicationsLoadedForUserId = useApplicationsStore((s) => s.loadedForUserId);
 
   const [fontsLoaded] = useFonts({
     PlusJakartaSans_400Regular,
@@ -107,6 +111,15 @@ export default function RootLayout() {
       if (shouldAutoSync()) syncCourses();
     });
   }, [dbReady]);
+
+  // Preload the teacher's applications once the session is restored so the
+  // Applications tab is instant on first visit instead of showing the empty
+  // state for a frame while the DB query runs.
+  useEffect(() => {
+    if (!dbReady || !userId) return;
+    if (applicationsLoadedForUserId === userId) return;
+    loadApplications(userId);
+  }, [dbReady, userId, applicationsLoadedForUserId, loadApplications]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {

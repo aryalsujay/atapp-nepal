@@ -130,15 +130,16 @@ export default function TeacherHome() {
   const altLangLabel = language === 'en' ? 'नेपाली' : 'English';
 
   const { profile, loadProfile } = useProfileStore();
-  const { applications, loadApplications } = useApplicationsStore();
+  const applications = useApplicationsStore((s) => s.applications);
+  const loadApplications = useApplicationsStore((s) => s.loadApplications);
+  const applicationsLoadedForUserId = useApplicationsStore((s) => s.loadedForUserId);
   const courses = useCoursesStore((s) => s.courses) as Course[];
 
   useEffect(() => {
-    if (userId) {
-      loadProfile(userId);
-      loadApplications(userId);
-    }
-  }, [userId, loadProfile, loadApplications]);
+    if (!userId) return;
+    loadProfile(userId);
+    if (applicationsLoadedForUserId !== userId) loadApplications(userId);
+  }, [userId, loadProfile, loadApplications, applicationsLoadedForUserId]);
 
   // ─── Derived data ─────────────────────────────────────────────────────────
 

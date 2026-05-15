@@ -73,14 +73,22 @@ export default function TeacherCourses() {
   const { profile, loadProfile } = useProfileStore();
   const applications = useApplicationsStore((s) => s.applications);
   const loadApplications = useApplicationsStore((s) => s.loadApplications);
+  const applicationsLoadedForUserId = useApplicationsStore((s) => s.loadedForUserId);
 
   useEffect(() => {
     if (courses.length === 0) loadCourses();
     if (userId) {
       loadProfile(userId);
-      loadApplications(userId);
+      if (applicationsLoadedForUserId !== userId) loadApplications(userId);
     }
-  }, [userId, courses.length, loadCourses, loadProfile, loadApplications]);
+  }, [
+    userId,
+    courses.length,
+    loadCourses,
+    loadProfile,
+    loadApplications,
+    applicationsLoadedForUserId,
+  ]);
 
   // Index applications by courseId so each card can look up its status in O(1).
   const applicationByCourse = useMemo(() => {

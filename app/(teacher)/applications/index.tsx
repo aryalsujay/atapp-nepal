@@ -48,12 +48,18 @@ export default function TeacherApplications() {
   const insets = useSafeAreaInsets();
 
   const userId = useAuthStore((s) => s.userId) ?? '';
-  const { applications, loadApplications } = useApplicationsStore();
+  const applications = useApplicationsStore((s) => s.applications);
+  const loadApplications = useApplicationsStore((s) => s.loadApplications);
+  const loadedForUserId = useApplicationsStore((s) => s.loadedForUserId);
   const courses = useCoursesStore((s) => s.courses) as Course[];
 
   useEffect(() => {
-    if (userId) loadApplications(userId);
-  }, [userId, loadApplications]);
+    // Skip if the app shell has already preloaded for this user. The shell
+    // fires `loadApplications` as soon as the session restores, so by the
+    // time this screen first mounts the data is already in zustand.
+    if (!userId || loadedForUserId === userId) return;
+    loadApplications(userId);
+  }, [userId, loadedForUserId, loadApplications]);
 
   const courseById = useMemo(() => {
     const m = new Map<number, Course>();
@@ -74,7 +80,11 @@ export default function TeacherApplications() {
 
   const approvedCount = sorted.filter((a) => a.status === 'approved').length;
 
-  const onViewBrief = (app: Application) => router.push(routeTo.teacherApplicationBrief(app.id));
+  // Brief screen's URL param is the *courseId*, not the applicationId — it
+  // joins on courseId + teacherId to find the application. Passing app.id
+  // here silently broke navigation for approved cards.
+  const onViewBrief = (app: Application) =>
+    router.push(routeTo.teacherApplicationBrief(app.courseId));
 
   return (
     <View style={[s.flex, { backgroundColor: Colors.cr }]}>

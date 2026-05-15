@@ -18,6 +18,9 @@ import { useNotificationsStore } from './notificationsStore';
 
 interface ApplicationsState {
   applications: Application[];
+  loaded: boolean;
+  /** The teacher we last loaded applications for. Empty string = never loaded. */
+  loadedForUserId: string;
   loadApplications: (userId: string) => Promise<void>;
   loadAllApplications: () => Promise<void>;
   submitApplication: (courseId: number, userId: string) => Promise<Application>;
@@ -83,11 +86,13 @@ function recomputeQueue(courseId: number): void {
 
 export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
   applications: [],
+  loaded: false,
+  loadedForUserId: '',
 
   loadApplications: async (userId) => {
     try {
       const rows = applicationsRepo.listByTeacher(getDb(), userId).map(domainToApplication);
-      set({ applications: rows });
+      set({ applications: rows, loaded: true, loadedForUserId: userId });
     } catch (err) {
       logger.warn('[applicationsStore] loadApplications failed', err);
     }
