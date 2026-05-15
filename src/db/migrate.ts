@@ -20,6 +20,7 @@ import { migration0001Initial } from './migrations/0001_initial';
 import { migration0002TeacherPhone } from './migrations/0002_teacher_phone';
 import { migration0003CourseCoteacher } from './migrations/0003_course_coteacher';
 import { migration0004TeacherHomeLocation } from './migrations/0004_teacher_home_location';
+import { migration0005CourseOpenSlots } from './migrations/0005_course_open_slots';
 
 export interface Migration {
   name: string;
@@ -32,6 +33,7 @@ const MIGRATIONS: Migration[] = [
   migration0002TeacherPhone,
   migration0003CourseCoteacher,
   migration0004TeacherHomeLocation,
+  migration0005CourseOpenSlots,
 ];
 
 const ENSURE_TABLE_SQL = `

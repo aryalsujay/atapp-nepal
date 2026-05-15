@@ -88,6 +88,7 @@ interface SeedCourse {
   languages?: string[];
   needCount?: number;
   genderRequired?: string;
+  openSlots?: string[];
   status?: string;
   distanceKm?: number;
   travelHrs?: number;
@@ -281,8 +282,8 @@ export function seedDatabase(db: DB): { inserted: Record<string, number> } {
           (id, type, center, center_id, city, country, flag, dates, start_date, end_date,
            languages_json, need_count, gender_required, status, distance_km, travel_hrs,
            altitude, students_json, arrival_date, arrival_time, coordinator_json,
-           coteacher_json, transport, notes, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           coteacher_json, open_slots_json, transport, notes, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           c.id,
           c.type,
@@ -307,6 +308,9 @@ export function seedDatabase(db: DB): { inserted: Record<string, number> } {
           c.coordinator ? JSON.stringify(c.coordinator) : null,
           (c as { coTeacher?: unknown }).coTeacher
             ? JSON.stringify((c as { coTeacher?: unknown }).coTeacher)
+            : null,
+          (c as { openSlots?: unknown[] }).openSlots
+            ? JSON.stringify((c as { openSlots?: unknown[] }).openSlots)
             : null,
           c.transport ?? null,
           c.notes ?? null,
@@ -449,7 +453,11 @@ export function resetSeedFlag(db: DB): void {
 const PHONE_BACKFILL_KEY = 'backfill.teacherPhone';
 const PHONE_BACKFILL_VALUE = 'v1';
 const DEMO_COURSE_BACKFILL_KEY = 'backfill.demoCourses';
-const DEMO_COURSE_BACKFILL_VALUE = 'v1';
+const DEMO_COURSE_BACKFILL_VALUE = 'v3';
+const TEACHER_MONTHS_BACKFILL_KEY = 'backfill.teacherDemoMonths';
+const TEACHER_MONTHS_BACKFILL_VALUE = 'v1';
+const DROP_DEMO_APP_KEY = 'backfill.dropShringaJulApp';
+const DROP_DEMO_APP_VALUE = 'v1';
 const HOME_LOCATION_BACKFILL_KEY = 'backfill.teacherHomeLocation';
 const HOME_LOCATION_BACKFILL_VALUE = 'v1';
 
@@ -532,6 +540,110 @@ export function backfillTeacherHomeLocation(db: DB): { backfilled: number } {
 }
 
 /**
+ * One-time re-sync of teachers' `availableMonths` + `festivalMonths` from
+ * `teachers.json`. Needed because the demo teacher's monthly profile was
+ * tuned post-seed (so the prototype eligibility check on Dharma Shringa Jul
+ * 7-18 lights up green). Existing dev DBs had the older months persisted.
+ *
+ * Idempotent + gated. Only updates rows that still carry the *pre-tuning*
+ * months ([8] available + festivals including 6) so a teacher who has
+ * edited their profile via the UI is left alone.
+ */
+export function backfillTeacherDemoMonths(db: DB): { backfilled: number } {
+  const flag = db.queryOne<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    TEACHER_MONTHS_BACKFILL_KEY,
+  ]);
+  if (flag?.value === TEACHER_MONTHS_BACKFILL_VALUE) return { backfilled: 0 };
+
+  const seeds = teachersJson as unknown as {
+    id: string;
+    availableMonths?: number[];
+    festivalMonths?: number[];
+  }[];
+  const now = new Date().toISOString();
+  let count = 0;
+
+  db.transaction(() => {
+    for (const t of seeds) {
+      if (!t.availableMonths || !t.festivalMonths) continue;
+      const row = db.queryOne<{
+        available_months_json: string | null;
+        festival_months_json: string | null;
+      }>('SELECT available_months_json, festival_months_json FROM teachers WHERE id = ?', [t.id]);
+      if (!row) continue;
+
+      // Pre-tuning fingerprint: availableMonths === [8], festivalMonths
+      // includes 6. Skip rows that don't match (= teacher already edited).
+      const prevAvail = row.available_months_json ?? '[]';
+      const prevFest = row.festival_months_json ?? '[]';
+      let parsedAvail: number[] = [];
+      let parsedFest: number[] = [];
+      try {
+        parsedAvail = JSON.parse(prevAvail);
+        parsedFest = JSON.parse(prevFest);
+      } catch {
+        continue;
+      }
+      const isPretuned = parsedAvail.length === 1 && parsedAvail[0] === 8 && parsedFest.includes(6);
+      if (!isPretuned) continue;
+
+      db.exec(
+        'UPDATE teachers SET available_months_json = ?, festival_months_json = ?, updated_at = ? WHERE id = ?',
+        [JSON.stringify(t.availableMonths), JSON.stringify(t.festivalMonths), now, t.id],
+      );
+      count++;
+    }
+    db.exec('INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, ?)', [
+      TEACHER_MONTHS_BACKFILL_KEY,
+      TEACHER_MONTHS_BACKFILL_VALUE,
+      now,
+    ]);
+  });
+
+  logger.info('[db] teacher demo-months backfill complete', { backfilled: count });
+  return { backfilled: count };
+}
+
+/**
+ * One-time cleanup: remove the seeded "approved" application that pinned
+ * teacher-001 to the Dharma Shringa Jul 7–18 course (`id=1753781245`). That
+ * course is now the canonical "Apply CTA" demo, so the detail screen must
+ * render in unapplied state. Real user-submitted applications use a
+ * different id range so this is safe to delete in place.
+ *
+ * Idempotent + gated. The detection is narrow (specific teacher + course +
+ * status) so user edits aren't trampled.
+ */
+export function dropDemoShringaJulApplication(db: DB): { dropped: number } {
+  const flag = db.queryOne<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    DROP_DEMO_APP_KEY,
+  ]);
+  if (flag?.value === DROP_DEMO_APP_VALUE) return { dropped: 0 };
+
+  const now = new Date().toISOString();
+  let dropped = 0;
+  db.transaction(() => {
+    const row = db.queryOne<{ id: number }>(
+      "SELECT id FROM applications WHERE teacher_id = 'teacher-001' AND course_id = 1753781245 AND status = 'approved' LIMIT 1",
+    );
+    if (row) {
+      db.exec('DELETE FROM applications WHERE id = ?', [row.id]);
+      dropped = 1;
+    }
+    db.exec('INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, ?)', [
+      DROP_DEMO_APP_KEY,
+      DROP_DEMO_APP_VALUE,
+      now,
+    ]);
+  });
+
+  if (dropped > 0) {
+    logger.info('[db] dropped seeded Shringa-Jul application', { dropped });
+  }
+  return { dropped };
+}
+
+/**
  * One-time enrichment of the two confirmed-upcoming demo courses with
  * sample co-teacher / coordinator / transport / notes / arrival data that
  * the raw dhamma.org scrape doesn't ship. Lets the course-brief screen
@@ -565,9 +677,16 @@ export function enrichDemoCourses(db: DB): { enriched: number } {
       const existing = db.queryOne<{ id: number }>('SELECT id FROM courses WHERE id = ?', [id]);
       if (!existing) continue;
 
+      const openSlots = (seed as { openSlots?: unknown[] }).openSlots;
       db.exec(
         `UPDATE courses SET
+           dates             = ?,
+           start_date        = ?,
+           end_date          = ?,
+           gender_required   = ?,
+           need_count        = ?,
            coteacher_json    = ?,
+           open_slots_json   = ?,
            coordinator_json  = ?,
            transport         = ?,
            notes             = ?,
@@ -580,7 +699,13 @@ export function enrichDemoCourses(db: DB): { enriched: number } {
            updated_at        = ?
          WHERE id = ?`,
         [
+          seed.dates ?? null,
+          seed.startDate ?? null,
+          seed.endDate ?? null,
+          seed.genderRequired ?? null,
+          seed.needCount ?? null,
           seed.coTeacher ? JSON.stringify(seed.coTeacher) : null,
+          openSlots ? JSON.stringify(openSlots) : null,
           JSON.stringify(seed.coordinator ?? {}),
           seed.transport ?? null,
           seed.notes ?? null,

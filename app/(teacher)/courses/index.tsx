@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 
 import { routeTo } from '@/routes';
 import { useAuthStore } from '@/store/authStore';
+import { useApplicationsStore } from '@/store/applicationsStore';
 import { useCoursesStore } from '@/store/coursesStore';
 import { useProfileStore } from '@/store/profileStore';
 import { useTeachersStore } from '@/store/teachersStore';
@@ -36,7 +37,7 @@ import { langLabel } from '@/utils/eligibility';
 import { enrichCoursesWithMatch } from '@/utils/matching';
 import { travelFor } from '@/utils/travel';
 import { MatchBadge, Meter } from '@/components/ui/MatchPill';
-import type { Course } from '@/types';
+import type { Application, Course } from '@/types';
 
 const TYPE_FILTERS = ['All', '1-Day', '10-Day', 'Satipatthana', '20-Day', '30-Day'] as const;
 
@@ -70,11 +71,23 @@ export default function TeacherCourses() {
   const courses = useCoursesStore((s) => s.courses) as Course[];
   const loadCourses = useCoursesStore((s) => s.loadCourses);
   const { profile, loadProfile } = useProfileStore();
+  const applications = useApplicationsStore((s) => s.applications);
+  const loadApplications = useApplicationsStore((s) => s.loadApplications);
 
   useEffect(() => {
     if (courses.length === 0) loadCourses();
-    if (userId) loadProfile(userId);
-  }, [userId, courses.length, loadCourses, loadProfile]);
+    if (userId) {
+      loadProfile(userId);
+      loadApplications(userId);
+    }
+  }, [userId, courses.length, loadCourses, loadProfile, loadApplications]);
+
+  // Index applications by courseId so each card can look up its status in O(1).
+  const applicationByCourse = useMemo(() => {
+    const m = new Map<number, Application>();
+    for (const a of applications) m.set(a.courseId, a);
+    return m;
+  }, [applications]);
 
   // Profile fallback — if profileStore hasn't loaded yet, synthesize a
   // matcher-compatible profile from the teachersStore row so the match
@@ -279,10 +292,12 @@ export default function TeacherCourses() {
             <CourseCard
               key={c.id}
               course={c}
+              application={applicationByCourse.get(c.id)}
               onPress={() => router.push(routeTo.teacherCourseDetail(c.id))}
               applyLabel={t('courses.view_and_apply')}
               needLabel={t('courses.need_at', { count: c.needCount ?? 1 })}
               matchLabel={t('courses.match_label')}
+              t={t}
             />
           ))
         )}
@@ -308,16 +323,20 @@ type CardCourse = Course & {
 
 function CourseCard({
   course,
+  application,
   onPress,
   applyLabel,
   needLabel,
   matchLabel,
+  t,
 }: {
   course: CardCourse;
+  application?: Application;
   onPress: () => void;
   applyLabel: string;
   needLabel: string;
   matchLabel: string;
+  t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
   const emoji = TYPE_EMOJI[course.type] ?? '🪷';
   return (
@@ -360,26 +379,62 @@ function CourseCard({
         <Meter score={course.match ?? 0} />
 
         <View style={s.applyRow}>
-          <TouchableOpacity
-            onPress={(e) => {
-              e.stopPropagation?.();
-              onPress();
-            }}
-            activeOpacity={0.85}
-            style={s.applyBtnWrap}
-          >
-            <LinearGradient
-              colors={Gradients.primaryCta as unknown as [string, string, ...string[]]}
-              start={GradientDirection.button.start}
-              end={GradientDirection.button.end}
-              style={s.applyBtn}
+          {application ? (
+            <ApplicationStatusPill status={application.status} t={t} />
+          ) : (
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation?.();
+                onPress();
+              }}
+              activeOpacity={0.85}
+              style={s.applyBtnWrap}
             >
-              <Text style={s.applyBtnText}>{applyLabel}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+              <LinearGradient
+                colors={Gradients.primaryCta as unknown as [string, string, ...string[]]}
+                start={GradientDirection.button.start}
+                end={GradientDirection.button.end}
+                style={s.applyBtn}
+              >
+                <Text style={s.applyBtnText}>{applyLabel}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </TouchableOpacity>
+  );
+}
+
+/**
+ * Status pill rendered in place of "View & Apply →" once the teacher has an
+ * application for this course. The card itself stays tappable (taps the
+ * outer TouchableOpacity, which navigates to the detail screen) so the
+ * teacher can still drill in to view the brief or withdraw.
+ */
+function ApplicationStatusPill({
+  status,
+  t,
+}: {
+  status: 'pending' | 'approved' | 'rejected' | 'withdrawal_requested';
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+  const variant = (() => {
+    switch (status) {
+      case 'approved':
+        return { bg: Colors.fol, fg: Colors.fo, label: t('courses.status_confirmed') };
+      case 'pending':
+        return { bg: Colors.sfl, fg: Colors.sfd, label: t('courses.status_pending') };
+      case 'rejected':
+        return { bg: Colors.url, fg: Colors.ur, label: t('courses.status_rejected') };
+      case 'withdrawal_requested':
+        return { bg: Colors.cr2, fg: Colors.tx2, label: t('courses.status_withdrawing') };
+    }
+  })();
+  return (
+    <View style={[s.statusPill, { backgroundColor: variant.bg }]}>
+      <Text style={[s.statusPillText, { color: variant.fg }]}>{variant.label}</Text>
+    </View>
   );
 }
 
@@ -612,6 +667,21 @@ const s = StyleSheet.create({
   },
   applyBtnText: {
     color: Colors.white,
+    fontSize: 12.5,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+
+  // Application status pill (replaces "View & Apply →" once applied)
+  statusPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    minHeight: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusPillText: {
     fontSize: 12.5,
     fontWeight: '700',
     fontFamily: FontFamily.sansBold,
