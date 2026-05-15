@@ -473,15 +473,16 @@
     "city": "Budhanilkantha, Kathmandu",
     "country": "NP",
     "flag": "🇳🇵",
-    "dates": "Jun 14–Jun 25, 2026",
-    "startDate": "2026-06-14",
-    "endDate": "2026-06-25",
+    "dates": "Jul 7–18, 2026",
+    "startDate": "2026-07-07",
+    "endDate": "2026-07-18",
     "languages": [
       "ne",
       "en"
     ],
     "needCount": 1,
-    "genderRequired": "Any",
+    "genderRequired": "M",
+    "openSlots": ["M"],
     "status": "open",
     "distanceKm": 12,
     "travelHrs": 0.5,
@@ -491,7 +492,7 @@
       "male": 48,
       "female": 42
     },
-    "arrivalDate": "Jun 13, 2026",
+    "arrivalDate": "Jul 6, 2026",
     "arrivalTime": "5:00 PM",
     "coordinator": {
       "name": "Ramesh Adhikari",
@@ -500,15 +501,15 @@
     },
     "transport": "Taxi ~30 min from Ring Road, or microbus from Sundarijal. Park inside the gate; staff will help with luggage.",
     "coTeacher": {
-      "name": "Maya Shrestha",
+      "name": "Asha Mehta",
       "gender": "F",
       "languages": [
-        "Nepali",
-        "English"
+        "ne",
+        "en"
       ],
-      "phone": "+977 98••• ••661"
+      "phone": "+977 98••• ••772"
     },
-    "notes": "Course opens evening of June 13. Group sit at 6 PM. Metta on Day 10. Please carry citizenship copy + 2 passport photos for the centre record."
+    "notes": "Course opens evening of July 6. Group sit at 6 PM. Metta on Day 10. Please carry citizenship copy + 2 passport photos for the centre record."
   },
   {
     "id": 1324192656,

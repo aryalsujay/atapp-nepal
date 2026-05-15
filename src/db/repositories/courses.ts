@@ -54,6 +54,9 @@ function rowToDomain(r: CourseRow): Course {
           languages: [],
         })
       : undefined,
+    openSlots: r.open_slots_json
+      ? jsonParse<NonNullable<Course['openSlots']>>(r.open_slots_json, [])
+      : undefined,
     transport: r.transport ?? '',
     status: r.status ?? undefined,
     notes: r.notes ?? undefined,
@@ -78,8 +81,8 @@ export function upsert(db: DB, course: Course): void {
        dates, start_date, end_date, languages_json, need_count,
        gender_required, status, distance_km, travel_hrs, altitude,
        students_json, arrival_date, arrival_time, coordinator_json,
-       coteacher_json, transport, notes, created_at, updated_at
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+       coteacher_json, open_slots_json, transport, notes, created_at, updated_at
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
      ON CONFLICT(id) DO UPDATE SET
        type             = excluded.type,
        center           = excluded.center,
@@ -102,6 +105,7 @@ export function upsert(db: DB, course: Course): void {
        arrival_time     = excluded.arrival_time,
        coordinator_json = excluded.coordinator_json,
        coteacher_json   = excluded.coteacher_json,
+       open_slots_json  = excluded.open_slots_json,
        transport        = excluded.transport,
        notes            = excluded.notes,
        updated_at       = excluded.updated_at`,
@@ -128,6 +132,7 @@ export function upsert(db: DB, course: Course): void {
       course.arrivalTime || null,
       JSON.stringify(course.coordinator),
       course.coTeacher ? JSON.stringify(course.coTeacher) : null,
+      course.openSlots ? JSON.stringify(course.openSlots) : null,
       course.transport || null,
       course.notes ?? null,
       now,
@@ -149,6 +154,7 @@ export function upsertMany(db: DB, courses: Course[]): void {
  *
  * Admin-set fields preserved across sync:
  *   - coteacher_json
+ *   - open_slots_json (admin-set per-slot gender breakdown)
  *   - coordinator_json (admin replaces "See dhamma.org" placeholder with
  *     real coordinator name + phone)
  *   - transport prose
@@ -174,8 +180,8 @@ export function syncUpsert(db: DB, course: Course): void {
        dates, start_date, end_date, languages_json, need_count,
        gender_required, status, distance_km, travel_hrs, altitude,
        students_json, arrival_date, arrival_time, coordinator_json,
-       coteacher_json, transport, notes, created_at, updated_at
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+       coteacher_json, open_slots_json, transport, notes, created_at, updated_at
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
      ON CONFLICT(id) DO UPDATE SET
        type             = excluded.type,
        center           = excluded.center,
@@ -215,6 +221,7 @@ export function syncUpsert(db: DB, course: Course): void {
       course.arrivalTime || null,
       JSON.stringify(course.coordinator),
       course.coTeacher ? JSON.stringify(course.coTeacher) : null,
+      course.openSlots ? JSON.stringify(course.openSlots) : null,
       course.transport || null,
       course.notes ?? null,
       now,

@@ -16,16 +16,18 @@ describe('runMigrations', () => {
       '0002_teacher_phone',
       '0003_course_coteacher',
       '0004_teacher_home_location',
+      '0005_course_open_slots',
     ]);
     expect(result.alreadyApplied).toEqual([]);
 
     const rows = db.query<MigrationRow>('SELECT id, name, applied_at FROM _migrations');
-    expect(rows).toHaveLength(4);
+    expect(rows).toHaveLength(5);
     expect(rows.map((r) => r.name)).toEqual([
       '0001_initial',
       '0002_teacher_phone',
       '0003_course_coteacher',
       '0004_teacher_home_location',
+      '0005_course_open_slots',
     ]);
   });
 
@@ -40,6 +42,7 @@ describe('runMigrations', () => {
       '0002_teacher_phone',
       '0003_course_coteacher',
       '0004_teacher_home_location',
+      '0005_course_open_slots',
     ]);
   });
 
