@@ -1,275 +1,549 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+/**
+ * Teacher Notifications — implements `specs/11-teacher-notifications.md`.
+ *
+ * Prototype-faithful port of `app.html:3377–3490`. List view (white header +
+ * cream divider + card stack with type-coloured left border + unread tint) +
+ * in-place detail view (back row + body card + per-type CTAs). State is
+ * local — no route change between list and detail.
+ *
+ * Inline literal font sizes match the prototype; no FontSize tokens used.
+ * Per-text fontFamily ties weights to registered Plus Jakarta Sans variants.
+ */
+
+import React, { useState } from 'react';
+import {
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path } from 'react-native-svg';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+
+import { routeTo } from '@/routes';
 import { useAuthStore } from '@/store/authStore';
+import { useCoursesStore } from '@/store/coursesStore';
 import { useNotificationsStore, formatNotifTime } from '@/store/notificationsStore';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useToast } from '@/components/ui/Toast';
 import { Colors } from '@/theme/colors';
-import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { FontFamily } from '@/theme/typography';
 import { Shadows } from '@/theme/shadows';
-import { SectionHeader } from '@/components/layout/SectionHeader';
+import { DashedDivider } from '@/components/ui/DashedDivider';
+import type { Course, Notification, NotificationType } from '@/types';
 
-const TYPE_CONFIG: Record<string, { emoji: string; bg: string; label: string }> = {
-  assignment: { emoji: '📋', bg: Colors.fo + '22', label: 'Assignment' },
-  invite: { emoji: '📬', bg: '#5B6FA822', label: 'Invite' },
-  rejection: { emoji: '✗', bg: Colors.ur + '18', label: 'Update' },
-  reminder: { emoji: '⏰', bg: '#9B6B1422', label: 'Reminder' },
-  update: { emoji: '🔄', bg: Colors.bl + '22', label: 'Update' },
-  approval: { emoji: '✓', bg: Colors.fo + '22', label: 'Approved' },
+const ASSIGNED_BLUE = '#5B6FA8';
+const REMINDER_GOLD = '#9B6B14';
+
+const ACCENT: Record<NotificationType, string> = {
+  invite: ASSIGNED_BLUE,
+  assignment: Colors.fo,
+  reminder: REMINDER_GOLD,
+  update: Colors.bl,
+  approval: Colors.fo,
+  rejection: Colors.ur,
 };
 
-export default function NotificationsScreen() {
-  const { t } = useTranslation();
-  const { language } = useSettingsStore();
-  const userId = useAuthStore((s) => s.userId) ?? '';
-  const { getForUser, markRead, respondToInvite, loaded } = useNotificationsStore();
+const ICON: Record<NotificationType, string> = {
+  invite: '📬',
+  assignment: '📋',
+  reminder: '⏰',
+  update: '🔄',
+  approval: '✓',
+  rejection: '✗',
+};
 
-  const [expanded, setExpanded] = useState<number | null>(null);
-  const [localResponses, setLocalResponses] = useState<Record<number, 'accepted' | 'declined'>>({});
-  const [declineReason, setDeclineReason] = useState('');
-  const [showDeclineInput, setShowDeclineInput] = useState<number | null>(null);
+const accent = (type: NotificationType) => ACCENT[type] ?? Colors.tx3;
+const icon = (type: NotificationType) => ICON[type] ?? '🔔';
+
+/** Apply a flat 13 % alpha to a hex accent for the icon-tile background. */
+const tile = (type: NotificationType) => `${accent(type)}22`;
+
+type InviteStatus = 'pending' | 'approved' | 'rejected';
+
+export default function TeacherNotifications() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const toast = useToast();
+
+  const userId = useAuthStore((s) => s.userId) ?? '';
+  const getForUser = useNotificationsStore((s) => s.getForUser);
+  const markRead = useNotificationsStore((s) => s.markRead);
+  const respondToInvite = useNotificationsStore((s) => s.respondToInvite);
+  // Subscribe to notifications so the screen re-renders after store mutations.
+  useNotificationsStore((s) => s.notifications);
+  const courses = useCoursesStore((s) => s.courses) as Course[];
+  const language = useSettingsStore((s) => s.language);
+
+  const [selected, setSelected] = useState<Notification | null>(null);
+  const [rejecting, setRejecting] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
 
   const notifs = getForUser(userId);
   const unread = notifs.filter((n) => !n.read).length;
 
-  const handleExpand = (id: number, wasRead: boolean) => {
-    setExpanded((prev) => (prev === id ? null : id));
-    if (!wasRead) markRead(id);
+  const openNotif = (n: Notification) => {
+    setSelected(n);
+    setRejecting(false);
+    setRejectReason('');
+    if (!n.read) markRead(n.id);
   };
 
-  return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: Colors.cr }}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 110 }}
-    >
-      <SectionHeader title={t('notifications.title')} style={styles.header} />
-      <Text style={styles.subtitle}>
-        {unread} new · {notifs.length} total
-      </Text>
+  const closeDetail = () => {
+    setSelected(null);
+    setRejecting(false);
+    setRejectReason('');
+  };
 
-      {notifs.map((notif) => {
-        const isExp = expanded === notif.id;
-        const response =
-          localResponses[notif.id] ??
-          (notif.status === 'approved'
-            ? 'accepted'
-            : notif.status === 'rejected'
-              ? 'declined'
-              : undefined);
-        const cfg = TYPE_CONFIG[notif.type] ?? { emoji: '🔔', bg: Colors.tx3 + '22', label: '' };
-        const body = language === 'ne' ? notif.bodyNe : notif.bodyEn;
-        const showDecline = showDeclineInput === notif.id;
+  const onAccept = async (n: Notification) => {
+    await respondToInvite(n.id, 'accepted');
+    closeDetail();
+    toast.success(t('notifications.toast_accepted'));
+  };
 
-        return (
-          <TouchableOpacity
-            key={notif.id}
-            onPress={() => handleExpand(notif.id, notif.read)}
-            activeOpacity={0.88}
-            style={[styles.card, !notif.read && styles.unread]}
-          >
-            {/* Header row */}
-            <View style={styles.cardRow}>
-              <View style={[styles.iconBox, { backgroundColor: cfg.bg }]}>
-                <Text style={styles.iconText}>{cfg.emoji}</Text>
+  const onConfirmDecline = async (n: Notification) => {
+    await respondToInvite(n.id, 'declined', rejectReason);
+    closeDetail();
+    toast.success(t('notifications.toast_declined'));
+  };
+
+  // ─── Detail view ────────────────────────────────────────────────────────
+  if (selected) {
+    const n = selected;
+    const status = n.status as InviteStatus | undefined;
+    const courseForBrief = n.courseId ? courses.find((c) => c.id === n.courseId) : undefined;
+
+    return (
+      <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+        <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={[s.headerWrap, { paddingTop: Math.max(56, insets.top + 14) }]}>
+            <TouchableOpacity
+              onPress={closeDetail}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={s.backRow}
+            >
+              <BackChevron />
+              <Text style={s.backText}>{t('notifications.back')}</Text>
+            </TouchableOpacity>
+
+            <View style={s.detailHeaderRow}>
+              <View style={[s.detailIconTile, { backgroundColor: tile(n.type) }]}>
+                <Text style={s.detailIconEmoji}>{icon(n.type)}</Text>
               </View>
-
-              <View style={styles.cardBody}>
-                <View style={styles.titleRow}>
-                  <Text
-                    style={[styles.cardTitle, !notif.read && styles.cardTitleUnread]}
-                    numberOfLines={2}
-                  >
-                    {notif.subjectEn}
-                  </Text>
-                  {!notif.read && <View style={styles.unreadDot} />}
-                </View>
-                <Text style={styles.cardMeta}>
-                  {notif.center} · {formatNotifTime(notif.timestamp)}
+              <View style={{ flex: 1 }}>
+                <Text style={s.detailSubject}>{n.subjectEn}</Text>
+                <Text style={s.detailMeta}>
+                  {n.center} · {formatNotifTime(n.timestamp)}
                 </Text>
-                <Text style={styles.cardCourse} numberOfLines={1}>
-                  {notif.course}
-                </Text>
-
-                {notif.type === 'invite' && (
-                  <View
-                    style={[
-                      styles.statusChip,
-                      response === 'accepted'
-                        ? { backgroundColor: Colors.fol }
-                        : response === 'declined'
-                          ? { backgroundColor: Colors.url }
-                          : { backgroundColor: Colors.gdl },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.statusChipText,
-                        response === 'accepted'
-                          ? { color: Colors.fo }
-                          : response === 'declined'
-                            ? { color: Colors.ur }
-                            : { color: Colors.gd },
-                      ]}
-                    >
-                      {response === 'accepted'
-                        ? '✓ Accepted'
-                        : response === 'declined'
-                          ? '✗ Declined'
-                          : '⏳ Awaiting your response'}
-                    </Text>
-                  </View>
-                )}
-                {notif.type === 'assignment' && (
-                  <View style={[styles.statusChip, { backgroundColor: Colors.fol }]}>
-                    <Text style={[styles.statusChipText, { color: Colors.fo }]}>✓ Confirmed</Text>
-                  </View>
-                )}
+                {n.type === 'invite' ? (
+                  <StatusChip status={status} placement="detail" t={t} />
+                ) : null}
               </View>
-
-              <Text style={styles.chevron}>{isExp ? '▲' : '▼'}</Text>
             </View>
+          </View>
 
-            {/* Expanded */}
-            {isExp && (
-              <View style={styles.expanded}>
-                <View style={styles.expandHeader}>
-                  <View style={[styles.iconBoxLg, { backgroundColor: cfg.bg }]}>
-                    <Text style={styles.iconTextLg}>{cfg.emoji}</Text>
-                  </View>
-                  <View style={{ flex: 1, gap: 2 }}>
-                    <Text style={styles.expandSubject}>{notif.subjectEn}</Text>
-                    <Text style={styles.expandMeta}>
-                      {notif.center} · {formatNotifTime(notif.timestamp)}
-                    </Text>
-                  </View>
-                </View>
+          <View style={s.dividerStrip} />
 
-                <Text style={styles.emailBody}>{body}</Text>
+          <View style={[s.card, s.bodyCard]}>
+            <Text style={s.bodyText}>{language === 'ne' && n.bodyNe ? n.bodyNe : n.bodyEn}</Text>
+          </View>
 
-                {notif.type === 'invite' && !response && !showDecline && (
-                  <View style={styles.actionRow}>
+          {/* Invite — pending response zone */}
+          {n.type === 'invite' && status === 'pending' ? (
+            <View style={s.inviteWrap}>
+              {rejecting ? (
+                <>
+                  <TextInput
+                    value={rejectReason}
+                    onChangeText={setRejectReason}
+                    multiline
+                    textAlignVertical="top"
+                    placeholder={t('notifications.decline_placeholder')}
+                    placeholderTextColor={Colors.tx3}
+                    style={[s.inp, s.declineInput]}
+                  />
+                  <View style={s.btnRow}>
                     <TouchableOpacity
-                      style={[styles.actionBtn, { backgroundColor: Colors.fo }]}
-                      onPress={async () => {
-                        setLocalResponses((r) => ({ ...r, [notif.id]: 'accepted' }));
-                        await respondToInvite(notif.id, 'accepted');
-                        setExpanded(null);
+                      onPress={() => {
+                        setRejecting(false);
+                        setRejectReason('');
                       }}
+                      activeOpacity={0.85}
+                      style={[s.btnSm, s.btnOu, { flex: 1 }]}
                     >
-                      <Text style={styles.actionBtnText}>✓ Accept Invitation</Text>
+                      <Text style={s.btnOuText}>{t('notifications.cancel')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={styles.actionBtnOutline}
-                      onPress={() => setShowDeclineInput(notif.id)}
+                      onPress={() => onConfirmDecline(n)}
+                      activeOpacity={0.85}
+                      style={[s.btnSm, s.btnDanger, { flex: 1 }]}
                     >
-                      <Text style={styles.actionBtnOutlineText}>Decline</Text>
+                      <Text style={s.btnDangerText}>{t('notifications.confirm_decline')}</Text>
                     </TouchableOpacity>
                   </View>
-                )}
-
-                {notif.type === 'invite' && showDecline && !response && (
-                  <View style={styles.declineBox}>
-                    <Text style={styles.declineLabel}>Reason for declining (optional)</Text>
-                    <TextInput
-                      value={declineReason}
-                      onChangeText={setDeclineReason}
-                      placeholder="e.g. Travel conflict, health, etc."
-                      placeholderTextColor={Colors.tx3}
-                      style={styles.declineInput}
-                      multiline
-                      numberOfLines={2}
-                    />
-                    <View style={styles.declineActions}>
-                      <TouchableOpacity
-                        style={styles.cancelBtn}
-                        onPress={() => setShowDeclineInput(null)}
-                      >
-                        <Text style={styles.cancelBtnText}>Cancel</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.actionBtn,
-                          {
-                            flex: 1,
-                            backgroundColor: Colors.url,
-                            borderWidth: 1,
-                            borderColor: Colors.ur,
-                          },
-                        ]}
-                        onPress={async () => {
-                          setLocalResponses((r) => ({ ...r, [notif.id]: 'declined' }));
-                          await respondToInvite(notif.id, 'declined', declineReason);
-                          setShowDeclineInput(null);
-                          setDeclineReason('');
-                          setExpanded(null);
-                        }}
-                      >
-                        <Text style={[styles.actionBtnText, { color: Colors.ur }]}>✗ Decline</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                )}
-
-                {notif.type === 'assignment' && (
-                  <TouchableOpacity style={styles.briefLink}>
-                    <Text style={styles.briefLinkText}>View Course Brief →</Text>
+                </>
+              ) : (
+                <View style={s.btnRow}>
+                  <TouchableOpacity
+                    onPress={() => onAccept(n)}
+                    activeOpacity={0.85}
+                    style={{ flex: 1 }}
+                  >
+                    <LinearGradient
+                      colors={[Colors.sf, Colors.sfd] as [string, string]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={[s.btnSm, s.btnPr]}
+                    >
+                      <Text style={s.btnPrText}>{t('notifications.accept')}</Text>
+                    </LinearGradient>
                   </TouchableOpacity>
-                )}
-              </View>
-            )}
-          </TouchableOpacity>
-        );
-      })}
+                  <TouchableOpacity
+                    onPress={() => setRejecting(true)}
+                    activeOpacity={0.85}
+                    style={[s.btnSm, s.btnDeclineOu, { flex: 1 }]}
+                  >
+                    <Text style={s.btnDeclineOuText}>{t('notifications.decline')}</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          ) : null}
 
-      {notifs.length === 0 && loaded && (
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>No notifications yet.</Text>
+          {/* Invite — rejected reason recap */}
+          {n.type === 'invite' && status === 'rejected' && n.declineReason ? (
+            <View style={s.reasonRecap}>
+              <Text style={s.reasonRecapText}>
+                <Text style={s.reasonRecapStrong}>{t('notifications.your_reason')} </Text>
+                {n.declineReason}
+              </Text>
+            </View>
+          ) : null}
+
+          {/* Assignment — View Course Brief */}
+          {n.type === 'assignment' && courseForBrief ? (
+            <View style={s.assignmentLinkWrap}>
+              <TouchableOpacity
+                onPress={() => {
+                  setSelected(null);
+                  router.push(routeTo.teacherApplicationBrief(courseForBrief.id));
+                }}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={[Colors.sf, Colors.sfd] as [string, string]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={s.btnPrFull}
+                >
+                  <Text style={s.btnPrFullText}>📋 {t('notifications.view_brief')}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ─── List view ──────────────────────────────────────────────────────────
+  return (
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[s.headerWrap, { paddingTop: Math.max(56, insets.top + 14) }]}>
+          <Text style={s.title}>{t('notifications.title')}</Text>
+          <Text style={s.subtitle}>
+            {t('notifications.subtitle', { new: unread, total: notifs.length })}
+          </Text>
         </View>
-      )}
-    </ScrollView>
+
+        <View style={s.dividerStrip} />
+
+        {notifs.length === 0 ? (
+          <View style={s.empty}>
+            <Text style={s.emptyEmoji}>🔔</Text>
+            <Text style={s.emptyTitle}>{t('notifications.empty_title')}</Text>
+            <Text style={s.emptyMsg}>{t('notifications.empty_message')}</Text>
+          </View>
+        ) : (
+          notifs.map((n) => (
+            <NotificationCard
+              key={n.id}
+              n={n}
+              courses={courses}
+              onPress={() => openNotif(n)}
+              t={t}
+            />
+          ))
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  header: { paddingTop: 20 },
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+function NotificationCard({
+  n,
+  courses,
+  onPress,
+  t,
+}: {
+  n: Notification;
+  courses: Course[];
+  onPress: () => void;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+  const isUnread = !n.read;
+  const accentColor = accent(n.type);
+  const status = n.status as InviteStatus | undefined;
+  const matchedCourse = n.courseId ? courses.find((c) => c.id === n.courseId) : undefined;
+
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+      <View
+        style={[
+          s.card,
+          {
+            borderLeftColor: accentColor,
+            backgroundColor: isUnread ? Colors.fol : Colors.white,
+          },
+        ]}
+      >
+        <View style={s.cardTopRow}>
+          <View style={[s.iconTile, { backgroundColor: tile(n.type) }]}>
+            <Text style={s.iconTileEmoji}>{icon(n.type)}</Text>
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <View style={s.subjectRow}>
+              <Text style={[s.subjectText, isUnread ? s.subjectUnread : s.subjectRead]}>
+                {n.subjectEn}
+              </Text>
+              {isUnread ? <View style={s.unreadDot} /> : null}
+            </View>
+            <Text style={s.courseLine}>{n.course}</Text>
+            <Text style={s.timeLine}>{formatNotifTime(n.timestamp)}</Text>
+
+            {/* Type-specific footers */}
+            {n.type === 'invite' ? <InviteFooter status={status} t={t} /> : null}
+            {n.type === 'assignment' && matchedCourse ? (
+              <AssignmentFooter course={matchedCourse} t={t} />
+            ) : null}
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+function InviteFooter({ status, t }: { status?: InviteStatus; t: (key: string) => string }) {
+  return (
+    <View style={s.inviteFooterWrap}>
+      <DashedDivider marginVertical={0} />
+      <View style={s.inviteFooterRow}>
+        <StatusChip status={status} placement="list" t={t} />
+        {status === 'pending' || !status ? (
+          <Text style={s.tapToRespond}>{t('notifications.tap_to_respond')}</Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function AssignmentFooter({ course, t }: { course: Course; t: (k: string) => string }) {
+  return (
+    <View style={s.assignmentFooterWrap}>
+      <DashedDivider marginVertical={0} />
+      <Text style={s.confirmedText}>✓ {t('notifications.confirmed_short')}</Text>
+      <Text style={s.assignmentMeta}>
+        📅 {course.dates} · 🛬 {course.arrivalDate}
+      </Text>
+    </View>
+  );
+}
+
+function StatusChip({
+  status,
+  placement,
+  t,
+}: {
+  status?: InviteStatus;
+  placement: 'list' | 'detail';
+  t: (key: string) => string;
+}) {
+  const variant = (() => {
+    if (status === 'approved') {
+      return { bg: Colors.fol, fg: Colors.fo, label: t('notifications.status_accepted') };
+    }
+    if (status === 'rejected') {
+      return { bg: Colors.url, fg: Colors.ur, label: t('notifications.status_declined') };
+    }
+    return {
+      bg: Colors.cr2,
+      fg: Colors.tx2,
+      label:
+        placement === 'detail'
+          ? t('notifications.status_pending_detail')
+          : t('notifications.status_pending_list'),
+    };
+  })();
+  return (
+    <View
+      style={[
+        s.statusChip,
+        placement === 'detail' ? s.statusChipDetail : null,
+        { backgroundColor: variant.bg },
+      ]}
+    >
+      <Text
+        style={[
+          s.statusChipText,
+          placement === 'detail' ? s.statusChipTextDetail : null,
+          { color: variant.fg },
+        ]}
+      >
+        {variant.label}
+      </Text>
+    </View>
+  );
+}
+
+function BackChevron() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 18L9 12L15 6"
+        stroke={Colors.sf}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
+const s = StyleSheet.create({
+  flex: { flex: 1 },
+
+  // Header (shared by list + detail)
+  headerWrap: {
+    paddingHorizontal: 18,
+    paddingBottom: 14,
+    backgroundColor: Colors.white,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
+    color: Colors.tx,
+    lineHeight: 32,
+  },
   subtitle: {
-    fontSize: FontSize.sm,
+    fontSize: 13,
+    fontFamily: FontFamily.sansRegular,
     color: Colors.tx2,
-    paddingHorizontal: Layout.horizontalPad,
-    paddingBottom: Spacing.sm,
-  },
-  empty: {
-    alignItems: 'center',
-    padding: 48,
-  },
-  emptyText: {
-    fontSize: FontSize.md,
-    color: Colors.tx3,
+    marginTop: 2,
   },
 
-  card: {
-    backgroundColor: Colors.white,
-    marginHorizontal: Layout.horizontalPad,
-    marginVertical: 5,
-    borderRadius: Radius.lg,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    ...Shadows.card,
-    gap: 0,
+  // Detail back row + header
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 8,
   },
-  unread: {
-    backgroundColor: Colors.sfl,
-    borderColor: Colors.sfm,
+  backText: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
+    color: Colors.sf,
   },
-  cardRow: {
+  detailHeaderRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
+    gap: 11,
   },
-  iconBox: {
+  detailIconTile: {
+    width: 46,
+    height: 46,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  detailIconEmoji: {
+    fontSize: 22,
+  },
+  detailSubject: {
+    fontSize: 16,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
+    color: Colors.tx,
+    lineHeight: 21,
+  },
+  detailMeta: {
+    fontSize: 12,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx3,
+    marginTop: 3,
+  },
+
+  // Divider
+  dividerStrip: {
+    height: 8,
+    backgroundColor: Colors.cr,
+  },
+
+  // Card base (list rows + detail body)
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 11,
+    borderLeftWidth: 4,
+    borderLeftColor: 'transparent',
+    ...Shadows.card,
+  },
+
+  // Detail body card (no left border, all-around margin)
+  bodyCard: {
+    margin: 14,
+    marginHorizontal: 14,
+    borderLeftWidth: 0,
+  },
+  bodyText: {
+    fontSize: 13.5,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx,
+    lineHeight: 22,
+  },
+
+  // ── List card content ──
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 11,
+  },
+  iconTile: {
     width: 38,
     height: 38,
     borderRadius: 11,
@@ -277,120 +551,253 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-  iconText: { fontSize: 17 },
-  cardBody: { flex: 1, gap: 3 },
-  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
-  cardTitle: {
-    flex: 1,
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.semibold,
-    color: Colors.tx,
-    lineHeight: FontSize.smPlus * 1.4,
+  iconTileEmoji: {
+    fontSize: 18,
   },
-  cardTitleUnread: { fontWeight: FontWeight.bold },
+  subjectRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  subjectText: {
+    fontSize: 13.5,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx,
+    lineHeight: 18,
+    flex: 1,
+  },
+  subjectUnread: {
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  subjectRead: {
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
+  },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.sf,
+    backgroundColor: Colors.fo,
+    marginTop: 5,
     flexShrink: 0,
-    marginTop: 4,
   },
-  cardMeta: { fontSize: FontSize.sm, color: Colors.tx3 },
-  cardCourse: { fontSize: FontSize.xs, color: Colors.tx3 },
+  courseLine: {
+    fontSize: 11.5,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx3,
+    marginTop: 2,
+  },
+  timeLine: {
+    fontSize: 11,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx3,
+    marginTop: 1,
+  },
+
+  // Invite footer (list)
+  inviteFooterWrap: {
+    marginTop: 7,
+    paddingTop: 7,
+  },
+  inviteFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  tapToRespond: {
+    fontSize: 11,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: ASSIGNED_BLUE,
+  },
+
+  // Assignment footer (list)
+  assignmentFooterWrap: {
+    marginTop: 8,
+    paddingTop: 8,
+  },
+  confirmedText: {
+    fontSize: 11,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.fo,
+  },
+  assignmentMeta: {
+    fontSize: 11,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx2,
+    marginTop: 1,
+  },
+
+  // Status chip (used in both list footer + detail header)
   statusChip: {
-    alignSelf: 'flex-start',
     paddingHorizontal: 9,
     paddingVertical: 3,
-    borderRadius: Radius.full,
-    marginTop: 3,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
   },
-  statusChipText: { fontSize: FontSize.xs, fontWeight: FontWeight.bold },
-  chevron: { fontSize: 10, color: Colors.tx3, flexShrink: 0, marginTop: 3 },
+  statusChipText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
+  },
+  statusChipDetail: {
+    marginTop: 6,
+  },
+  statusChipTextDetail: {
+    fontSize: 11,
+  },
 
-  expanded: {
-    borderTopWidth: 1,
-    borderTopColor: Colors.bd,
-    marginTop: 10,
-    paddingTop: Spacing.md,
-    gap: Spacing.md,
+  // ── Invite response zone ──
+  inviteWrap: {
+    paddingHorizontal: 18,
+    paddingBottom: 10,
   },
-  expandHeader: {
+  btnRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
+    gap: 8,
   },
-  iconBoxLg: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
+  btnSm: {
+    paddingHorizontal: 15,
+    paddingVertical: 7,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
   },
-  iconTextLg: { fontSize: 22 },
-  expandSubject: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.tx },
-  expandMeta: { fontSize: FontSize.sm, color: Colors.tx3 },
-
-  emailBody: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx,
-    lineHeight: FontSize.smPlus * 1.7,
-    backgroundColor: Colors.cr,
-    borderRadius: Radius.sm,
-    padding: 12,
+  btnPr: {
+    shadowColor: '#000',
+    shadowOpacity: 0.32,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
-
-  actionRow: { flexDirection: 'row', gap: Spacing.sm },
-  actionBtn: {
-    flex: 1,
-    paddingVertical: 11,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-  },
-  actionBtnText: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
+  btnPrText: {
     color: Colors.white,
+    fontSize: 12.5,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
   },
-  actionBtnOutline: {
-    flex: 1,
-    paddingVertical: 11,
-    borderRadius: Radius.md,
-    alignItems: 'center',
+  btnOu: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: Colors.bd2,
+  },
+  btnOuText: {
+    color: Colors.tx,
+    fontSize: 12.5,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+  btnDeclineOu: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#F5C0BB',
+  },
+  btnDeclineOuText: {
+    color: Colors.ur,
+    fontSize: 12.5,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+  btnDanger: {
+    backgroundColor: Colors.ur,
+  },
+  btnDangerText: {
+    color: Colors.white,
+    fontSize: 12.5,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+  // Multiline `.inp` for decline reason
+  inp: {
+    backgroundColor: Colors.cr,
     borderWidth: 1.5,
-    borderColor: Colors.ur,
+    borderColor: Colors.bd,
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
+    fontSize: 14,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx,
   },
-  actionBtnOutlineText: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
+  declineInput: {
+    minHeight: 90,
+    lineHeight: 21,
+    marginBottom: 8,
+  },
+
+  // Rejection reason recap
+  reasonRecap: {
+    marginHorizontal: 18,
+    backgroundColor: Colors.url,
+    borderRadius: 11,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  reasonRecapText: {
+    fontSize: 12,
+    fontFamily: FontFamily.sansRegular,
     color: Colors.ur,
   },
-
-  declineBox: { gap: Spacing.sm },
-  declineLabel: { fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: Colors.tx2 },
-  declineInput: {
-    backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    borderRadius: Radius.md,
-    padding: 10,
-    fontSize: FontSize.smPlus,
-    color: Colors.tx,
-    minHeight: 56,
-    textAlignVertical: 'top',
+  reasonRecapStrong: {
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
   },
-  declineActions: { flexDirection: 'row', gap: Spacing.sm },
-  cancelBtn: {
-    paddingVertical: 11,
-    paddingHorizontal: 16,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.bd,
+
+  // Assignment quick-link (detail)
+  assignmentLinkWrap: {
+    paddingHorizontal: 18,
+    paddingVertical: 6,
+  },
+  btnPrFull: {
+    paddingHorizontal: 22,
+    paddingVertical: 15,
+    borderRadius: 13,
     alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.32,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
-  cancelBtnText: { fontSize: FontSize.smPlus, color: Colors.tx2, fontWeight: FontWeight.semibold },
+  btnPrFullText: {
+    color: Colors.white,
+    fontSize: 15,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
 
-  briefLink: { paddingVertical: 4 },
-  briefLinkText: { fontSize: FontSize.smPlus, fontWeight: FontWeight.bold, color: Colors.gd },
+  // Empty state
+  empty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 40,
+    gap: 14,
+  },
+  emptyEmoji: {
+    fontSize: 48,
+  },
+  emptyTitle: {
+    fontSize: 19,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.tx,
+    textAlign: 'center',
+  },
+  emptyMsg: {
+    fontSize: 13.5,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx3,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
 });
+
+type InviteStatusType = InviteStatus;
+// re-export internal type for symbol stability if used elsewhere
+export type { InviteStatusType };
