@@ -51,18 +51,27 @@ export default function TeacherCourseDetail() {
   const courses = useCoursesStore((s) => s.courses) as Course[];
   const loadCourses = useCoursesStore((s) => s.loadCourses);
   const { profile, loadProfile } = useProfileStore();
-  const { applications, loadApplications, submitApplication } = useApplicationsStore();
+  const applications = useApplicationsStore((s) => s.applications);
+  const loadApplications = useApplicationsStore((s) => s.loadApplications);
+  const applicationsLoadedForUserId = useApplicationsStore((s) => s.loadedForUserId);
+  const submitApplication = useApplicationsStore((s) => s.submitApplication);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (courses.length === 0) loadCourses();
-    if (userId) {
-      loadProfile(userId);
-      loadApplications(userId);
-    }
-  }, [userId, courses.length, loadCourses, loadProfile, loadApplications]);
+    if (!userId) return;
+    loadProfile(userId);
+    if (applicationsLoadedForUserId !== userId) loadApplications(userId);
+  }, [
+    userId,
+    courses.length,
+    loadCourses,
+    loadProfile,
+    loadApplications,
+    applicationsLoadedForUserId,
+  ]);
 
   // Profile fallback — hydrate match scores from teachersStore before the
   // profileStore async load completes.
@@ -288,7 +297,7 @@ export default function TeacherCourseDetail() {
           {isAssigned ? (
             <TouchableOpacity
               activeOpacity={0.85}
-              onPress={() => router.push(routeTo.teacherApplicationBrief(existingApp?.id ?? ''))}
+              onPress={() => router.push(routeTo.teacherApplicationBrief(course.id))}
               style={s.viewBriefBtn}
             >
               <Text style={s.viewBriefText}>{t('courseDetail.view_brief')}</Text>
