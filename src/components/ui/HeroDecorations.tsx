@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import Svg, { Ellipse, Circle, Polygon } from 'react-native-svg';
+import Svg, { Ellipse, Circle, Polygon, Path } from 'react-native-svg';
 
 interface LotusHeroProps {
   color?: string;
@@ -91,6 +91,51 @@ export const MountainSilhouette: React.FC<{ color?: string }> = ({
       <Polygon points="160,18 165,10 170,18" fill={color} fillOpacity={0.9} />
       <Polygon points="280,24 285,16 290,24" fill={color} fillOpacity={0.9} />
       <Polygon points="50,32 55,24 60,32" fill={color} fillOpacity={0.85} />
+    </Svg>
+  </View>
+);
+
+/**
+ * Stylised seated meditation figure — head + halo, shoulders, body, two
+ * arms folded into mudra. Decorative only; used in the teacher-profile
+ * hero (`app.html:183`). Positioned absolutely inside the hero by default
+ * (right:-10, bottom:-10) matching the prototype's `<svg style="…">`.
+ */
+export const MeditationFigure: React.FC<{
+  size?: number;
+  color?: string;
+  right?: number;
+  bottom?: number;
+}> = ({ size = 130, color = 'rgba(255,255,255,0.13)', right = -10, bottom = -10 }) => (
+  <View style={{ position: 'absolute', right, bottom, pointerEvents: 'none' }} pointerEvents="none">
+    <Svg width={size} height={size} viewBox="0 0 100 100">
+      {/* Halo ring */}
+      <Circle cx={50} cy={22} r={19} fill="none" stroke={color} strokeWidth={1.5} opacity={0.6} />
+      {/* Head */}
+      <Circle cx={50} cy={22} r={12} fill={color} />
+      {/* Shoulders */}
+      <Path d="M35 46 C35 38 42 34 50 34 C58 34 65 38 65 46" fill={color} />
+      {/* Body (lap + crossed legs silhouette) */}
+      <Path
+        d="M24 68 C27 52 38 48 50 48 C62 48 73 52 76 68 L76 74 C72 70 62 67 50 67 C38 67 28 70 24 74 Z"
+        fill={color}
+      />
+      {/* Left arm */}
+      <Path
+        d="M36 51 C28 56 25 63 27 68"
+        stroke={color}
+        strokeWidth={3.5}
+        strokeLinecap="round"
+        fill="none"
+      />
+      {/* Right arm */}
+      <Path
+        d="M64 51 C72 56 75 63 73 68"
+        stroke={color}
+        strokeWidth={3.5}
+        strokeLinecap="round"
+        fill="none"
+      />
     </Svg>
   </View>
 );
