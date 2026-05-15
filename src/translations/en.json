@@ -94,16 +94,17 @@
   },
   "courses": {
     "title": "Open Courses",
-    "search": "Search courses...",
-    "allTypes": "All",
-    "noResults": "No courses match your filters",
-    "matchScore": "Match",
-    "available": "available",
-    "needed": "needed",
-    "apply": "Apply",
+    "search": "Search courses…",
+    "seeking": "courses seeking teachers",
+    "all_types": "All",
+    "no_results": "No courses match your filters",
+    "clear_filters": "Clear filters",
+    "view_and_apply": "View & Apply →",
+    "need_at": "{{count}} AT needed",
+    "subtitle_fallback": "Nepal Vipassana Centers",
+    "match_label": "match",
     "applied": "Applied",
-    "assigned": "Assigned",
-    "detail": "Course Detail"
+    "assigned": "Assigned"
   },
   "courseDetail": {
     "eligibility": "Your Eligibility Check",

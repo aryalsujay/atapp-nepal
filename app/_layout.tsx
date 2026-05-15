@@ -15,7 +15,12 @@ import { ConfirmDialogProvider } from '@/components/ui/ConfirmDialog';
 import { Colors } from '@/theme/colors';
 import { getDb } from '@/db';
 import { runMigrations } from '@/db/migrate';
-import { seedDatabase, backfillTeacherPhone, enrichDemoCourses } from '@/db/seed';
+import {
+  seedDatabase,
+  backfillTeacherPhone,
+  backfillTeacherHomeLocation,
+  enrichDemoCourses,
+} from '@/db/seed';
 import { legacyMigrate } from '@/db/legacyMigrate';
 import { logger } from '@/utils/logger';
 import {
@@ -72,6 +77,7 @@ export default function RootLayout() {
         runMigrations(db);
         seedDatabase(db);
         backfillTeacherPhone(db);
+        backfillTeacherHomeLocation(db);
         enrichDemoCourses(db);
         // Legacy AsyncStorage → SQLite migration. Idempotent + gated by a
         // settings flag, so it's a no-op on subsequent boots and on new

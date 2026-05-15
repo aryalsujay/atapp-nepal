@@ -41,6 +41,9 @@ export interface TeacherRow {
   available_months_json: string | null;
   festival_months_json: string | null;
   teaching_history_json: string | null;
+  home_city: string | null;
+  home_lat: number | null;
+  home_lng: number | null;
   created_at: string;
   updated_at: string;
 }
