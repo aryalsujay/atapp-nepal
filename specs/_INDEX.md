@@ -47,7 +47,7 @@ Legend: `📝 draft` · `👀 review` · `✅ approved` · `🔨 in progress` ·
 | 07 | [Teacher Course Brief](./07-teacher-course-brief.md) | `/(teacher)/applications/brief/[id]` | `app.html:1225` | ✓ done |
 | 08 | [Teacher Applications](./08-teacher-applications.md) | `/(teacher)/applications` | `app.html:1155` | ✓ done |
 | 09 | [Teacher Profile](./09-teacher-profile.md) | `/(teacher)/profile` | `app.html:1385` | ✓ done |
-| 10 | Teacher Edit Profile | `/(teacher)/profile/edit` | `app.html:1585` | — |
+| 10 | [Teacher Edit Profile](./10-teacher-edit-profile.md) | `/(teacher)/profile/edit` | `app.html:1585` | ✓ done |
 | 11 | Teacher Notifications | `/(teacher)/notifications` | `app.html:3377` | — |
 
 ### Server
