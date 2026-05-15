@@ -1,46 +1,238 @@
-import React, { useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useConfirm } from '@/components/ui/ConfirmDialog';
-import { Routes, routeTo } from '@/routes';
+/**
+ * Teacher Profile — implements `specs/09-teacher-profile.md`.
+ *
+ * Prototype-faithful port of `app.html:1385–1582`. Orange-gradient hero
+ * with meditation figure + lotus + 4 stat tiles, eligibility status card,
+ * tappable month grid with festival quick-chips, languages/authorizations/
+ * preferred-centres/recent-teaching/personal-note cards, sign-out CTA.
+ *
+ * Inline literal font sizes match the prototype; no FontSize tokens used.
+ * Per-text fontFamily ties weights to registered Plus Jakarta Sans variants.
+ */
+
+import React, { useMemo, useState } from 'react';
+import {
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path } from 'react-native-svg';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+
+import { Routes } from '@/routes';
 import { useAuthStore } from '@/store/authStore';
 import { useProfileStore } from '@/store/profileStore';
-import { Colors, Gradients } from '@/theme/colors';
-import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { useSettingsStore } from '@/store/settingsStore';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { Colors } from '@/theme/colors';
+import { FontFamily } from '@/theme/typography';
 import { Shadows } from '@/theme/shadows';
-import { AvailabilityCalendar } from '@/components/ui/AvailabilityCalendar';
-import { Chip } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
-import { toAvailabilityArray } from '@/utils/availability';
+import { LotusHero, MeditationFigure } from '@/components/ui/HeroDecorations';
+import { DashedDivider } from '@/components/ui/DashedDivider';
+import centersData from '@/data/centers.json';
 
-const LANG_LEVELS: Record<string, string> = {
-  primary: 'Primary',
-  secondary: 'Secondary',
+// ─── Static maps (display copy not stored on the profile) ────────────────────
+
+const LANGUAGE_META: Record<string, { flag: string; native?: string }> = {
+  Nepali: { flag: '🇳🇵', native: 'नेपाली' },
+  English: { flag: '🌐' },
+  Hindi: { flag: '🇮🇳' },
+  Gujarati: { flag: '🇮🇳' },
+  Marathi: { flag: '🇮🇳' },
+  Tamil: { flag: '🇮🇳' },
+  German: { flag: '🇩🇪' },
+  French: { flag: '🇫🇷' },
+  Spanish: { flag: '🇪🇸' },
 };
 
-export default function ProfileScreen() {
+const LANGUAGE_NOTES: Record<string, string> = {
+  Nepali: 'Dhamma Shringa, Nepal',
+  English: 'International courses',
+  Hindi: 'Terai & Madhesh',
+  Gujarati: 'Secondary',
+  Marathi: 'Secondary',
+  Tamil: 'Secondary',
+  German: 'European courses',
+  French: 'European courses',
+  Spanish: 'European courses',
+};
+
+const AUTH_DESCRIPTIONS: Record<string, string> = {
+  '10-Day': 'Standard Vipassana — core authorization',
+  '20-Day': 'Advanced — for senior teachers',
+  '30-Day': 'Advanced — for senior teachers',
+  'Satipatthana Sutta': 'Advanced — post 10-day retreat',
+  "Children's Anapana": 'Ages 8–12 · parent consent required',
+  'Teen Course': 'Ages 13–17 · supervised setting',
+  Executive: 'Shortened format · corporate groups',
+  '1-Day': 'One-day refresher · old students',
+  '3-Day': 'Three-day refresher · old students',
+};
+
+const AUTH_EMOJI: Record<string, string> = {
+  '10-Day': '🪷',
+  '20-Day': '🌿',
+  '30-Day': '🌳',
+  'Satipatthana Sutta': '📿',
+  "Children's Anapana": '👦',
+  'Teen Course': '🌱',
+  Executive: '💼',
+  '1-Day': '☸️',
+  '3-Day': '🌸',
+};
+
+const RANK_COLORS = [Colors.fo, Colors.sf, Colors.bl];
+const REGION_NOTE_BY_RANK = [
+  'Home region · Nepali speaker',
+  'Second priority region',
+  'Eastern & Southern Nepal',
+];
+
+const MONTHS_EN = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+const MONTHS_NE = [
+  'जन',
+  'फेब',
+  'मार्च',
+  'अप्रिल',
+  'मे',
+  'जुन',
+  'जुलाई',
+  'अग',
+  'सेप',
+  'अक्ट',
+  'नोभ',
+  'डिस',
+];
+
+type MonthState = 'available' | 'festival' | 'unavailable';
+
+interface CenterRow {
+  id: string;
+  name: string;
+  region?: string;
+}
+
+// ─── Screen ──────────────────────────────────────────────────────────────────
+
+export default function TeacherProfile() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const confirm = useConfirm();
+
   const userId = useAuthStore((s) => s.userId) ?? '';
   const signOut = useAuthStore((s) => s.signOut);
-  const { profile, loadProfile } = useProfileStore();
+  const language = useSettingsStore((s) => s.language);
+  const setLanguage = useSettingsStore((s) => s.setLanguage);
+  const altLangLabel = language === 'en' ? 'नेपाली' : 'English';
 
-  useEffect(() => {
-    loadProfile(userId);
-  }, [userId]);
+  const profile = useProfileStore((s) => s.profile);
+  const setProfile = useProfileStore((s) => s.setProfile);
 
-  const handleSignOut = () => {
+  const [showAllHistory, setShowAllHistory] = useState(false);
+
+  // ─── Derived: availability state ────────────────────────────────────────────
+  const monthStates = useMemo<MonthState[]>(() => {
+    const avail = new Set(profile?.availableMonths ?? []);
+    const fest = new Set(profile?.festivalMonths ?? []);
+    return MONTHS_EN.map((_, i) => {
+      if (fest.has(i)) return 'festival';
+      if (avail.has(i)) return 'available';
+      return 'unavailable';
+    });
+  }, [profile]);
+
+  const availableCount = monthStates.filter((s) => s === 'available').length;
+
+  // ─── Derived: eligibility ──────────────────────────────────────────────────
+  const lastTaught = profile?.teachingHistory?.[0]?.date ?? '';
+  const lastTaughtMs = lastTaught ? Date.parse(`${lastTaught} 01`) : NaN;
+  const nextEligibleMs = Number.isNaN(lastTaughtMs)
+    ? null
+    : lastTaughtMs + 21 * 24 * 60 * 60 * 1000;
+  const nextEligibleStr = nextEligibleMs
+    ? new Date(nextEligibleMs).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : null;
+
+  // ─── Derived: centres per preferred region ─────────────────────────────────
+  const centersByRegion = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const c of centersData as CenterRow[]) {
+      if (!c.region) continue;
+      if (!m.has(c.region)) m.set(c.region, []);
+      m.get(c.region)!.push(c.name);
+    }
+    return m;
+  }, []);
+
+  if (!profile) {
+    return (
+      <View style={{ flex: 1, backgroundColor: Colors.cr }}>
+        <StatusBar barStyle="light-content" />
+      </View>
+    );
+  }
+
+  // ─── Mutations ─────────────────────────────────────────────────────────────
+  const cycleMonth = (idx: number) => {
+    const next: MonthState =
+      monthStates[idx] === 'available'
+        ? 'festival'
+        : monthStates[idx] === 'festival'
+          ? 'unavailable'
+          : 'available';
+    persistMonths(idx, next);
+  };
+
+  const setMonthFestival = (idx: number) => persistMonths(idx, 'festival');
+
+  const resetMonths = () => {
+    setProfile({
+      ...profile,
+      availableMonths: [],
+      festivalMonths: [],
+    });
+  };
+
+  const persistMonths = (idx: number, state: MonthState) => {
+    const newStates = [...monthStates];
+    newStates[idx] = state;
+    setProfile({
+      ...profile,
+      availableMonths: newStates.map((s, i) => (s === 'available' ? i : -1)).filter((i) => i >= 0),
+      festivalMonths: newStates.map((s, i) => (s === 'festival' ? i : -1)).filter((i) => i >= 0),
+    });
+  };
+
+  const onSignOut = () => {
     confirm({
-      title: 'Sign Out',
-      message: 'Are you sure you want to sign out?',
-      confirmText: 'Sign Out',
+      title: t('profile.signout_confirm_title'),
+      message: t('profile.signout_confirm_message'),
+      confirmText: t('common.signOut'),
       destructive: true,
       onConfirm: async () => {
         await signOut();
@@ -49,380 +241,936 @@ export default function ProfileScreen() {
     });
   };
 
-  if (!profile) {
-    return <View style={{ flex: 1, backgroundColor: Colors.cr }} />;
-  }
+  // ─── Render helpers ────────────────────────────────────────────────────────
+  const activeLanguages = Object.entries(profile.languages).filter(
+    ([, level]) => level === 'primary' || level === 'secondary',
+  );
 
-  const activeLangs = Object.entries(profile.languages).filter(([, v]) => v !== 'off');
+  const yearsActive =
+    profile.authorizedSince && profile.authorizedSince > 0
+      ? new Date().getFullYear() - profile.authorizedSince
+      : 0;
+
+  const monthLabels = language === 'ne' ? MONTHS_NE : MONTHS_EN;
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: Colors.cr }}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Hero */}
-      <LinearGradient
-        colors={Gradients.teacher as unknown as [string, string, ...string[]]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.hero, { paddingTop: insets.top + 16 }]}
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        showsVerticalScrollIndicator={false}
       >
-        <LotusHero color="white" opacity={0.08} size={220} />
-        <MountainSilhouette />
-
-        {/* VRI Dharma Wheel — top right */}
-        <Image
-          source={require('../../../assets/vri-wheel.png')}
-          style={styles.vriWheel}
-          resizeMode="contain"
-        />
-
-        {/* Avatar */}
-        <View style={styles.avatarWrap}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{profile.name.charAt(0)}</Text>
-          </View>
-        </View>
-
-        <Text style={styles.name}>{profile.name}</Text>
-        <Text style={styles.role}>
-          {t('home.subtitle')} · {profile.region} {profile.flag ?? '🇳🇵'}
-        </Text>
-        <Text style={styles.authLine}>🔒 Authorized since {profile.authorizedSince}</Text>
-
-        {/* Stats */}
-        <View style={styles.statsRow}>
-          <StatBox label={t('profile.totalCourses')} value={String(profile.totalCourses)} />
-          <StatBox label={t('profile.centersServed')} value={String(profile.centersServed)} />
-          <StatBox label={t('profile.thisYear')} value={String(profile.coursesThisYear)} />
-          <StatBox
-            label="Years"
-            value={String(new Date().getFullYear() - Number(profile.authorizedSince))}
-          />
-        </View>
-
-        {/* Edit button */}
-        <TouchableOpacity
-          onPress={() => router.push(Routes.teacherProfileEdit)}
-          style={styles.editBtn}
-          activeOpacity={0.8}
+        {/* ── Hero ───────────────────────────────────────────────────────── */}
+        <LinearGradient
+          colors={['#6B3600', Colors.sf] as [string, string]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[s.hero, { paddingTop: Math.max(56, insets.top + 14) }]}
         >
-          <Text style={styles.editBtnText}>{t('profile.edit')}</Text>
-        </TouchableOpacity>
-      </LinearGradient>
+          <MeditationFigure size={130} color="rgba(255,255,255,0.1)" />
+          <LotusHero color="white" opacity={0.07} size={180} right={-20} bottom={-20} />
 
-      {/* Eligibility */}
-      <View style={styles.section}>
-        <View style={styles.eligibilityRow}>
-          <View style={styles.eligibilityBadge}>
-            <Text style={styles.eligibilityCheck}>✓</Text>
+          {/* Lang + Edit pills */}
+          <View style={s.heroPillRow}>
+            <TouchableOpacity
+              onPress={() => setLanguage(language === 'en' ? 'ne' : 'en')}
+              activeOpacity={0.85}
+              style={s.heroPill}
+            >
+              <Text style={s.heroPillText}>🌐 {altLangLabel}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push(Routes.teacherProfileEdit)}
+              activeOpacity={0.85}
+              style={s.heroPill}
+            >
+              <Text style={s.heroPillText}>✏️ {t('profile.edit')}</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.eligibilityInfo}>
-            <Text style={styles.sectionTitle}>{t('profile.eligible')}</Text>
-            <Text style={styles.sectionSub}>
-              {t('home.lastCourse')}: {profile.teachingHistory?.[0]?.date ?? '—'}
-            </Text>
+
+          {/* Avatar + name */}
+          <View style={s.heroIdentityRow}>
+            <View style={s.heroAvatar}>
+              <Text style={s.heroAvatarEmoji}>🧘</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.heroName}>{profile.name}</Text>
+              <Text style={s.heroSub}>
+                {t('profile.role_at')} · {profile.region || 'Nepal'} {profile.flag ?? '🇳🇵'}
+              </Text>
+              <Text style={s.heroMeta}>
+                🔒 {t('profile.authorized_since', { year: profile.authorizedSince })} ·{' '}
+                {profile.gender === 'F' ? t('profile.female_at') : t('profile.male_at')}
+              </Text>
+            </View>
+          </View>
+
+          {/* Stats */}
+          <View style={s.heroStatsRow}>
+            <StatTile value={profile.totalCourses} label={t('profile.stat_total')} />
+            <StatTile value={profile.centersServed} label={t('profile.stat_centers')} />
+            <StatTile value={yearsActive} label={t('profile.stat_years')} />
+            <StatTile value={profile.coursesThisYear} label={t('profile.stat_this_year')} />
+          </View>
+        </LinearGradient>
+
+        {/* ── Eligibility card ──────────────────────────────────────────── */}
+        <View style={s.eligWrap}>
+          <View style={s.eligCard}>
+            <View style={s.eligIconTile}>
+              <Text style={s.eligIconEmoji}>✅</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.eligTitle}>{t('profile.eligible_title')}</Text>
+              <Text style={s.eligSub}>
+                {lastTaught
+                  ? t('profile.eligible_sub', { lastTaught })
+                  : t('profile.eligible_sub_none')}
+              </Text>
+              {nextEligibleStr ? (
+                <Text style={s.eligNext}>
+                  {t('profile.eligible_next', { date: nextEligibleStr })}
+                </Text>
+              ) : null}
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Languages */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('profile.languages')}</Text>
-        <View style={styles.langGrid}>
-          {activeLangs.map(([lang, level]) => (
-            <View key={lang} style={styles.langItem}>
-              <Chip label={lang} variant={level === 'primary' ? 'orange' : 'gray'} />
-              <Text style={styles.langLevel}>{LANG_LEVELS[level] ?? level}</Text>
+        {/* ── Availability ──────────────────────────────────────────────── */}
+        <Text style={s.sph}>
+          📅 {t('profile.availability', { year: new Date().getFullYear() })}
+        </Text>
+        <View style={s.card}>
+          <View style={s.availTopRow}>
+            <Text style={s.availCountText}>
+              <Text style={s.availCountStrong}>
+                {availableCount} {t('profile.months_word')}
+              </Text>{' '}
+              {t('profile.available_lowercase')}
+            </Text>
+            <View style={s.maxChip}>
+              <Text style={s.maxChipText}>{t('profile.max_per_year')}</Text>
+            </View>
+          </View>
+
+          {/* Month grid */}
+          <View style={s.monthGrid}>
+            {MONTHS_EN.map((_, i) => {
+              const state = monthStates[i];
+              return (
+                <MonthTile
+                  key={i}
+                  label={monthLabels[i]}
+                  state={state}
+                  onPress={() => cycleMonth(i)}
+                />
+              );
+            })}
+          </View>
+
+          <Text style={s.availHint}>{t('profile.av_tap_hint')}</Text>
+
+          {/* Legend */}
+          <View style={s.legendRow}>
+            <LegendItem swatchBg={Colors.fo} label={`✓ ${t('profile.legend_available')}`} />
+            <LegendItem
+              swatchBg={Colors.cr3}
+              borderColor={Colors.bd}
+              label={`✗ ${t('profile.legend_unavailable')}`}
+            />
+            <LegendItem swatchBg={Colors.gd} label={`🎑 ${t('profile.legend_festival')}`} />
+          </View>
+
+          {/* Festival quick-chips */}
+          <DashedDivider marginVertical={11} />
+          <Text style={s.quickBlockHeader}>{t('profile.quick_block')}</Text>
+          <View style={s.quickChipsRow}>
+            <FestivalChip label={t('profile.block_buddha')} onPress={() => setMonthFestival(4)} />
+            <FestivalChip label={t('profile.block_dashain')} onPress={() => setMonthFestival(9)} />
+            <FestivalChip label={t('profile.block_tihar')} onPress={() => setMonthFestival(10)} />
+            <ResetChip label={t('profile.reset_av')} onPress={resetMonths} />
+          </View>
+        </View>
+
+        {/* ── Languages ─────────────────────────────────────────────────── */}
+        <Text style={s.sph}>🗣 {t('profile.languages')}</Text>
+        <View style={s.card}>
+          <Text style={s.cardLabel}>{t('profile.can_conduct')}</Text>
+          {activeLanguages.map(([lang, level]) => {
+            const meta = LANGUAGE_META[lang] ?? { flag: '🌐' };
+            const note = LANGUAGE_NOTES[lang] ?? '';
+            const isPrimary = level === 'primary';
+            const display = meta.native ? `${lang} (${meta.native})` : lang;
+            return (
+              <View key={lang} style={s.langRow}>
+                <View
+                  style={[s.langTile, { backgroundColor: isPrimary ? Colors.fol : Colors.cr2 }]}
+                >
+                  <Text style={s.langTileText}>{meta.flag}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.langName}>{display}</Text>
+                  <Text style={s.langNote}>{note}</Text>
+                </View>
+                <View
+                  style={[
+                    s.levelChip,
+                    isPrimary ? { backgroundColor: Colors.fol } : { backgroundColor: Colors.cr2 },
+                  ]}
+                >
+                  <Text style={[s.levelChipText, { color: isPrimary ? Colors.fo : Colors.tx2 }]}>
+                    {isPrimary ? `★ ${t('profile.primary')}` : t('profile.secondary')}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* ── Authorizations ────────────────────────────────────────────── */}
+        <View style={s.sphRow}>
+          <Text style={s.sphText}>🎓 {t('profile.authorizations')}</Text>
+          <Text style={s.sphSubtle}>· 🔒 {t('profile.locked_short')}</Text>
+        </View>
+        <View style={s.card}>
+          <Text style={s.cardLabel}>{t('profile.authorized_to_teach')}</Text>
+          {(profile.authorizations ?? []).map((courseType) => (
+            <View key={courseType} style={s.authRow}>
+              <View style={s.authTile}>
+                <Text style={s.authTileEmoji}>{AUTH_EMOJI[courseType] ?? '🪷'}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.authLabel}>{courseType}</Text>
+                <Text style={s.authDesc}>{AUTH_DESCRIPTIONS[courseType] ?? ''}</Text>
+              </View>
+              <View style={s.authCheckCircle}>
+                <CheckIcon />
+              </View>
             </View>
           ))}
         </View>
-      </View>
 
-      {/* Course authorizations */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('profile.authorizations')}</Text>
-        <View style={styles.chipWrap}>
-          {profile.authorizations.map((auth) => (
-            <Chip key={auth} label={auth} variant="green" />
-          ))}
+        {/* ── Preferred Centers ─────────────────────────────────────────── */}
+        <Text style={s.sph}>📍 {t('profile.preferred_centers')}</Text>
+        <View style={s.card}>
+          <Text style={s.cardLabel}>{t('profile.will_travel_to')}</Text>
+          {(profile.preferredRegions ?? []).slice(0, 3).map((region, i) => {
+            const centers = centersByRegion.get(region) ?? [];
+            return (
+              <View key={region} style={s.prefRow}>
+                <View style={[s.prefRankTile, { backgroundColor: RANK_COLORS[i] ?? Colors.fo }]}>
+                  <Text style={s.prefRankText}>{i + 1}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.prefRegion}>
+                    {region} {profile.flag ?? '🇳🇵'}
+                  </Text>
+                  {centers.length > 0 ? (
+                    <Text style={s.prefCenters}>{centers.join(' · ')}</Text>
+                  ) : null}
+                  <Text style={s.prefNote}>{REGION_NOTE_BY_RANK[i] ?? ''}</Text>
+                </View>
+              </View>
+            );
+          })}
         </View>
-      </View>
 
-      {/* Preferred regions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('profile.regions')}</Text>
-        {profile.preferredRegions.map((region, idx) => (
-          <View key={region} style={styles.regionItem}>
-            <Text style={styles.regionRank}>{idx + 1}</Text>
-            <Text style={styles.regionName}>{region}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Availability */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('profile.availability')}</Text>
-        <AvailabilityCalendar availability={toAvailabilityArray(profile)} editable={false} />
-      </View>
-
-      {/* Teaching history */}
-      {profile.teachingHistory?.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('profile.history')}</Text>
-          {profile.teachingHistory.map((entry, idx) => (
-            <View key={idx} style={styles.historyItem}>
-              <View style={styles.historyLeft}>
-                <Text style={styles.historyDate}>{entry.date}</Text>
-                <Text style={styles.historyCenter}>
-                  {entry.center} {entry.country}
+        {/* ── Recent Teaching ───────────────────────────────────────────── */}
+        <Text style={s.sph}>📖 {t('profile.recent_teaching')}</Text>
+        <View style={s.card}>
+          {(showAllHistory
+            ? (profile.teachingHistory ?? [])
+            : (profile.teachingHistory ?? []).slice(0, 3)
+          ).map((h, i, arr) => (
+            <View
+              key={`${h.date}-${i}`}
+              style={[s.historyRow, { borderBottomWidth: i < arr.length - 1 ? 1 : 0 }]}
+            >
+              <View style={s.historyTile}>
+                <Text style={s.historyTileText}>{h.country}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.historyCenter}>{h.center}</Text>
+                <Text style={s.historyMeta}>
+                  {h.type} · {h.students} {t('profile.students_label')}
                 </Text>
               </View>
-              <View style={styles.historyRight}>
-                <Chip label={entry.type} variant="orange" />
-                <Text style={styles.historyStudents}>{entry.students} students</Text>
-              </View>
+              <Text style={s.historyDate}>{h.date}</Text>
             </View>
           ))}
+          {(profile.teachingHistory ?? []).length > 3 ? (
+            <TouchableOpacity
+              onPress={() => setShowAllHistory((v) => !v)}
+              activeOpacity={0.6}
+              style={s.historyFooterWrap}
+            >
+              <Text style={s.historyFooterLink}>
+                {showAllHistory
+                  ? t('profile.show_less_courses')
+                  : t('profile.view_all_courses', { count: profile.totalCourses })}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
-      )}
 
-      {/* Personal note */}
-      {profile.personalNote ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('profile.note')}</Text>
-          <Text style={styles.noteText}>{profile.personalNote}</Text>
+        {/* ── Personal Note ─────────────────────────────────────────────── */}
+        <Text style={s.sph}>💬 {t('profile.personal_note')}</Text>
+        <View style={[s.card, s.noteCard]}>
+          <Text style={s.noteBody}>&ldquo;{profile.personalNote}&rdquo;</Text>
+          <Text style={s.noteUpdated}>{t('profile.last_updated', { date: 'Apr 2026' })}</Text>
         </View>
-      ) : null}
 
-      {/* Sign out */}
-      <View style={{ paddingHorizontal: Layout.horizontalPad, paddingVertical: Spacing.xl }}>
-        <Button label={t('common.signOut')} variant="outline" fullWidth onPress={handleSignOut} />
-      </View>
-    </ScrollView>
+        {/* ── Sign Out ──────────────────────────────────────────────────── */}
+        <View style={s.signOutWrap}>
+          <TouchableOpacity onPress={onSignOut} activeOpacity={0.85} style={s.signOutBtn}>
+            <Text style={s.signOutText}>{t('common.signOut')}</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
-const StatBox: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <View style={styles.statBox}>
-    <Text style={styles.statValue}>{value}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
+// ─── Sub-components ──────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+function StatTile({ value, label }: { value: number; label: string }) {
+  return (
+    <View style={s.statTile}>
+      <Text style={s.statNumber}>{value}</Text>
+      <Text style={s.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function MonthTile({
+  label,
+  state,
+  onPress,
+}: {
+  label: string;
+  state: MonthState;
+  onPress: () => void;
+}) {
+  const bg = state === 'available' ? Colors.fo : state === 'festival' ? Colors.gd : Colors.cr3;
+  const fg =
+    state === 'available' ? Colors.white : state === 'festival' ? Colors.white : Colors.tx3;
+  const glyph = state === 'available' ? '✓' : state === 'festival' ? '🎑' : '✗';
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        s.monthTile,
+        { backgroundColor: bg },
+        state === 'unavailable' ? s.monthTileUnavailableBorder : null,
+        pressed ? { transform: [{ scale: 0.94 }] } : null,
+      ]}
+    >
+      <Text style={[s.monthLabel, { color: fg }]}>{label}</Text>
+      <Text style={[s.monthGlyph, { color: fg }]}>{glyph}</Text>
+    </Pressable>
+  );
+}
+
+function LegendItem({
+  swatchBg,
+  borderColor,
+  label,
+}: {
+  swatchBg: string;
+  borderColor?: string;
+  label: string;
+}) {
+  return (
+    <View style={s.legendItem}>
+      <View
+        style={[
+          s.legendSwatch,
+          { backgroundColor: swatchBg },
+          borderColor ? { borderWidth: 1.5, borderColor } : null,
+        ]}
+      />
+      <Text style={s.legendLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function FestivalChip({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={s.festivalChip}>
+      <Text style={s.festivalChipText}>🎑 {label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function ResetChip({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={s.resetChip}>
+      <Text style={s.resetChipText}>⟲ {label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M5 12L10 17L20 7"
+        stroke={Colors.white}
+        strokeWidth={3}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
+const s = StyleSheet.create({
+  flex: { flex: 1 },
+
+  // ── Hero ──
   hero: {
-    paddingHorizontal: Layout.horizontalPad,
-    paddingBottom: Layout.heroPadBottom + 10,
-    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingBottom: 22,
     overflow: 'hidden',
+    position: 'relative',
   },
-  vriWheel: {
-    position: 'absolute',
-    right: -20,
-    top: 30,
-    width: 130,
-    height: 130,
-    opacity: 0.18,
+  heroPillRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+    position: 'relative',
   },
-  avatarWrap: {
-    marginBottom: Spacing.md,
+  heroPill: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
-  avatar: {
+  heroPillText: {
+    color: Colors.white,
+    fontSize: 11,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+  heroIdentityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    position: 'relative',
+  },
+  heroAvatar: {
     width: 72,
     height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.35)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.4)',
+    flexShrink: 0,
   },
-  avatarText: {
-    fontSize: 28,
-    fontWeight: FontWeight.bold,
+  heroAvatarEmoji: {
+    fontSize: 50,
+  },
+  heroName: {
+    fontSize: 22,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
     color: Colors.white,
+    lineHeight: 24,
   },
-  name: {
-    fontSize: FontSize.h2,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.white,
-    marginBottom: 4,
-  },
-  role: {
-    fontSize: FontSize.smPlus,
+  heroSub: {
+    fontSize: 13,
+    fontFamily: FontFamily.sansRegular,
     color: 'rgba(255,255,255,0.75)',
-    marginBottom: 3,
+    marginTop: 3,
   },
-  authLine: {
-    fontSize: FontSize.xs,
+  heroMeta: {
+    fontSize: 12,
+    fontFamily: FontFamily.sansRegular,
     color: 'rgba(255,255,255,0.6)',
-    marginBottom: Spacing.lg,
+    marginTop: 1,
   },
-  statsRow: {
+  heroStatsRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
-    width: '100%',
-    marginBottom: Spacing.lg,
+    gap: 8,
+    marginTop: 16,
+    position: 'relative',
   },
-  statBox: {
+  statTile: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: Radius.sm,
-    padding: 8,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 9,
     alignItems: 'center',
-    gap: 2,
   },
-  statValue: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+  statNumber: {
+    fontSize: 18,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
     color: Colors.white,
   },
   statLabel: {
     fontSize: 9,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: FontWeight.medium,
+    fontFamily: FontFamily.sansRegular,
+    color: 'rgba(255,255,255,0.65)',
+    marginTop: 1,
+    lineHeight: 11,
     textAlign: 'center',
   },
-  editBtn: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 20,
-    paddingVertical: 9,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
-  },
-  editBtnText: {
-    color: Colors.white,
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.semibold,
-  },
 
-  section: {
-    backgroundColor: Colors.white,
-    marginHorizontal: Layout.horizontalPad,
-    marginTop: Spacing.md,
-    borderRadius: Radius.lg,
-    padding: Layout.cardPad,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    ...Shadows.card,
-    gap: 10,
+  // ── Eligibility ──
+  eligWrap: {
+    paddingHorizontal: 18,
+    paddingTop: 14,
   },
-  sectionTitle: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx,
-  },
-  sectionSub: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-  },
-
-  eligibilityRow: {
+  eligCard: {
+    backgroundColor: Colors.fol,
+    borderWidth: 1.5,
+    borderColor: Colors.fom,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: 12,
   },
-  eligibilityBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.fol,
+  eligIconTile: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: Colors.fo,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
-  eligibilityCheck: {
-    fontSize: 18,
+  eligIconEmoji: { fontSize: 22 },
+  eligTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
     color: Colors.fo,
-    fontWeight: FontWeight.bold,
   },
-  eligibilityInfo: {
-    flex: 1,
-    gap: 2,
+  eligSub: {
+    fontSize: 12,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx2,
+    marginTop: 2,
+  },
+  eligNext: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.fo,
+    marginTop: 2,
   },
 
-  langGrid: {
+  // ── Section header (.sph) ──
+  // Section header typography — used inline inside a flex row (sphRow)
+  // so margins are owned by the parent, not the text.
+  sphText: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.tx2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.84,
+  },
+  // Standalone section header (text + its own margins). Used when the
+  // header has no right-aligned subtitle.
+  sph: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.tx2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.84,
+    marginTop: 18,
+    marginHorizontal: 18,
+    marginBottom: 9,
+  },
+  sphRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  langItem: {
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
+    marginTop: 18,
+    marginBottom: 9,
+    paddingHorizontal: 18,
   },
-  langLevel: {
-    fontSize: FontSize.xs,
+  sphSubtle: {
+    fontSize: 9.5,
+    fontFamily: FontFamily.sansSemiBold,
+    fontWeight: '600',
     color: Colors.tx3,
-    fontWeight: FontWeight.medium,
   },
 
-  chipWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
+  // ── Card base ──
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 11,
+    ...Shadows.card,
+  },
+  cardLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
+    color: Colors.tx3,
+    textTransform: 'uppercase',
+    letterSpacing: 0.55,
+    marginBottom: 8,
   },
 
-  regionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.bd,
-  },
-  regionRank: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.sfl,
-    textAlign: 'center',
-    lineHeight: 24,
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.sf,
-  },
-  regionName: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx,
-    fontWeight: FontWeight.medium,
-  },
-
-  historyItem: {
+  // ── Availability ──
+  availTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 10,
+  },
+  availCountText: {
+    fontSize: 12,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx2,
+  },
+  availCountStrong: {
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.fo,
+  },
+  maxChip: {
+    backgroundColor: Colors.fol,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  maxChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
+    color: Colors.fo,
+  },
+  monthGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+  },
+  monthTile: {
+    width: '15.5%',
+    borderRadius: 10,
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  monthTileUnavailableBorder: {
+    borderWidth: 1.5,
+    borderColor: Colors.bd,
+  },
+  monthLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+  monthGlyph: {
+    fontSize: 9,
+    fontFamily: FontFamily.sansRegular,
+    marginTop: 2,
+    opacity: 0.85,
+  },
+  availHint: {
+    fontSize: 10.5,
+    fontStyle: 'italic',
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx3,
+    textAlign: 'center',
+    marginTop: 7,
+  },
+  legendRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 10,
+    flexWrap: 'wrap',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  legendSwatch: {
+    width: 12,
+    height: 12,
+    borderRadius: 3,
+  },
+  legendLabel: {
+    fontSize: 10.5,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx2,
+  },
+  quickBlockHeader: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.tx3,
+    textTransform: 'uppercase',
+    letterSpacing: 0.525,
+    marginBottom: 7,
+  },
+  quickChipsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  festivalChip: {
+    backgroundColor: Colors.gdl,
+    borderWidth: 1,
+    borderColor: '#F0DCA0',
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 18,
+  },
+  festivalChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
+    color: Colors.gd,
+  },
+  resetChip: {
+    backgroundColor: Colors.cr2,
+    borderWidth: 1,
+    borderColor: Colors.bd,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 18,
+  },
+  resetChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
+    color: Colors.tx2,
+  },
+
+  // ── Languages ──
+  langRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: Colors.bd,
-    gap: 8,
   },
-  historyLeft: {
-    flex: 1,
-    gap: 2,
+  langTile: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
-  historyDate: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-    fontWeight: FontWeight.medium,
-  },
-  historyCenter: {
-    fontSize: FontSize.smPlus,
+  langTileText: { fontSize: 18 },
+  langName: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
     color: Colors.tx,
-    fontWeight: FontWeight.semibold,
   },
-  historyRight: {
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  historyStudents: {
-    fontSize: FontSize.xs,
+  langNote: {
+    fontSize: 11,
+    fontFamily: FontFamily.sansRegular,
     color: Colors.tx3,
+    marginTop: 1,
+  },
+  levelChip: {
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 20,
+    flexShrink: 0,
+  },
+  levelChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
   },
 
-  noteText: {
-    fontSize: FontSize.smPlus,
+  // ── Authorizations ──
+  authRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    paddingVertical: 9,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.bd,
+  },
+  authTile: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    backgroundColor: Colors.fol,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  authTileEmoji: { fontSize: 17 },
+  authLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.tx,
+  },
+  authDesc: {
+    fontSize: 11,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx3,
+    marginTop: 1,
+  },
+  authCheckCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.fo,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+
+  // ── Preferred Centers ──
+  prefRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 11,
+    paddingVertical: 11,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.bd,
+  },
+  prefRankTile: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  prefRankText: {
+    fontSize: 12,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
+    color: Colors.white,
+  },
+  prefRegion: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.tx,
+  },
+  prefCenters: {
+    fontSize: 12,
+    fontFamily: FontFamily.sansRegular,
     color: Colors.tx2,
-    lineHeight: FontSize.smPlus * 1.55,
+    marginTop: 1,
+  },
+  prefNote: {
+    fontSize: 11,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx3,
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+
+  // ── Recent Teaching ──
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    paddingVertical: 9,
+    borderBottomColor: Colors.bd,
+  },
+  historyTile: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    backgroundColor: Colors.sfl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  historyTileText: { fontSize: 16 },
+  historyCenter: {
+    fontSize: 13,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.tx,
+  },
+  historyMeta: {
+    fontSize: 11,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx2,
+    marginTop: 1,
+  },
+  historyDate: {
+    fontSize: 11,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx3,
+    textAlign: 'right',
+    flexShrink: 0,
+  },
+  historyFooterWrap: {
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  historyFooterLink: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
+    color: Colors.sf,
+  },
+
+  // ── Personal Note ──
+  noteCard: {
+    backgroundColor: Colors.sfl,
+    borderWidth: 1,
+    borderColor: Colors.sfm,
+  },
+  noteBody: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx,
+    lineHeight: 21,
+  },
+  noteUpdated: {
+    fontSize: 11,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx3,
+    marginTop: 8,
+  },
+
+  // ── Sign Out ──
+  signOutWrap: {
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 6,
+  },
+  signOutBtn: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: '#F5C0BB',
+    borderRadius: 13,
+    paddingHorizontal: 22,
+    paddingVertical: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  signOutText: {
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.ur,
   },
 });
