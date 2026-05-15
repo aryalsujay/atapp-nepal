@@ -3800,7 +3800,7 @@
     ],
     "needCount": 1,
     "genderRequired": "Any",
-    "status": "not_yet_open",
+    "status": "open",
     "distanceKm": 0,
     "travelHrs": 0,
     "altitude": 200,
@@ -3809,7 +3809,7 @@
       "male": 40,
       "female": 40
     },
-    "arrivalDate": "Sep 3",
+    "arrivalDate": "Sep 2, 2026",
     "arrivalTime": "5:00 PM",
     "coordinator": {
       "name": "Center Coordinator",

@@ -177,6 +177,30 @@
   },
   "applications": {
     "title": "मेरा आवेदनहरू",
+    "subtitle": "{{count}} आवेदन · {{approved}} अनुमोदित",
+    "applied_date": "आवेदन {{date}}",
+    "assigned_pill": "📨 नियुक्त",
+    "view_brief": "विवरण हेर्नुहोस्",
+    "browse_more": "थप शिविरहरू हेर्नुहोस्",
+    "reason_label": "कारण:",
+    "empty_title": "अहिलेसम्म कुनै आवेदन छैन",
+    "empty_message": "खुला शिविरहरू हेर्नुहोस् र पढाउन आवेदन दिनुहोस्",
+    "status": {
+      "approved": "अनुमोदित",
+      "pending": "प्रतीक्षा",
+      "rejected": "अस्वीकृत",
+      "withdrawal_requested": "हट्ने अनुरोध"
+    },
+    "timeline": {
+      "applied": "आवेदन गरियो",
+      "under_review": "समीक्षा भइरहेको",
+      "confirmed": "पुष्टि भयो ✓",
+      "not_selected": "छनोट भएन",
+      "awaiting_decision": "निर्णय बाँकी",
+      "assigned": "एडमिनद्वारा नियुक्त",
+      "accepted": "स्वीकार गरियो",
+      "awaiting_confirmation": "पुष्टि बाँकी"
+    },
     "tabs": {
       "all": "सबै",
       "pending": "प्रतीक्षा",

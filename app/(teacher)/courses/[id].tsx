@@ -32,6 +32,7 @@ import { FontFamily } from '@/theme/typography';
 import { Shadows } from '@/theme/shadows';
 import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
 import { MatchBadge } from '@/components/ui/MatchPill';
+import { DashedDivider } from '@/components/ui/DashedDivider';
 import { langLabel } from '@/utils/eligibility';
 import { enrichCoursesWithMatch } from '@/utils/matching';
 import { travelFor } from '@/utils/travel';
@@ -365,24 +366,6 @@ function XIcon() {
   );
 }
 
-/**
- * Horizontal dashed line. Used as a separator inside cards (between
- * co-teacher and "Center is looking for").
- *
- * Why a custom component: RN's `borderStyle: 'dashed'` only renders
- * reliably when *all four* borders are set, so a 1 px top-only dashed
- * border silently degrades to solid (or invisible) on web + iOS. The
- * outer-clipped-inner-bordered trick below renders a clean dashed line
- * on every platform.
- */
-function DashedDivider() {
-  return (
-    <View style={s.dashedDividerOuter}>
-      <View style={s.dashedDividerInner} />
-    </View>
-  );
-}
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function genderText(g: Course['genderRequired'], t: (k: string) => string): string {
@@ -706,18 +689,6 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  dashedDividerOuter: {
-    marginVertical: 12,
-    height: 1,
-    overflow: 'hidden',
-  },
-  dashedDividerInner: {
-    height: 2,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    borderStyle: 'dashed',
-    borderRadius: 1,
   },
   lookingForLabel: {
     fontSize: 11,

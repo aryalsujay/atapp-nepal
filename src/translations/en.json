@@ -177,6 +177,30 @@
   },
   "applications": {
     "title": "My Applications",
+    "subtitle": "{{count}} applications · {{approved}} approved",
+    "applied_date": "Applied {{date}}",
+    "assigned_pill": "📨 Assigned",
+    "view_brief": "View Brief",
+    "browse_more": "Browse More Courses",
+    "reason_label": "Reason:",
+    "empty_title": "No applications yet",
+    "empty_message": "Browse open courses and apply to teach",
+    "status": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "rejected": "Rejected",
+      "withdrawal_requested": "Step-down requested"
+    },
+    "timeline": {
+      "applied": "Applied",
+      "under_review": "Under Review",
+      "confirmed": "Confirmed ✓",
+      "not_selected": "Not Selected",
+      "awaiting_decision": "Awaiting Decision",
+      "assigned": "Assigned by Admin",
+      "accepted": "Accepted",
+      "awaiting_confirmation": "Awaiting Confirmation"
+    },
     "tabs": {
       "all": "All",
       "pending": "Pending",
