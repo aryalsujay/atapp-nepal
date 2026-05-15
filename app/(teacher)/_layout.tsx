@@ -69,12 +69,12 @@ export default function TeacherLayout() {
         options={{ tabBarIcon: ({ focused }) => <InboxTab focused={focused} /> }}
       />
       <Tabs.Screen
-        name="profile/index"
-        options={{ tabBarIcon: ({ focused }) => <PersonTab focused={focused} /> }}
-      />
-      <Tabs.Screen
         name="notifications"
         options={{ tabBarIcon: ({ focused }) => <BellTab focused={focused} /> }}
+      />
+      <Tabs.Screen
+        name="profile/index"
+        options={{ tabBarIcon: ({ focused }) => <PersonTab focused={focused} /> }}
       />
       {/* Hidden screens (no tab) */}
       <Tabs.Screen name="courses/[id]" options={{ href: null }} />
