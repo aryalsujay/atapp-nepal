@@ -39,6 +39,9 @@ export interface StoredTeacher {
   teachingHistory: HistoryEntry[];
   role?: 'teacher' | 'server';
   isOnboarded: boolean;
+  homeCity?: string | null;
+  homeLat?: number | null;
+  homeLng?: number | null;
 }
 
 interface TeachersState {
@@ -78,6 +81,9 @@ function toStored(t: ReturnType<typeof teachersRepo.list>[number]): StoredTeache
     teachingHistory: t.teachingHistory as HistoryEntry[],
     role: t.role,
     isOnboarded: t.isOnboarded,
+    homeCity: t.homeCity ?? null,
+    homeLat: t.homeLat ?? null,
+    homeLng: t.homeLng ?? null,
   };
 }
 
@@ -120,6 +126,9 @@ export const useTeachersStore = create<TeachersState>((set) => ({
         availableMonths: teacher.availableMonths,
         festivalMonths: teacher.festivalMonths,
         teachingHistory: teacher.teachingHistory,
+        homeCity: teacher.homeCity ?? null,
+        homeLat: teacher.homeLat ?? null,
+        homeLng: teacher.homeLng ?? null,
       });
       const all = teachersRepo.list(getDb()).map(toStored);
       set({ allTeachers: all });

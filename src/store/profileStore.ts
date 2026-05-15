@@ -45,6 +45,9 @@ function domainToProfile(t: ReturnType<typeof teachersRepo.findById>): TeacherPr
     teachingHistory: t.teachingHistory as HistoryEntry[],
     inviteCode: t.inviteCode ?? undefined,
     isOnboarded: t.isOnboarded,
+    homeCity: t.homeCity ?? null,
+    homeLat: t.homeLat ?? null,
+    homeLng: t.homeLng ?? null,
   };
 }
 
@@ -75,6 +78,9 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         availableMonths: profile.availableMonths,
         festivalMonths: profile.festivalMonths,
         teachingHistory: profile.teachingHistory,
+        homeCity: profile.homeCity ?? null,
+        homeLat: profile.homeLat ?? null,
+        homeLng: profile.homeLng ?? null,
       });
       set({ profile });
     } catch (err) {

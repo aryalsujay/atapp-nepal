@@ -48,7 +48,10 @@
     ],
     "isOnboarded": true,
     "availableMonths": [8],
-    "festivalMonths": [4, 5, 6, 7, 9, 10]
+    "festivalMonths": [4, 5, 6, 7, 9, 10],
+    "homeCity": "Durbarmarg, Kathmandu",
+    "homeLat": 27.7128,
+    "homeLng": 85.3186
   },
   {
     "id": "teacher-002",

@@ -31,4 +31,8 @@ export interface TeacherProfile {
   teachingHistory: HistoryEntry[];
   inviteCode?: string;
   isOnboarded: boolean;
+  /** Specific home address — preferred over `preferredRegions[0]` for distance/travel. */
+  homeCity?: string | null;
+  homeLat?: number | null;
+  homeLng?: number | null;
 }

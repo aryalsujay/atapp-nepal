@@ -35,6 +35,9 @@ export interface TeacherDomain {
   availableMonths: number[];
   festivalMonths: number[];
   teachingHistory: unknown[];
+  homeCity: string | null;
+  homeLat: number | null;
+  homeLng: number | null;
 }
 
 function jsonParse<T>(raw: string | null, fallback: T): T {
@@ -70,6 +73,9 @@ function rowToDomain(r: TeacherRow): TeacherDomain {
     availableMonths: jsonParse<number[]>(r.available_months_json, []),
     festivalMonths: jsonParse<number[]>(r.festival_months_json, []),
     teachingHistory: jsonParse<unknown[]>(r.teaching_history_json, []),
+    homeCity: r.home_city ?? null,
+    homeLat: r.home_lat ?? null,
+    homeLng: r.home_lng ?? null,
   };
 }
 
@@ -131,6 +137,9 @@ export function upsert(db: DB, teacher: Partial<TeacherDomain> & { id: string })
     availableMonths: teacher.availableMonths ?? existing?.availableMonths ?? [],
     festivalMonths: teacher.festivalMonths ?? existing?.festivalMonths ?? [],
     teachingHistory: teacher.teachingHistory ?? existing?.teachingHistory ?? [],
+    homeCity: teacher.homeCity ?? existing?.homeCity ?? null,
+    homeLat: teacher.homeLat ?? existing?.homeLat ?? null,
+    homeLng: teacher.homeLng ?? existing?.homeLng ?? null,
   };
 
   db.exec(
@@ -140,8 +149,9 @@ export function upsert(db: DB, teacher: Partial<TeacherDomain> & { id: string })
        courses_this_year, is_onboarded, personal_note,
        authorizations_json, languages_json, preferred_regions_json,
        available_months_json, festival_months_json, teaching_history_json,
+       home_city, home_lat, home_lng,
        created_at, updated_at
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
      ON CONFLICT(id) DO UPDATE SET
        role                    = excluded.role,
        name                    = excluded.name,
@@ -164,6 +174,9 @@ export function upsert(db: DB, teacher: Partial<TeacherDomain> & { id: string })
        available_months_json   = excluded.available_months_json,
        festival_months_json    = excluded.festival_months_json,
        teaching_history_json   = excluded.teaching_history_json,
+       home_city               = excluded.home_city,
+       home_lat                = excluded.home_lat,
+       home_lng                = excluded.home_lng,
        updated_at              = excluded.updated_at`,
     [
       merged.id,
@@ -188,6 +201,9 @@ export function upsert(db: DB, teacher: Partial<TeacherDomain> & { id: string })
       JSON.stringify(merged.availableMonths),
       JSON.stringify(merged.festivalMonths),
       JSON.stringify(merged.teachingHistory),
+      merged.homeCity,
+      merged.homeLat,
+      merged.homeLng,
       // created_at only takes effect on INSERT (ON CONFLICT … DO UPDATE skips it).
       now,
       now,

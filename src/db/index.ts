@@ -98,12 +98,83 @@ interface TableState {
   rows: Record<string, unknown>[];
 }
 
+// Persistence key + tag. Bump LS_VERSION when the shim's serialized format
+// changes incompatibly so we throw out stale snapshots instead of crashing.
+const LS_KEY = 'dhamma.memoryDb';
+const LS_VERSION = 1;
+
+function loadSnapshot(): {
+  tables: Map<string, TableState>;
+  indexes: Set<string>;
+  lastInsertId: number;
+} | null {
+  if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      v: number;
+      tables: [string, TableState][];
+      indexes: string[];
+      lastInsertId: number;
+    };
+    if (parsed.v !== LS_VERSION) return null;
+    return {
+      tables: new Map(parsed.tables),
+      indexes: new Set(parsed.indexes),
+      lastInsertId: parsed.lastInsertId ?? 0,
+    };
+  } catch (err) {
+    logger.warn('[memory-db] failed to restore snapshot', err);
+    return null;
+  }
+}
+
+function saveSnapshot(
+  tables: Map<string, TableState>,
+  indexes: Set<string>,
+  lastInsertId: number,
+): void {
+  if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') return;
+  try {
+    const payload = {
+      v: LS_VERSION,
+      tables: Array.from(tables.entries()),
+      indexes: Array.from(indexes),
+      lastInsertId,
+    };
+    window.localStorage.setItem(LS_KEY, JSON.stringify(payload));
+  } catch (err) {
+    // Quota / blocked storage — silent, we just lose persistence this session.
+    logger.warn('[memory-db] failed to save snapshot', err);
+  }
+}
+
 function createMemoryDb(): DB {
-  const tables = new Map<string, TableState>();
-  const indexes = new Set<string>();
+  // On web we restore the previous session's tables from localStorage so
+  // auth, applications, etc. survive reloads. In tests `window` is undefined
+  // so this is a no-op and every suite gets a clean DB.
+  const restored = loadSnapshot();
+  const tables: Map<string, TableState> = restored?.tables ?? new Map();
+  const indexes: Set<string> = restored?.indexes ?? new Set();
   // Track the last auto-incremented rowid so `SELECT last_insert_rowid()`
   // works the same way as on native SQLite.
-  let lastInsertId = 0;
+  let lastInsertId = restored?.lastInsertId ?? 0;
+
+  // Debounced persist — every committed write schedules a save 80 ms later.
+  // Coalesces bursts (e.g., a multi-row INSERT in a transaction) into one
+  // localStorage roundtrip.
+  let persistTimer: ReturnType<typeof setTimeout> | null = null;
+  const schedulePersist = () => {
+    if (typeof window === 'undefined') return;
+    if (persistTimer) clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => {
+      persistTimer = null;
+      saveSnapshot(tables, indexes, lastInsertId);
+    }, 80);
+  };
 
   const ensureTable = (name: string) => {
     if (!tables.has(name)) {
@@ -126,23 +197,28 @@ function createMemoryDb(): DB {
 
     if (upper.startsWith('CREATE TABLE')) {
       handleCreateTable(sql);
+      schedulePersist();
       return undefined;
     }
     if (upper.startsWith('CREATE INDEX') || upper.startsWith('CREATE UNIQUE INDEX')) {
       const m = sql.match(/CREATE\s+(?:UNIQUE\s+)?INDEX\s+(\w+)/i);
       if (m) indexes.add(m[1]);
+      schedulePersist();
       return undefined;
     }
     if (upper.startsWith('INSERT')) {
       handleInsert(sql, params);
+      schedulePersist();
       return undefined;
     }
     if (upper.startsWith('UPDATE')) {
       handleUpdate(sql, params);
+      schedulePersist();
       return undefined;
     }
     if (upper.startsWith('DELETE FROM')) {
       handleDelete(sql, params);
+      schedulePersist();
       return undefined;
     }
     if (upper.startsWith('SELECT')) {
@@ -151,6 +227,7 @@ function createMemoryDb(): DB {
     if (upper.startsWith('DROP TABLE')) {
       const m = sql.match(/DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?(\w+)/i);
       if (m) tables.delete(m[1]);
+      schedulePersist();
       return undefined;
     }
     if (upper.startsWith('ALTER TABLE')) {
@@ -161,6 +238,7 @@ function createMemoryDb(): DB {
         const tbl = tables.get(m[1]);
         if (tbl && !tbl.columns.includes(m[2])) tbl.columns.push(m[2]);
       }
+      schedulePersist();
       return undefined;
     }
 

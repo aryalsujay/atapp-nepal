@@ -46,6 +46,10 @@ interface SeedTeacher {
   availableMonths?: number[];
   festivalMonths?: number[];
   teachingHistory?: unknown[];
+  homeCity?: string;
+  homeLat?: number;
+  homeLng?: number;
+  phone?: string;
 }
 
 interface SeedCentre {
@@ -189,8 +193,9 @@ export function seedDatabase(db: DB): { inserted: Record<string, number> } {
            authorized_since, total_courses, centers_served, courses_this_year, is_onboarded,
            personal_note, authorizations_json, languages_json, preferred_regions_json,
            available_months_json, festival_months_json, teaching_history_json,
+           home_city, home_lat, home_lng,
            created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           t.id,
           t.role ?? 'teacher',
@@ -214,6 +219,9 @@ export function seedDatabase(db: DB): { inserted: Record<string, number> } {
           JSON.stringify(t.availableMonths ?? []),
           JSON.stringify(t.festivalMonths ?? []),
           JSON.stringify(t.teachingHistory ?? []),
+          t.homeCity ?? null,
+          t.homeLat ?? null,
+          t.homeLng ?? null,
           now,
           now,
         ],
@@ -442,6 +450,8 @@ const PHONE_BACKFILL_KEY = 'backfill.teacherPhone';
 const PHONE_BACKFILL_VALUE = 'v1';
 const DEMO_COURSE_BACKFILL_KEY = 'backfill.demoCourses';
 const DEMO_COURSE_BACKFILL_VALUE = 'v1';
+const HOME_LOCATION_BACKFILL_KEY = 'backfill.teacherHomeLocation';
+const HOME_LOCATION_BACKFILL_VALUE = 'v1';
 
 export function backfillTeacherPhone(db: DB): { backfilled: number } {
   const flag = db.queryOne<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
@@ -471,6 +481,53 @@ export function backfillTeacherPhone(db: DB): { backfilled: number } {
   });
 
   logger.info('[db] phone backfill complete', { backfilled: count });
+  return { backfilled: count };
+}
+
+/**
+ * Backfill `home_city` / `home_lat` / `home_lng` from `teachers.json` for
+ * upgrades from a pre-migration-0004 DB. Idempotent + gated by its own
+ * settings flag. Only writes when the existing row has NULL for all three —
+ * doesn't trample anything a teacher (or admin) has edited.
+ */
+export function backfillTeacherHomeLocation(db: DB): { backfilled: number } {
+  const flag = db.queryOne<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    HOME_LOCATION_BACKFILL_KEY,
+  ]);
+  if (flag?.value === HOME_LOCATION_BACKFILL_VALUE) return { backfilled: 0 };
+
+  const seeds = teachersJson as unknown as {
+    id: string;
+    homeCity?: string;
+    homeLat?: number;
+    homeLng?: number;
+  }[];
+  const now = new Date().toISOString();
+  let count = 0;
+
+  db.transaction(() => {
+    for (const t of seeds) {
+      if (!t.homeCity || t.homeLat == null || t.homeLng == null) continue;
+      const row = db.queryOne<{
+        home_city: string | null;
+        home_lat: number | null;
+        home_lng: number | null;
+      }>('SELECT home_city, home_lat, home_lng FROM teachers WHERE id = ?', [t.id]);
+      if (!row || row.home_city || row.home_lat != null || row.home_lng != null) continue;
+      db.exec(
+        'UPDATE teachers SET home_city = ?, home_lat = ?, home_lng = ?, updated_at = ? WHERE id = ?',
+        [t.homeCity, t.homeLat, t.homeLng, now, t.id],
+      );
+      count++;
+    }
+    db.exec('INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, ?)', [
+      HOME_LOCATION_BACKFILL_KEY,
+      HOME_LOCATION_BACKFILL_VALUE,
+      now,
+    ]);
+  });
+
+  logger.info('[db] home location backfill complete', { backfilled: count });
   return { backfilled: count };
 }
 
