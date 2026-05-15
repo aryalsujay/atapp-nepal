@@ -453,7 +453,9 @@ export function resetSeedFlag(db: DB): void {
 const PHONE_BACKFILL_KEY = 'backfill.teacherPhone';
 const PHONE_BACKFILL_VALUE = 'v1';
 const DEMO_COURSE_BACKFILL_KEY = 'backfill.demoCourses';
-const DEMO_COURSE_BACKFILL_VALUE = 'v3';
+const DEMO_COURSE_BACKFILL_VALUE = 'v4';
+const EXTRA_DEMO_APPS_KEY = 'backfill.extraDemoApplications';
+const EXTRA_DEMO_APPS_VALUE = 'v1';
 const TEACHER_MONTHS_BACKFILL_KEY = 'backfill.teacherDemoMonths';
 const TEACHER_MONTHS_BACKFILL_VALUE = 'v1';
 const DROP_DEMO_APP_KEY = 'backfill.dropShringaJulApp';
@@ -537,6 +539,64 @@ export function backfillTeacherHomeLocation(db: DB): { backfilled: number } {
 
   logger.info('[db] home location backfill complete', { backfilled: count });
   return { backfilled: count };
+}
+
+/**
+ * Inserts seeded demo applications that were added to `applications.json`
+ * after the initial `seedDatabase()` run. Skips rows that already exist
+ * (by `id`) so user-submitted applications aren't disturbed.
+ *
+ * Used to ship the screen 08 "applied + approved" demo (course 914305423)
+ * without forcing existing dev DBs to reset.
+ */
+export function seedExtraDemoApplications(db: DB): { inserted: number } {
+  const flag = db.queryOne<{ value: string }>('SELECT value FROM settings WHERE key = ?', [
+    EXTRA_DEMO_APPS_KEY,
+  ]);
+  if (flag?.value === EXTRA_DEMO_APPS_VALUE) return { inserted: 0 };
+
+  const seeds = applicationsJson as unknown as SeedApplication[];
+  const now = new Date().toISOString();
+  let inserted = 0;
+
+  db.transaction(() => {
+    for (const a of seeds) {
+      const existing = db.queryOne<{ id: number }>('SELECT id FROM applications WHERE id = ?', [
+        a.id,
+      ]);
+      if (existing) continue;
+      db.exec(
+        `INSERT INTO applications
+          (id, course_id, teacher_id, status, applied_date, source, rejection_reason,
+           queue_position, withdrawal_note, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          a.id,
+          a.courseId,
+          a.teacherId,
+          a.status,
+          a.appliedDate ?? null,
+          a.source ?? null,
+          a.rejectionReason ?? null,
+          a.queuePosition ?? null,
+          a.withdrawalNote ?? null,
+          now,
+          now,
+        ],
+      );
+      inserted++;
+    }
+    db.exec('INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, ?)', [
+      EXTRA_DEMO_APPS_KEY,
+      EXTRA_DEMO_APPS_VALUE,
+      now,
+    ]);
+  });
+
+  if (inserted > 0) {
+    logger.info('[db] seeded extra demo applications', { inserted });
+  }
+  return { inserted };
 }
 
 /**
@@ -665,7 +725,14 @@ export function enrichDemoCourses(db: DB): { enriched: number } {
     arrivalDate?: string;
     arrivalTime?: string;
   })[];
-  const targetIds = [1753781245, 1399940739];
+  // Three demo courses get the full prototype enrichment treatment:
+  //   1753781245  Dharma Shringa Jul 7–18 — screen 06 Apply CTA demo (with
+  //               Asha Mehta F co-teacher + ["M"] open slot).
+  //   1399940739  Dhamma Pokhara — screen 07 brief demo (admin-assigned).
+  //   914305423   Dhamma Citavana Sep 3–14 — screen 08 applied-approved
+  //               demo. Only `arrivalDate` matters here; the rest of the
+  //               UPDATE replays the existing JSON values.
+  const targetIds = [1753781245, 1399940739, 914305423];
   const now = new Date().toISOString();
   let count = 0;
 

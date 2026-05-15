@@ -1,5 +1,14 @@
 [
   {
+    "id": 5,
+    "courseId": 914305423,
+    "teacherId": "teacher-001",
+    "status": "approved",
+    "appliedDate": "Apr 10, 2026",
+    "source": "applied",
+    "rejectionReason": null
+  },
+  {
     "id": 2,
     "courseId": 1399940739,
     "teacherId": "teacher-001",

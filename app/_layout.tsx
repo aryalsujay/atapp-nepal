@@ -21,6 +21,7 @@ import {
   backfillTeacherHomeLocation,
   backfillTeacherDemoMonths,
   dropDemoShringaJulApplication,
+  seedExtraDemoApplications,
   enrichDemoCourses,
 } from '@/db/seed';
 import { legacyMigrate } from '@/db/legacyMigrate';
@@ -82,6 +83,7 @@ export default function RootLayout() {
         backfillTeacherHomeLocation(db);
         backfillTeacherDemoMonths(db);
         dropDemoShringaJulApplication(db);
+        seedExtraDemoApplications(db);
         enrichDemoCourses(db);
         // Legacy AsyncStorage → SQLite migration. Idempotent + gated by a
         // settings flag, so it's a no-op on subsequent boots and on new
