@@ -491,13 +491,9 @@
       "coteacher_sub": "Show co-teacher info to teachers on course detail"
     },
     "inbox": {
+      "kicker": "Admin Panel",
       "title": "Applications",
-      "reviewAll": "Review All",
-      "quickApprove": "Approve",
-      "quickReject": "Reject",
-      "review": "Review",
-      "match": "Match",
-      "courses": "courses taught"
+      "empty_state": "No applications in this category."
     },
     "review": {
       "title": "Application Review",
