@@ -13,6 +13,7 @@
     "reject": "Reject",
     "loading": "Loading...",
     "noResults": "No results found",
+    "coming_soon": "Coming soon",
     "search": "Search",
     "done": "Done",
     "confirm": "Confirm",
@@ -736,14 +737,17 @@
       }
     },
     "profile": {
-      "title": "My Profile",
-      "role": "Dhamma Server · सेवक",
-      "coursesServed": "Courses Served",
-      "centers": "Centers",
-      "since": "Since",
-      "serviceHistory": "Service History",
-      "eligible": "Eligible to Serve",
-      "eligibleBody": "You have completed the required Vipassana courses and rest period."
+      "courses_lbl": "courses",
+      "last_served": "Last served",
+      "stat_eligible": "Eligible",
+      "areas_expertise": "Areas of Expertise",
+      "pref_areas": "Preferred service areas",
+      "avail_2026": "Availability 2026",
+      "festival_blocks": "🎑 Festival blocks: Buddha Jayanti (May) · Dashain (Oct) · Tihar (Nov)",
+      "pref_centers": "Preferred Centers",
+      "service_history": "Service History",
+      "view_all_courses": "View all courses →",
+      "edit_avail": "Edit Profile & Availability"
     }
   },
   "matching": {

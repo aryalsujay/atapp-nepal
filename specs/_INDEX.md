@@ -61,7 +61,7 @@ Legend: `📝 draft` · `👀 review` · `✅ approved` · `🔨 in progress` ·
 | 16 | [Server Apply](./16-server-apply.md) | `/(server)/apply/[id]` | `app.html:2679` | ✓ done |
 | 17 | [Server Applications](./17-server-applications.md) | `/(server)/applications` | `app.html:2823` | ✓ done |
 | 18 | [Server Application Detail](./18-server-application-detail.md) | `/(server)/applications/[id]` | `app.html:3173` | ✓ done |
-| 19 | Server Profile | `/(server)/profile` | `app.html:2864` | — |
+| 19 | [Server Profile](./19-server-profile.md) | `/(server)/profile` | `app.html:2864` | ✓ done |
 | 20 | Server Notifications | `/(server)/notifications` | `app.html:3307` | — |
 
 ### Admin
