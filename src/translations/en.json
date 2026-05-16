@@ -681,18 +681,21 @@
       "successBody": "Your application has been sent. The coordinator will review and notify you. Sadhu!"
     },
     "applications": {
-      "title": "My Applications",
-      "tabs": {
-        "all": "All",
-        "pending": "Pending",
-        "approved": "Approved",
-        "rejected": "Rejected"
-      },
-      "noApplications": "No applications in this category.",
-      "partial": "Partial",
-      "arriveBy": "Arrive by",
-      "coordinator": "Coordinator",
-      "reason": "Reason"
+      "title": "My Service",
+      "applications_lbl": "applications",
+      "confirmed_lbl": "confirmed",
+      "applied_lbl": "Applied",
+      "full_course": "Full course",
+      "partial_lbl": "Partial",
+      "reason_lbl": "Reason:",
+      "view_details": "View Details →",
+      "browse_more": "Browse More Courses →",
+      "empty_state": "You haven't applied to any courses yet.",
+      "status": {
+        "approved": "✓ Confirmed",
+        "pending": "⏳ Pending",
+        "rejected": "Not Selected"
+      }
     },
     "profile": {
       "title": "My Profile",

@@ -699,12 +699,21 @@
       }
     },
     "applications": {
-      "title": "मेरा आवेदनहरू",
-      "noApplications": "यस श्रेणीमा कुनै आवेदन छैन।",
-      "partial": "आंशिक",
-      "arriveBy": "आइपुग्ने समय",
-      "coordinator": "समन्वयकर्ता",
-      "reason": "कारण"
+      "title": "मेरो सेवा",
+      "applications_lbl": "आवेदन",
+      "confirmed_lbl": "पुष्टि",
+      "applied_lbl": "आवेदन",
+      "full_course": "पूरा शिविर",
+      "partial_lbl": "आंशिक",
+      "reason_lbl": "कारण:",
+      "view_details": "विवरण हेर्नुहोस् →",
+      "browse_more": "थप शिविरहरू →",
+      "empty_state": "तपाईंले अहिलेसम्म कुनै शिविरमा आवेदन दिनुभएको छैन।",
+      "status": {
+        "approved": "✓ पुष्टि",
+        "pending": "⏳ विचाराधीन",
+        "rejected": "छनोट भएन"
+      }
     },
     "profile": {
       "title": "मेरो प्रोफाइल",
