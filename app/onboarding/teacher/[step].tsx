@@ -39,7 +39,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useProfileStore } from '@/store/profileStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTeachersStore } from '@/store/teachersStore';
-import { useOnboardingDraftStore, type LangLevel, type AvCell } from '@/store/onboardingDraftStore';
+import { useOnboardingDraftStore, type LangLevel } from '@/store/onboardingDraftStore';
 import { Colors, Gradients, GradientDirection } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';

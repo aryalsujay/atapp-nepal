@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  Alert,
   Modal,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -42,6 +41,7 @@ export default function AdminCentreDetailScreen() {
 
   useEffect(() => {
     loadHalls();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const centre = centresData.find((c) => c.id === id);

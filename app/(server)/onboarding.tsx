@@ -83,7 +83,6 @@ export default function ServerOnboarding() {
   const [answers, setAnswers] = useState<Partial<Record<QKey, Answer>>>({});
   const [step, setStep] = useState(0);
 
-  const allYes = QUESTIONS.every((q) => answers[q.key] === 'yes');
   const anyNo = QUESTIONS.some((q) => answers[q.key] === 'no');
   const isResult = step >= QUESTIONS.length;
 

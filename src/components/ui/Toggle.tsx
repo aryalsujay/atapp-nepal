@@ -31,6 +31,7 @@ export const Toggle: React.FC<ToggleProps> = ({
         useNativeDriver: false,
       }),
     ]).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   const interpolatedBg = bgColor.interpolate({

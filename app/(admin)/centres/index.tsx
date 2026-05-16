@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Routes, routeTo } from '@/routes';
+import { routeTo } from '@/routes';
 import { useHallsStore } from '@/store/hallsStore';
 import { Colors } from '@/theme/colors';
 import { FontSize, FontWeight } from '@/theme/typography';
@@ -22,6 +22,7 @@ export default function AdminCentresScreen() {
 
   useEffect(() => {
     loadHalls();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const byRegion = centresData.reduce<Record<string, any[]>>((acc, c) => {

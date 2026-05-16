@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ScrollView, View, ViewStyle } from 'react-native';
 import { Colors } from '@/theme/colors';
 import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Spacing } from '@/theme/spacing';
+import { Radius } from '@/theme/spacing';
 
 interface FilterChipProps {
   label: string;
