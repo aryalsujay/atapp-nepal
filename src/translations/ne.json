@@ -463,21 +463,26 @@
     }
   },
   "admin": {
-    "dashboard": {
-      "title": "एडमिन",
-      "center": "धम्म श्रृंग नेपाल",
+    "nav": {
+      "dashboard": "ड्यासबोर्ड",
       "applications": "आवेदनहरू",
-      "pending": "विचाराधीन",
-      "unscheduled": "अनुसूचित छैन",
-      "activeATs": "सक्रिय AT",
-      "urgentCourses": "अत्यावश्यक — AT चाहिन्छ",
-      "recentApplications": "हालका आवेदनहरू",
-      "settings": "सेटिङ",
-      "showCoTeacher": "AT लाई सह-आचार्य जानकारी देखाउनुहोस्",
-      "showCoTeacherDesc": "नियुक्त AT लाई सह-आचार्य सम्पर्क जानकारी देखाउनुहोस्",
-      "demoSection": "🧪 डेमो",
-      "resetDemo": "डेमो डेटा रिसेट गर्नुहोस्",
-      "resetDemoDesc": "स्थानीय AsyncStorage मेटाई बीउ JSON पुन: लोड गर्नुहोस्"
+      "teachers": "आचार्यहरू",
+      "calendar": "पात्रो",
+      "schedule": "तालिका",
+      "servers": "सेवकहरू"
+    },
+    "dashboard": {
+      "kicker": "व्यवस्थापक",
+      "applications": "आवेदनहरू",
+      "teachers": "आचार्यहरू",
+      "schedule": "स्वत:-तालिका",
+      "urgent": "अत्यावश्यक — आचार्य चाहिन्छ",
+      "recent_apps": "हालका आवेदनहरू",
+      "notif_center": "सूचना केन्द्र",
+      "notif_center_sub": "आचार्यका इमेल हेर्नुहोस् र पुनः पठाउनुहोस् · द्वैभाषिक",
+      "feature_visibility": "सुविधा दृश्यता",
+      "coteacher_title": "सह-आचार्य खण्ड",
+      "coteacher_sub": "शिविर विवरणमा सह-आचार्य जानकारी देखाउनुहोस्"
     },
     "inbox": {
       "title": "आवेदनहरू",

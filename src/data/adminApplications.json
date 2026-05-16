@@ -1,0 +1,46 @@
+[
+  {
+    "id": 1,
+    "name": "Asha Mehta",
+    "gender": "F",
+    "langs": ["Nepali", "English"],
+    "course": "Dhamma Shringa — Sep Satipatthana",
+    "applied": "2 days ago",
+    "match": 94,
+    "courses": 23,
+    "note": "Taught at Dhamma Shringa twice. Strong Nepali language skills."
+  },
+  {
+    "id": 2,
+    "name": "Ram Prasad Sharma",
+    "gender": "M",
+    "langs": ["Nepali", "Hindi"],
+    "course": "Dhamma Janani — Aug 10-day",
+    "applied": "1 day ago",
+    "match": 87,
+    "courses": 18,
+    "note": "Local teacher, based in Lumbini. Strong Hindi and Nepali."
+  },
+  {
+    "id": 3,
+    "name": "Bhikkhu Ananda",
+    "gender": "M",
+    "langs": ["English", "Hindi", "Nepali"],
+    "course": "Dhamma Shringa — Nov 20-day",
+    "applied": "3 days ago",
+    "match": 97,
+    "courses": 47,
+    "note": "Ideal — Nepali speaker, extensive Nepal experience."
+  },
+  {
+    "id": 4,
+    "name": "Sita Devi",
+    "gender": "F",
+    "langs": ["Nepali"],
+    "course": "Dhamma Birata — Sep 10-day",
+    "applied": "5 hrs ago",
+    "match": 91,
+    "courses": 14,
+    "note": "Based in Itahari. Fluent Nepali, served Dhamma Birata 3 times."
+  }
+]

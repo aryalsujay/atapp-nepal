@@ -469,21 +469,26 @@
     }
   },
   "admin": {
-    "dashboard": {
-      "title": "Admin",
-      "center": "Dharma Shringa Nepal",
+    "nav": {
+      "dashboard": "Dashboard",
       "applications": "Applications",
-      "pending": "Pending",
-      "unscheduled": "Unscheduled",
-      "activeATs": "Active ATs",
-      "urgentCourses": "Urgent — Needs AT",
-      "recentApplications": "Recent Applications",
-      "settings": "Settings",
-      "showCoTeacher": "Show Co-Teacher Info to ATs",
-      "showCoTeacherDesc": "Show co-teacher contact info to assigned ATs",
-      "demoSection": "🧪 Demo",
-      "resetDemo": "Reset demo data",
-      "resetDemoDesc": "Wipe local AsyncStorage and reload seed JSON"
+      "teachers": "Teachers",
+      "calendar": "Calendar",
+      "schedule": "Schedule",
+      "servers": "Servers"
+    },
+    "dashboard": {
+      "kicker": "Admin",
+      "applications": "Applications",
+      "teachers": "Teachers",
+      "schedule": "Auto-Schedule",
+      "urgent": "Urgent — Needs Teacher",
+      "recent_apps": "Recent Applications",
+      "notif_center": "Notification Center",
+      "notif_center_sub": "View & resend teacher emails · Bilingual",
+      "feature_visibility": "Feature Visibility",
+      "coteacher_title": "Co-Teacher Section",
+      "coteacher_sub": "Show co-teacher info to teachers on course detail"
     },
     "inbox": {
       "title": "Applications",

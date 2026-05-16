@@ -205,10 +205,14 @@ export const AppsIcon: React.FC<IconProps> = ({ size = 24, active, accentColor =
   const color = active ? accentColor : INACTIVE;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Rect x={3} y={3} width={7} height={7} rx={1.5} stroke={color} strokeWidth={1.7} />
-      <Rect x={14} y={3} width={7} height={7} rx={1.5} stroke={color} strokeWidth={1.7} />
-      <Rect x={3} y={14} width={7} height={7} rx={1.5} stroke={color} strokeWidth={1.7} />
-      <Rect x={14} y={14} width={7} height={7} rx={1.5} stroke={color} strokeWidth={1.7} />
+      <Path
+        d="M3 8L12 3L21 8V16L12 21L3 16V8Z"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+        fill={active ? 'rgba(42,92,138,0.12)' : 'none'}
+      />
+      <Path d="M12 3V21M3 8L21 8" stroke={color} strokeWidth={1.4} opacity={0.5} />
     </Svg>
   );
 };

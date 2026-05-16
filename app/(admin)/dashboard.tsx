@@ -1,524 +1,623 @@
+/**
+ * Admin Dashboard — implements `specs/21-admin-dashboard.md`.
+ *
+ * Prototype-faithful port of `app.html:1935–2010` (`AdminDash`).
+ */
+
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Routes, routeTo } from '@/routes';
-import { useToast } from '@/components/ui/Toast';
-import { useConfirm } from '@/components/ui/ConfirmDialog';
+import {
+  Alert,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuthStore } from '@/store/authStore';
-import { useSettingsStore } from '@/store/settingsStore';
-import { useApplicationsStore } from '@/store/applicationsStore';
-import { useNotificationsStore } from '@/store/notificationsStore';
-import { useTeachersStore } from '@/store/teachersStore';
-import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
-import { FadeInView } from '@/components/ui/FadeInView';
-import { Colors, Gradients } from '@/theme/colors';
-import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
-import { Shadows } from '@/theme/shadows';
-import { SectionHeader } from '@/components/layout/SectionHeader';
-import { Toggle } from '@/components/ui/Toggle';
-import { Chip } from '@/components/ui/Badge';
-import { useCoursesStore } from '@/store/coursesStore';
-import { applications as applicationsData, teachers as teachersData } from '@/data';
 
-export default function AdminDashboard() {
-  const { t } = useTranslation();
+import { Routes, routeTo } from '@/routes';
+import { useAuthStore } from '@/store/authStore';
+import { Colors, Gradients, GradientDirection } from '@/theme/colors';
+import { FontFamily } from '@/theme/typography';
+import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
+import { adminApplications } from '@/data';
+
+const URGENT = [
+  {
+    name: '10-Day',
+    center: 'Dhamma Pokhara, Pokhara 🇳🇵',
+    dates: 'Jul 15–26, 2026',
+    days: 11,
+    need: 'Nepali-speaking AT',
+  },
+  {
+    name: '10-Day',
+    center: 'Dhamma Janani, Lumbini 🇳🇵',
+    dates: 'Aug 20–31, 2026',
+    days: 18,
+    need: 'Female AT (Nepali/Hindi)',
+  },
+  {
+    name: '20-Day',
+    center: 'Dhamma Shringa, Kathmandu 🇳🇵',
+    dates: 'Nov 1–21, 2026',
+    days: 34,
+    need: 'Senior Male AT',
+  },
+];
+
+function matchBadgeStyle(score: number) {
+  if (score >= 90) return { bg: Colors.fol, color: Colors.fo };
+  if (score >= 70) return { bg: Colors.bll, color: Colors.bl };
+  return { bg: Colors.cr2, color: Colors.tx3 };
+}
+
+export default function AdminDashboardScreen() {
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const toast = useToast();
-  const confirm = useConfirm();
+  const lang = i18n.language;
   const signOut = useAuthStore((s) => s.signOut);
-  const { showCoTeacher, toggleCoTeacher } = useSettingsStore();
-  const { courses, lastSyncAt, syncing, syncCourses } = useCoursesStore();
-  const reloadAllApps = useApplicationsStore((s) => s.loadAllApplications);
-  const reloadNotifs = useNotificationsStore((s) => s.loadNotifications);
-  const reloadTeachers = useTeachersStore((s) => s.loadTeachers);
+  const [showCoTeacher, setShowCoTeacher] = useState(true);
 
-  const handleResetDemo = () => {
-    confirm({
-      title: 'Reset Demo Data',
-      message:
-        'Clear all stored applications, notifications, profiles, and synced courses, then reload seed data. This is for demo purposes only.',
-      confirmText: 'Reset',
-      destructive: true,
-      onConfirm: async () => {
-        const keys = await AsyncStorage.getAllKeys();
-        const dhammaKeys = keys.filter((k) => k.startsWith('@dhamma_'));
-        await AsyncStorage.multiRemove(dhammaKeys);
-        await Promise.all([reloadAllApps(), reloadNotifs(), reloadTeachers()]);
-        toast.success(
-          'Local data cleared. Sign out and back in to refresh your session.',
-          'Demo Reset',
-        );
-      },
-    });
-  };
-
-  const pendingApps = applicationsData.filter((a) => a.status === 'pending').length;
-  const totalTeachers = teachersData.length;
-
-  const urgentCourses = courses
-    .filter((c) => c.status === 'open' || c.status === 'not_yet_open')
-    .slice(0, 3);
-
-  const handleSync = async () => {
-    const result = await syncCourses();
-    if (result.error) {
-      toast.error(result.error, t('system.syncFailed'));
-    } else {
-      toast.success(`${result.added} courses updated from dhamma.org`, t('system.syncSuccess'));
-    }
-  };
-
-  const syncLabel = lastSyncAt
-    ? `Last sync: ${lastSyncAt.toLocaleDateString()} ${lastSyncAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-    : 'Never synced';
-
-  const handleSignOut = () => {
-    confirm({
-      title: 'Sign Out',
-      message: 'Sign out of admin?',
-      confirmText: 'Sign Out',
-      destructive: true,
-      onConfirm: async () => {
-        await signOut();
-        router.replace(Routes.login);
-      },
-    });
-  };
+  const recent = adminApplications.slice(0, 2);
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: Colors.cr }}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Hero */}
-      <LinearGradient
-        colors={Gradients.admin as unknown as [string, string, ...string[]]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.hero, { paddingTop: insets.top + 16 }]}
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}
+        showsVerticalScrollIndicator={false}
       >
-        <LotusHero color="white" opacity={0.09} size={240} />
-        <MountainSilhouette />
+        {/* ─── Hero ─────────────────────────────────────────────────── */}
+        <LinearGradient
+          colors={Gradients.admin}
+          start={GradientDirection.hero.start}
+          end={GradientDirection.hero.end}
+          style={[s.hero, { paddingTop: Math.max(56, insets.top + 12) }]}
+        >
+          <LotusHero color="white" opacity={0.07} size={220} />
+          <MountainSilhouette color="rgba(255,255,255,0.06)" />
 
-        <View style={styles.heroTop}>
-          <View>
-            <Text style={styles.heroLabel}>{t('admin.dashboard.title')}</Text>
-            <Text style={styles.heroCenter}>{t('admin.dashboard.center')}</Text>
+          <Text style={[s.kicker, lang === 'ne' && { fontFamily: FontFamily.devanagari }]}>
+            {t('admin.dashboard.kicker')}
+          </Text>
+          <Text style={s.title}>Dashboard</Text>
+          <Text style={s.subline}>Dhamma Shringa · Kathmandu Valley 🇳🇵</Text>
+
+          <View style={s.statsRow}>
+            <StatChip n="4" label={t('admin.dashboard.applications')} color={Colors.gd} />
+            <StatChip n="6" label="Unscheduled" color="#FFB3AE" />
+            <StatChip n="138" label="Active ATs" color={Colors.white} />
           </View>
-          <TouchableOpacity onPress={handleSignOut} style={styles.signOutBtn}>
-            <Text style={styles.signOutText}>Sign Out</Text>
-          </TouchableOpacity>
+        </LinearGradient>
+
+        {/* ─── Quick actions ──────────────────────────────────────── */}
+        <View style={s.quickRow}>
+          <QuickButton
+            label={`📨 ${t('admin.dashboard.applications')}`}
+            variant="forest"
+            onPress={() => router.push(Routes.adminInbox)}
+          />
+          <QuickButton
+            label={`👥 ${t('admin.dashboard.teachers')}`}
+            variant="saffron"
+            onPress={() => router.push(Routes.adminDirectory)}
+          />
+          <QuickButton
+            label={`⚡ ${t('admin.dashboard.schedule')}`}
+            variant="outline"
+            onPress={() => router.push(Routes.adminSchedule)}
+          />
         </View>
 
-        {/* Stats */}
-        <View style={styles.statsRow}>
-          <AdminStat label={t('admin.dashboard.pending')} value={String(pendingApps)} emoji="📥" />
-          <AdminStat label="Teachers" value={String(totalTeachers)} emoji="🧘" />
-          <AdminStat label={t('admin.dashboard.activeATs')} value="2" emoji="✅" />
-          <AdminStat label="Courses" value={String(urgentCourses.length)} emoji="🪷" />
-        </View>
-      </LinearGradient>
-
-      {/* Quick actions */}
-      <View style={styles.quickRow}>
-        <QuickAction
-          emoji="📥"
-          label="Applications"
-          onPress={() => router.push(Routes.adminInbox)}
-          color={Colors.sf}
-        />
-        <QuickAction
-          emoji="👥"
-          label="Teachers"
-          onPress={() => router.push(Routes.adminDirectory)}
-          color={Colors.fo}
-        />
-        <QuickAction
-          emoji="⚡"
-          label="Auto-Schedule"
-          onPress={() => router.push(Routes.adminSchedule)}
-          color={Colors.bl}
-        />
-        <QuickAction
-          emoji="📅"
-          label="Calendar"
-          onPress={() => router.push(Routes.adminCalendar)}
-          color={Colors.gd}
-        />
-      </View>
-
-      {/* Urgent courses */}
-      <SectionHeader
-        title={t('admin.dashboard.urgentCourses')}
-        action="View All"
-        onAction={() => router.push(Routes.adminSchedule)}
-      />
-      {urgentCourses.map((course, i) => (
-        <FadeInView key={course.id} delay={100 + i * 60}>
-          <View style={styles.urgentCard}>
-            <View style={styles.urgentLeft}>
-              <Text style={styles.urgentType}>{course.type}</Text>
-              <Text style={styles.urgentCenter}>{course.center}</Text>
-              <Text style={styles.urgentDates}>📅 {course.dates}</Text>
+        {/* ─── Urgent ─────────────────────────────────────────────── */}
+        <Text style={s.sph}>🔴 {t('admin.dashboard.urgent')}</Text>
+        {URGENT.map((c) => (
+          <View key={c.center} style={[s.card, { borderLeftWidth: 4, borderLeftColor: Colors.ur }]}>
+            <View style={s.urgentTopRow}>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text style={s.urgentName}>{c.name}</Text>
+                <Text style={s.urgentCenter}>{c.center}</Text>
+                <Text style={s.urgentDates}>📅 {c.dates}</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end', flexShrink: 0 }}>
+                <Text style={s.urgentDaysLeft}>{c.days}d left</Text>
+              </View>
             </View>
-            <View style={styles.urgentRight}>
-              <Chip
-                label={course.status === 'open' ? 'Open' : 'Upcoming'}
-                variant={course.status === 'open' ? 'orange' : 'gray'}
-              />
+            <View style={s.urgentBottomRow}>
+              <View style={s.chipUr}>
+                <Text style={s.chipUrText}>Needs: {c.need}</Text>
+              </View>
               <TouchableOpacity
-                onPress={() => router.push(Routes.adminInbox)}
-                style={styles.assignBtn}
+                activeOpacity={0.85}
+                onPress={() => Alert.alert(t('common.coming_soon'))}
               >
-                <Text style={styles.assignBtnText}>Assign →</Text>
+                <LinearGradient
+                  colors={Gradients.primaryCta}
+                  start={GradientDirection.button.start}
+                  end={GradientDirection.button.end}
+                  style={s.assignBtn}
+                >
+                  <Text style={s.assignBtnText}>Assign AT</Text>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           </View>
-        </FadeInView>
-      ))}
+        ))}
 
-      {/* Recent applications */}
-      <SectionHeader
-        title={t('admin.dashboard.recentApplications')}
-        action="See All"
-        onAction={() => router.push(Routes.adminInbox)}
-      />
-      {applicationsData.slice(0, 3).map((app) => {
-        const teacher = teachersData.find((t) => t.id === app.teacherId);
-        const course = courses.find((c) => c.id === app.courseId);
-        return (
+        {/* ─── Recent Applications ────────────────────────────────── */}
+        <View style={s.recentHeaderRow}>
+          <Text style={[s.sph, { margin: 0 }]}>📨 {t('admin.dashboard.recent_apps')}</Text>
           <TouchableOpacity
-            key={app.id}
-            onPress={() => router.push(routeTo.adminApplicationReview(app.id))}
-            style={styles.appCard}
+            activeOpacity={0.7}
+            hitSlop={8}
+            onPress={() => router.push(Routes.adminInbox)}
+          >
+            <Text style={s.seeAll}>{t('home.see_all')}</Text>
+          </TouchableOpacity>
+        </View>
+        {recent.map((a) => {
+          const badge = matchBadgeStyle(a.match);
+          return (
+            <TouchableOpacity
+              key={a.id}
+              activeOpacity={0.85}
+              onPress={() => router.push(routeTo.adminApplicationReview(a.id))}
+              style={[s.card, s.recentCardRow]}
+            >
+              <View style={s.avatar}>
+                <Text style={s.avatarText}>{a.name[0]}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.recentName}>{a.name}</Text>
+                <Text style={s.recentCourse}>{a.course}</Text>
+              </View>
+              <View style={[s.mbadge, { backgroundColor: badge.bg }]}>
+                <Text style={[s.mbadgeText, { color: badge.color }]}>{a.match}% match</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+
+        {/* ─── Notification Center card ───────────────────────────── */}
+        <View style={s.notifWrap}>
+          <TouchableOpacity
             activeOpacity={0.85}
+            onPress={() => router.push(Routes.adminNotifications)}
+            style={s.notifCard}
           >
-            <View style={styles.appAvatar}>
-              <Text style={styles.appAvatarText}>{teacher?.name?.charAt(0) ?? '?'}</Text>
+            <Text style={{ fontSize: 22 }}>📧</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={s.notifTitle}>{t('admin.dashboard.notif_center')}</Text>
+              <Text style={s.notifSub}>{t('admin.dashboard.notif_center_sub')}</Text>
             </View>
-            <View style={styles.appInfo}>
-              <Text style={styles.appName}>{teacher?.name ?? 'Unknown'}</Text>
-              <Text style={styles.appCourse}>
-                {course?.center} — {course?.type}
-              </Text>
-              <Text style={styles.appDate}>{app.appliedDate}</Text>
+            <Text style={s.notifChevron}>›</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ─── Feature Visibility ─────────────────────────────────── */}
+        <Text style={s.sph}>⚙️ {t('admin.dashboard.feature_visibility')}</Text>
+        <View style={s.sectionCard}>
+          <View style={s.toggleRow}>
+            <View style={{ flex: 1, paddingRight: 12 }}>
+              <Text style={s.toggleTitle}>{t('admin.dashboard.coteacher_title')}</Text>
+              <Text style={s.toggleSub}>{t('admin.dashboard.coteacher_sub')}</Text>
             </View>
-            <Chip
-              label={app.status.toUpperCase()}
-              variant={
-                app.status === 'approved' ? 'green' : app.status === 'rejected' ? 'red' : 'gold'
-              }
-            />
-          </TouchableOpacity>
-        );
-      })}
-
-      {/* Course Sync */}
-      <SectionHeader title="📡 Course Data" />
-      <View style={styles.settingsCard}>
-        <View style={styles.settingRow}>
-          <View style={styles.settingInfo}>
-            <Text style={styles.settingLabel}>🔄 Sync from dhamma.org</Text>
-            <Text style={styles.settingDesc}>
-              {syncLabel} · {courses.length} courses loaded
-            </Text>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setShowCoTeacher((v) => !v)}
+              style={[s.toggleTrack, { backgroundColor: showCoTeacher ? Colors.fo : Colors.bd2 }]}
+            >
+              <View style={[s.toggleThumb, { marginLeft: showCoTeacher ? 18 : 0 }]} />
+            </TouchableOpacity>
           </View>
+        </View>
+
+        {/* ─── Sign Out ───────────────────────────────────────────── */}
+        <View style={s.signOutWrap}>
           <TouchableOpacity
-            onPress={handleSync}
-            disabled={syncing}
-            style={[styles.syncBtn, syncing && { opacity: 0.55 }]}
+            activeOpacity={0.85}
+            onPress={async () => {
+              await signOut();
+              router.replace(Routes.login);
+            }}
+            style={s.signOutBtn}
           >
-            <Text style={styles.syncBtnText}>{syncing ? 'Syncing…' : 'Sync'}</Text>
+            <Text style={s.signOutText}>{t('common.signOut')}</Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Settings */}
-      <SectionHeader title={t('admin.dashboard.settings')} />
-      <View style={styles.settingsCard}>
-        <View style={styles.settingRow}>
-          <View style={styles.settingInfo}>
-            <Text style={styles.settingLabel}>{t('admin.dashboard.showCoTeacher')}</Text>
-            <Text style={styles.settingDesc}>{t('admin.dashboard.showCoTeacherDesc')}</Text>
-          </View>
-          <Toggle value={showCoTeacher} onToggle={toggleCoTeacher} />
-        </View>
-      </View>
-
-      {/* Demo controls */}
-      <SectionHeader title={t('admin.dashboard.demoSection')} />
-      <View style={styles.settingsCard}>
-        <View style={styles.settingRow}>
-          <View style={styles.settingInfo}>
-            <Text style={styles.settingLabel}>{t('admin.dashboard.resetDemo')}</Text>
-            <Text style={styles.settingDesc}>{t('admin.dashboard.resetDemoDesc')}</Text>
-          </View>
-          <TouchableOpacity
-            onPress={handleResetDemo}
-            style={[styles.syncBtn, { backgroundColor: Colors.url }]}
-          >
-            <Text style={[styles.syncBtnText, { color: Colors.ur }]}>Reset</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <View style={{ height: 32 }} />
-    </ScrollView>
+        <View style={{ height: 20 }} />
+      </ScrollView>
+    </View>
   );
 }
 
-const AdminStat = ({ label, value, emoji }: { label: string; value: string; emoji: string }) => (
-  <View style={styles.stat}>
-    <Text style={styles.statEmoji}>{emoji}</Text>
-    <Text style={styles.statValue}>{value}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
+// ─── Sub-components ──────────────────────────────────────────────────
 
-const QuickAction = ({
-  emoji,
-  label,
-  onPress,
-  color,
-}: {
-  emoji: string;
-  label: string;
-  onPress: () => void;
-  color: string;
-}) => (
-  <TouchableOpacity
-    onPress={onPress}
-    activeOpacity={0.8}
-    style={[styles.quickAction, { borderColor: color + '33' }]}
-  >
-    <View style={[styles.quickIcon, { backgroundColor: color + '18' }]}>
-      <Text style={styles.quickEmoji}>{emoji}</Text>
+function StatChip({ n, label, color }: { n: string; label: string; color: string }) {
+  return (
+    <View style={s.statChip}>
+      <Text style={[s.statNumber, { color }]}>{n}</Text>
+      <Text style={s.statLabel}>{label}</Text>
     </View>
-    <Text style={[styles.quickLabel, { color }]}>{label}</Text>
-  </TouchableOpacity>
-);
+  );
+}
 
-const styles = StyleSheet.create({
+function QuickButton({
+  label,
+  variant,
+  onPress,
+}: {
+  label: string;
+  variant: 'forest' | 'saffron' | 'outline';
+  onPress: () => void;
+}) {
+  if (variant === 'outline') {
+    return (
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={onPress}
+        style={[
+          s.quickBtn,
+          { borderWidth: 2, borderColor: Colors.bd2, backgroundColor: 'transparent' },
+        ]}
+      >
+        <Text style={[s.quickBtnText, { color: Colors.tx }]}>{label}</Text>
+      </TouchableOpacity>
+    );
+  }
+  const colors = variant === 'forest' ? Gradients.forestCta : Gradients.primaryCta;
+  return (
+    <TouchableOpacity activeOpacity={0.85} onPress={onPress} style={{ flex: 1 }}>
+      <LinearGradient
+        colors={colors}
+        start={GradientDirection.button.start}
+        end={GradientDirection.button.end}
+        style={s.quickBtn}
+      >
+        <Text style={[s.quickBtnText, { color: Colors.white }]}>{label}</Text>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+}
+
+// ─── Styles ──────────────────────────────────────────────────────────
+
+const s = StyleSheet.create({
+  flex: { flex: 1 },
+
+  // Hero
   hero: {
-    paddingHorizontal: Layout.horizontalPad,
-    paddingBottom: Layout.heroPadBottom + 10,
-    gap: Spacing.lg,
+    paddingHorizontal: 18,
+    paddingBottom: 22,
+    overflow: 'hidden',
+    position: 'relative',
   },
-  heroTop: {
+  kicker: {
+    fontSize: 12.5,
+    color: 'rgba(255,255,255,0.65)',
+    position: 'relative',
+    fontFamily: FontFamily.sansRegular,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: Colors.white,
+    position: 'relative',
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  subline: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.68)',
+    position: 'relative',
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Stats
+  statsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 16,
+    position: 'relative',
+  },
+  statChip: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.13)',
+    borderRadius: 13,
+    paddingHorizontal: 7,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 18,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  statLabel: {
+    fontSize: 9.5,
+    color: 'rgba(255,255,255,0.65)',
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Quick actions
+  quickRow: {
+    flexDirection: 'row',
+    gap: 9,
+    paddingTop: 13,
+    paddingHorizontal: 18,
+  },
+  quickBtn: {
+    flex: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 11,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+
+  // Section header
+  sph: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.tx2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.84,
+    marginHorizontal: 18,
+    marginTop: 18,
+    marginBottom: 9,
+    fontFamily: FontFamily.sansBold,
+  },
+
+  // Card (.card base)
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 11,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+  sectionCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 0,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+
+  // Urgent
+  urgentTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    marginBottom: 7,
   },
-  heroLabel: {
-    fontSize: FontSize.sm,
-    color: 'rgba(255,255,255,0.65)',
-    fontWeight: FontWeight.medium,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+  urgentName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.tx,
+    fontFamily: FontFamily.sansBold,
   },
-  heroCenter: {
-    fontSize: FontSize.xl,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.white,
-    marginTop: 3,
+  urgentCenter: {
+    fontSize: 12.5,
+    color: Colors.tx2,
+    fontFamily: FontFamily.sansRegular,
   },
-  signOutBtn: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: 12,
+  urgentDates: {
+    fontSize: 11,
+    color: Colors.tx3,
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
+  },
+  urgentDaysLeft: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: Colors.ur,
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  urgentBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  chipUr: {
+    backgroundColor: Colors.url,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 20,
+    flexShrink: 1,
+  },
+  chipUrText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.ur,
+    fontFamily: FontFamily.sansSemiBold,
+  },
+  assignBtn: {
+    paddingHorizontal: 15,
     paddingVertical: 7,
-    borderRadius: Radius.full,
-  },
-  signOutText: {
-    color: Colors.white,
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  stat: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: Radius.md,
-    padding: 10,
-    alignItems: 'center',
-    gap: 2,
-  },
-  statEmoji: { fontSize: 16 },
-  statValue: {
-    fontSize: FontSize.xl,
-    fontWeight: FontWeight.bold,
-    color: Colors.white,
-  },
-  statLabel: {
-    fontSize: 9,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: FontWeight.medium,
-    textAlign: 'center',
-  },
-
-  quickRow: {
-    flexDirection: 'row',
-    paddingHorizontal: Layout.horizontalPad,
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
-  },
-  quickAction: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 6,
-    padding: 10,
-    backgroundColor: Colors.white,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    ...Shadows.card,
-  },
-  quickIcon: {
-    width: 36,
-    height: 36,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quickEmoji: { fontSize: 18 },
-  quickLabel: {
-    fontSize: 10,
-    fontWeight: FontWeight.bold,
+  assignBtnText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: Colors.white,
+    fontFamily: FontFamily.sansBold,
   },
 
-  urgentCard: {
-    backgroundColor: Colors.white,
-    marginHorizontal: Layout.horizontalPad,
-    marginVertical: 4,
-    borderRadius: Radius.lg,
-    padding: 14,
+  // Recent applications
+  recentHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.sf,
-    ...Shadows.card,
-    gap: 8,
+    paddingHorizontal: 18,
+    paddingTop: 4,
+    paddingBottom: 7,
   },
-  urgentLeft: { flex: 1, gap: 3 },
-  urgentType: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
+  seeAll: {
+    fontSize: 13,
     color: Colors.sf,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
   },
-  urgentCenter: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx,
-  },
-  urgentDates: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-  },
-  urgentRight: {
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-  assignBtn: {
-    backgroundColor: Colors.sfl,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: Radius.full,
-  },
-  assignBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.sf,
-  },
-
-  appCard: {
-    backgroundColor: Colors.white,
-    marginHorizontal: Layout.horizontalPad,
-    marginVertical: 4,
-    borderRadius: Radius.lg,
-    padding: 14,
+  recentCardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    ...Shadows.card,
-    gap: Spacing.md,
+    gap: 10,
   },
-  appAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.sfl,
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.sfm,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  appAvatarText: {
-    fontSize: 16,
-    fontWeight: FontWeight.bold,
-    color: Colors.sf,
+  avatarText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.sfd,
+    fontFamily: FontFamily.sansBold,
   },
-  appInfo: { flex: 1, gap: 2 },
-  appName: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
+  recentName: {
+    fontSize: 13.5,
+    fontWeight: '700',
     color: Colors.tx,
+    fontFamily: FontFamily.sansBold,
   },
-  appCourse: {
-    fontSize: FontSize.sm,
+  recentCourse: {
+    fontSize: 11.5,
     color: Colors.tx2,
+    fontFamily: FontFamily.sansRegular,
   },
-  appDate: {
-    fontSize: FontSize.xs,
-    color: Colors.tx3,
+  mbadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 20,
+    flexShrink: 0,
+  },
+  mbadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
   },
 
-  settingsCard: {
-    backgroundColor: Colors.white,
-    marginHorizontal: Layout.horizontalPad,
-    marginTop: Spacing.sm,
-    borderRadius: Radius.lg,
-    padding: Layout.cardPad,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    ...Shadows.card,
+  // Notification Center
+  notifWrap: {
+    paddingHorizontal: 18,
+    paddingTop: 6,
+    paddingBottom: 10,
   },
-  settingRow: {
+  notifCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-  },
-  settingInfo: { flex: 1, gap: 3 },
-  settingLabel: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx,
-  },
-  settingDesc: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-    lineHeight: FontSize.sm * 1.4,
-  },
-  syncBtn: {
+    gap: 12,
     backgroundColor: Colors.bll,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.bld,
+    borderRadius: 16,
+    padding: 15,
   },
-  syncBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
+  notifTitle: {
+    fontSize: 13,
+    fontWeight: '700',
     color: Colors.bl,
+    fontFamily: FontFamily.sansBold,
+  },
+  notifSub: {
+    fontSize: 11,
+    color: Colors.tx2,
+    fontFamily: FontFamily.sansRegular,
+  },
+  notifChevron: {
+    fontSize: 18,
+    color: Colors.bl,
+  },
+
+  // Feature visibility toggle
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  toggleTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.tx,
+    fontFamily: FontFamily.sansBold,
+  },
+  toggleSub: {
+    fontSize: 11,
+    color: Colors.tx3,
+    marginTop: 2,
+    fontFamily: FontFamily.sansRegular,
+  },
+  toggleTrack: {
+    width: 44,
+    height: 26,
+    borderRadius: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 3,
+    flexShrink: 0,
+  },
+  toggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.white,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 3,
+    elevation: 2,
+  },
+
+  // Sign out
+  signOutWrap: {
+    paddingHorizontal: 18,
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+  signOutBtn: {
+    width: '100%',
+    paddingVertical: 13,
+    paddingHorizontal: 22,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: Colors.urd,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  signOutText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.ur,
+    fontFamily: FontFamily.sansBold,
   },
 });
