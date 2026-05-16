@@ -680,6 +680,44 @@
       "successTitle": "Application Submitted!",
       "successBody": "Your application has been sent. The coordinator will review and notify you. Sadhu!"
     },
+    "applicationDetail": {
+      "applied_lbl": "Applied",
+      "service_areas": "Service areas",
+      "duration_lbl": "Duration:",
+      "full_course": "Full course",
+      "partial_lbl": "Partial",
+      "confirmed": "Confirmed",
+      "arrive_by_lbl": "Please arrive by:",
+      "coordinator_lbl": "Coordinator:",
+      "what_bring": "What to bring",
+      "journey": "Reaching the Center",
+      "journey_body": "Detailed directions and pickup arrangements will be emailed by the center. Contact the coordinator one week before arrival to confirm transport.",
+      "pending_body": "Your application is under review by the center coordinator. You'll be notified by email when a decision is made.",
+      "reason": "Reason:",
+      "message_admin": "✉️ Message Center",
+      "withdraw": "Withdraw Application",
+      "withdraw_confirm": "Withdraw this application? The center will be notified.",
+      "cancel": "Cancel",
+      "withdraw_short": "Withdraw",
+      "withdrawn_title": "Application Withdrawn",
+      "withdrawn_body": "The center has been notified. You may apply again at any time.",
+      "view_apps": "View My Applications",
+      "coming_soon": "Messaging coming soon",
+      "status": {
+        "approved": "✓ Confirmed",
+        "pending": "⏳ Pending",
+        "rejected": "Not Selected"
+      },
+      "checklist": {
+        "row_0": "Government photo ID (citizenship / passport)",
+        "row_1": "2 sets comfortable, modest clothing (white preferred)",
+        "row_2": "Warm shawl / light jacket for early mornings",
+        "row_3": "Closed shoes for outdoor / kitchen",
+        "row_4": "Flashlight or phone torch",
+        "row_5": "Personal medications (full course supply)",
+        "row_6": "NO phone use during course (will be deposited)"
+      }
+    },
     "applications": {
       "title": "My Service",
       "applications_lbl": "applications",

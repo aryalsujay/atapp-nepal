@@ -1,360 +1,624 @@
+/**
+ * Server Application Detail — implements `specs/18-server-application-detail.md`.
+ *
+ * Prototype-faithful port of `app.html:3173–3303` (`ServerAppDetail`).
+ */
+
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  Alert,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useConfirm } from '@/components/ui/ConfirmDialog';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import Svg, { Path } from 'react-native-svg';
+
+import { Routes } from '@/routes';
 import { Colors } from '@/theme/colors';
-import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
-import { Shadows } from '@/theme/shadows';
+import { FontFamily } from '@/theme/typography';
+import { LotusHero } from '@/components/ui/HeroDecorations';
+import { DashedDivider } from '@/components/ui/DashedDivider';
 import { SERVICE_AREAS } from '@/data/serviceAreas';
-import { serverApplications, serverCourses } from '@/data';
+import { serverApplications, serverCourses, type ServerApplication } from '@/data';
 
-const WHAT_TO_BRING = [
-  'Comfortable meditation clothing (loose, modest)',
-  'Personal toiletries and towel',
-  'Any prescribed medication (inform management)',
-  'Warm layer for early mornings',
-  'Closed-toe shoes for kitchen/compound work',
-  'Small torch / flashlight',
-  'Valid ID document',
-];
+const HERO_GRAD: [string, string] = ['#5A3800', '#9B6B14'];
+const APPLY_GRAD: [string, string] = ['#9B6B14', '#6B4610'];
+const SV_ACCENT = '#9B6B14';
+const REJECTED_SOFT = '#B85040';
+const PENDING_BG = '#FBF0E0';
+const PENDING_BORDER = '#E8C878';
+const PENDING_TEXT = '#7A5008';
+const WITHDRAW_BORDER = '#E8B0A0';
+const WITHDRAW_BG = '#FBE8E0';
+const WITHDRAW_BODY = '#7A2A20';
 
-export default function ServerAppDetail() {
+const CHECKLIST_ICONS = ['🪪', '👕', '🧣', '🩴', '🔦', '💊', '🚫'];
+
+function durationAccent(status: ServerApplication['status']): string {
+  if (status === 'approved') return Colors.fo;
+  if (status === 'pending') return SV_ACCENT;
+  return REJECTED_SOFT;
+}
+
+export default function ServerApplicationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { t } = useTranslation();
   const router = useRouter();
-  const confirm = useConfirm();
-  const [checked, setChecked] = useState<Set<number>>(new Set());
+  const insets = useSafeAreaInsets();
 
-  const app = serverApplications.find((a) => a.id === Number(id));
-  const course = serverCourses.find((c) => c.id === app?.courseId);
+  const numericId = Number(id);
+  const a = serverApplications.find((x) => x.id === numericId) ?? serverApplications[0];
+  const course = serverCourses.find((c) => c.id === a.courseId);
+  const city = course?.city ?? '';
 
-  if (!app || !course) {
+  const [withdrawn, setWithdrawn] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+
+  // ─── Withdrawn success state ─────────────────────────────────────────
+  if (withdrawn) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>Application not found.</Text>
+      <View style={[s.flex, s.withdrawnWrap]}>
+        <Text style={s.withdrawnEmoji}>🙏</Text>
+        <Text style={s.withdrawnTitle}>{t('server.applicationDetail.withdrawn_title')}</Text>
+        <Text style={s.withdrawnBody}>{t('server.applicationDetail.withdrawn_body')}</Text>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.replace(Routes.serverApplications)}
+          style={{ width: '100%' }}
+        >
+          <LinearGradient
+            colors={APPLY_GRAD}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={s.withdrawnCta}
+          >
+            <Text style={s.withdrawnCtaText}>{t('server.applicationDetail.view_apps')}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
     );
   }
 
-  const isApproved = app.status === 'approved';
-  const isPending = app.status === 'pending';
-  const isRejected = app.status === 'rejected';
-
-  const statusColor = isApproved
-    ? { bg: Colors.fol, text: Colors.fo }
-    : isPending
-      ? { bg: Colors.gdl, text: Colors.gd }
-      : { bg: Colors.url, text: Colors.ur };
-
-  const toggleCheck = (i: number) => {
-    setChecked((prev) => {
-      const next = new Set(prev);
-      next.has(i) ? next.delete(i) : next.add(i);
-      return next;
-    });
-  };
-
-  const handleWithdraw = () => {
-    confirm({
-      title: 'Withdraw Application',
-      message: 'Are you sure you want to withdraw this application? This cannot be undone.',
-      confirmText: 'Withdraw',
-      destructive: true,
-      onConfirm: () => {
-        router.back();
-      },
-    });
-  };
+  const accent = durationAccent(a.status);
+  const durationText = a.partial
+    ? `${t('server.applicationDetail.partial_lbl')} · ${a.days ?? ''}`
+    : t('server.applicationDetail.full_course');
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: Colors.cr }}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 110 }}
-    >
-      {/* Back */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={styles.backText}>← Applications</Text>
-      </TouchableOpacity>
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ─── Hero ─────────────────────────────────────────────────── */}
+        <LinearGradient
+          colors={HERO_GRAD}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.671, y: 0.97 }}
+          style={[s.hero, { paddingTop: Math.max(56, insets.top + 12) }]}
+        >
+          <LotusHero color="white" opacity={0.08} size={180} />
 
-      {/* Hero */}
-      <View style={styles.hero}>
-        <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
-          <Text style={[styles.statusBadgeText, { color: statusColor.text }]}>
-            {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-          </Text>
-        </View>
-        <Text style={styles.courseTitle}>{course.center}</Text>
-        <Text style={styles.courseType}>
-          {course.type} · {course.dates}
-        </Text>
-        <Text style={styles.appliedOn}>Applied {app.applied}</Text>
-      </View>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+            style={s.backRow}
+            hitSlop={8}
+          >
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M15 18L9 12L15 6"
+                stroke="rgba(255,255,255,0.85)"
+                strokeWidth={2.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+            <Text style={s.backText}>{t('common.back')}</Text>
+          </TouchableOpacity>
 
-      <View style={{ paddingHorizontal: Layout.horizontalPad, gap: Spacing.md }}>
-        {/* Service areas */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Service Areas</Text>
-          <View style={styles.areaList}>
-            {(app.areas as string[]).map((aId) => {
-              const area = SERVICE_AREAS.find((a) => a.id === aId);
-              if (!area) return null;
+          <View style={s.statusRow}>
+            <View style={s.statusPill}>
+              <Text style={s.statusPillText}>
+                {t(`server.applicationDetail.status.${a.status}`)}
+              </Text>
+            </View>
+            <Text style={s.appliedText}>
+              {t('server.applicationDetail.applied_lbl')} {a.applied}
+            </Text>
+          </View>
+
+          <Text style={s.title}>{a.center}</Text>
+          {city ? <Text style={s.subline}>{city}</Text> : null}
+          <Text style={s.dateLine}>📅 {a.dates}</Text>
+        </LinearGradient>
+
+        {/* ─── Service areas + duration ─────────────────────────────── */}
+        <Text style={s.sph}>🌟 {t('server.applicationDetail.service_areas')}</Text>
+        <View style={s.sectionCard}>
+          <View style={s.chipsRow}>
+            {a.areas.map((aid) => {
+              const sa = SERVICE_AREAS.find((x) => x.id === aid);
+              if (!sa) return null;
               return (
-                <View key={aId} style={[styles.areaRow, { backgroundColor: area.color + '15' }]}>
-                  <View style={[styles.areaDot, { backgroundColor: area.color }]} />
-                  <Text style={styles.areaLabel}>{area.label}</Text>
-                  <Text style={styles.areaNepali}>{area.nepali}</Text>
+                <View key={aid} style={s.areaChip}>
+                  <Text style={s.areaChipText}>
+                    {sa.emoji} {sa.label}
+                  </Text>
                 </View>
               );
             })}
           </View>
-          {app.partial && (
-            <View style={styles.partialNote}>
-              <Text style={styles.partialNoteText}>Partial availability · {app.days}</Text>
-            </View>
-          )}
+          <Text style={s.durationLine}>
+            {t('server.applicationDetail.duration_lbl')}{' '}
+            <Text style={[s.durationValue, { color: accent }]}>{durationText}</Text>
+          </Text>
         </View>
 
-        {/* Duration */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Duration</Text>
-          <View style={styles.detailGrid}>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Arrive By</Text>
-              <Text style={styles.detailValue}>{app.arriveBy}</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Course Ends</Text>
-              <Text style={styles.detailValue}>{course.endDate.slice(5).replace('-', ' ')}</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Total Days</Text>
-              <Text style={styles.detailValue}>{course.days + 1} days</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Coverage</Text>
-              <Text style={styles.detailValue}>
-                {app.partial ? (app.days ?? 'Partial') : 'Full course'}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Status-specific section */}
-        {isApproved && (
+        {/* ─── Status-specific sections ─────────────────────────────── */}
+        {a.status === 'approved' && (
           <>
-            <View style={[styles.section, styles.approvedBanner]}>
-              <Text style={styles.approvedTitle}>Coordinator Contact</Text>
-              <Text style={styles.approvedName}>{app.coordinator}</Text>
-              <Text style={styles.approvedPhone}>{app.coordPhone}</Text>
+            <Text style={s.sph}>✅ {t('server.applicationDetail.confirmed')}</Text>
+            <View style={[s.sectionCard, s.confirmedCard]}>
+              <Text style={s.confirmedLine}>
+                {t('server.applicationDetail.arrive_by_lbl')}{' '}
+                <Text style={[s.confirmedBold, { color: Colors.fo }]}>{a.arriveBy}</Text>
+              </Text>
+              <Text style={s.coordinatorLine}>
+                {t('server.applicationDetail.coordinator_lbl')}{' '}
+                <Text style={s.coordinatorBold}>{a.coordinator}</Text> · {a.coordPhone}
+              </Text>
             </View>
 
-            {/* What to bring checklist */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>What to Bring</Text>
-              <View style={styles.checklist}>
-                {WHAT_TO_BRING.map((item, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={styles.checkItem}
-                    onPress={() => toggleCheck(i)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.checkbox, checked.has(i) && styles.checkboxChecked]}>
-                      {checked.has(i) && <Text style={styles.checkmark}>✓</Text>}
-                    </View>
-                    <Text style={[styles.checkText, checked.has(i) && styles.checkTextDone]}>
-                      {item}
+            <Text style={s.sph}>🎒 {t('server.applicationDetail.what_bring')}</Text>
+            <View style={s.sectionCard}>
+              {CHECKLIST_ICONS.map((icon, i) => (
+                <React.Fragment key={icon}>
+                  <View style={s.checkRow}>
+                    <Text style={s.checkIcon}>{icon}</Text>
+                    <Text style={s.checkBody}>
+                      {t(`server.applicationDetail.checklist.row_${i}`)}
                     </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <Text style={styles.packingNote}>
-                {checked.size}/{WHAT_TO_BRING.length} packed
-              </Text>
+                  </View>
+                  <DashedDivider marginVertical={0} />
+                </React.Fragment>
+              ))}
+            </View>
+
+            <Text style={s.sph}>🚌 {t('server.applicationDetail.journey')}</Text>
+            <View style={s.sectionCard}>
+              <Text style={s.journeyBody}>{t('server.applicationDetail.journey_body')}</Text>
             </View>
           </>
         )}
 
-        {isPending && (
-          <View style={[styles.section, styles.pendingBanner]}>
-            <Text style={styles.pendingTitle}>Under Review</Text>
-            <Text style={styles.pendingBody}>
-              The center manager is reviewing your application. You will be notified once a decision
-              is made.
-            </Text>
+        {a.status === 'pending' && (
+          <View style={s.pendingCard}>
+            <Text style={s.pendingBody}>{t('server.applicationDetail.pending_body')}</Text>
           </View>
         )}
 
-        {isRejected && app.reason && (
-          <View style={[styles.section, styles.rejectedBanner]}>
-            <Text style={styles.rejectedTitle}>Reason</Text>
-            <Text style={styles.rejectedBody}>{app.reason}</Text>
+        {a.status === 'rejected' && a.reason && (
+          <View style={s.rejectedCard}>
+            <Text style={s.rejectedHeader}>{t('server.applicationDetail.reason')}</Text>
+            <Text style={s.rejectedBody}>{a.reason}</Text>
           </View>
         )}
 
-        {/* Withdraw button — only for pending */}
-        {isPending && (
-          <TouchableOpacity style={styles.withdrawBtn} onPress={handleWithdraw}>
-            <Text style={styles.withdrawBtnText}>Withdraw Application</Text>
+        {/* ─── Actions ──────────────────────────────────────────────── */}
+        <View style={s.actionsWrap}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => Alert.alert(t('server.applicationDetail.coming_soon'))}
+            style={s.messageBtn}
+          >
+            <Text style={s.messageBtnText}>{t('server.applicationDetail.message_admin')}</Text>
           </TouchableOpacity>
-        )}
-      </View>
-    </ScrollView>
+
+          {a.status !== 'rejected' && !confirming && (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setConfirming(true)}
+              style={s.withdrawBtn}
+            >
+              <Text style={s.withdrawBtnText}>{t('server.applicationDetail.withdraw')}</Text>
+            </TouchableOpacity>
+          )}
+
+          {confirming && (
+            <View style={s.confirmPanel}>
+              <Text style={s.confirmBody}>{t('server.applicationDetail.withdraw_confirm')}</Text>
+              <View style={s.confirmBtnRow}>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => setConfirming(false)}
+                  style={s.cancelBtn}
+                >
+                  <Text style={s.cancelBtnText}>{t('server.applicationDetail.cancel')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    setWithdrawn(true);
+                    setConfirming(false);
+                  }}
+                  style={s.confirmBtn}
+                >
+                  <Text style={s.confirmBtnText}>
+                    {t('server.applicationDetail.withdraw_short')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+
+        <View style={{ height: 20 }} />
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.cr },
-  errorText: { color: Colors.tx3, fontSize: FontSize.md },
+const s = StyleSheet.create({
+  flex: { flex: 1 },
 
-  backBtn: {
-    paddingHorizontal: Layout.horizontalPad,
-    paddingTop: 56,
-    paddingBottom: Spacing.sm,
-  },
-  backText: { fontSize: FontSize.smPlus, color: Colors.sv, fontWeight: FontWeight.semibold },
-
+  // Hero
   hero: {
-    paddingHorizontal: Layout.horizontalPad,
-    paddingBottom: Spacing.lg,
+    paddingHorizontal: 18,
+    paddingBottom: 22,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
+    marginBottom: 12,
   },
-  statusBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: Radius.full,
-    marginBottom: 6,
+  backText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
+    fontFamily: FontFamily.sansRegular,
   },
-  statusBadgeText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold },
-  courseTitle: { fontSize: FontSize.h2, fontWeight: FontWeight.extrabold, color: Colors.tx },
-  courseType: { fontSize: FontSize.smPlus, color: Colors.tx2, fontWeight: FontWeight.medium },
-  appliedOn: { fontSize: FontSize.sm, color: Colors.tx3 },
-
-  section: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    gap: Spacing.sm,
-    ...Shadows.card,
-  },
-  sectionTitle: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx3,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  areaList: { gap: 6 },
-  areaRow: {
+  statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: Radius.md,
+    marginBottom: 6,
   },
-  areaDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
-  areaLabel: {
-    flex: 1,
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.semibold,
-    color: Colors.tx,
+  statusPill: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    paddingHorizontal: 11,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
-  areaNepali: { fontSize: FontSize.sm, color: Colors.tx3 },
-  partialNote: {
-    backgroundColor: Colors.gdl,
-    borderRadius: Radius.sm,
-    padding: 8,
-    alignSelf: 'flex-start',
+  statusPillText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: Colors.white,
+    fontFamily: FontFamily.sansBold,
   },
-  partialNoteText: { fontSize: FontSize.sm, color: Colors.gd, fontWeight: FontWeight.semibold },
+  appliedText: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.7)',
+    fontFamily: FontFamily.sansRegular,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: Colors.white,
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  subline: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.78)',
+    fontFamily: FontFamily.sansRegular,
+  },
+  dateLine: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.78)',
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
+  },
 
-  detailGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  detailItem: { width: '50%', paddingVertical: 6 },
-  detailLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.tx3,
+  // Section header (.sph)
+  sph: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.tx2,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  detailValue: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.semibold,
-    color: Colors.tx,
-    marginTop: 2,
+    letterSpacing: 0.84,
+    marginHorizontal: 18,
+    marginTop: 18,
+    marginBottom: 9,
+    fontFamily: FontFamily.sansBold,
   },
 
-  approvedBanner: {
-    borderColor: Colors.fom,
-    backgroundColor: Colors.fol,
-    gap: 3,
-  },
-  approvedTitle: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.fo,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  approvedName: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.tx },
-  approvedPhone: { fontSize: FontSize.smPlus, color: Colors.tx2 },
-
-  checklist: { gap: 8 },
-  checkItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: Colors.bd2,
+  // Section card (margin 0 18px, no marginBottom)
+  sectionCard: {
     backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 0,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+
+  // Areas card internals
+  chipsRow: {
+    flexDirection: 'row',
+    gap: 5,
+    flexWrap: 'wrap',
+    marginBottom: 8,
+  },
+  areaChip: {
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 20,
+    backgroundColor: Colors.svl,
+  },
+  areaChipText: {
+    fontSize: 11,
+    color: SV_ACCENT,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+  durationLine: {
+    fontSize: 12,
+    color: Colors.tx2,
+    fontFamily: FontFamily.sansRegular,
+  },
+  durationValue: {
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+
+  // Confirmed (approved) card
+  confirmedCard: {
+    backgroundColor: Colors.fol,
+    borderWidth: 1.5,
+    borderColor: Colors.fom,
+  },
+  confirmedLine: {
+    fontSize: 12,
+    color: Colors.tx2,
+    lineHeight: 18.6,
+    fontFamily: FontFamily.sansRegular,
+  },
+  confirmedBold: {
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+  coordinatorLine: {
+    fontSize: 11.5,
+    color: Colors.tx2,
+    marginTop: 4,
+    fontFamily: FontFamily.sansRegular,
+  },
+  coordinatorBold: {
+    fontWeight: '700',
+    color: Colors.tx,
+    fontFamily: FontFamily.sansBold,
+  },
+
+  // Checklist rows
+  checkRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingVertical: 7,
+    alignItems: 'flex-start',
+  },
+  checkIcon: {
+    fontSize: 18,
+    width: 24,
+    textAlign: 'center',
+    flexShrink: 0,
+  },
+  checkBody: {
+    fontSize: 12.5,
+    color: Colors.tx2,
+    lineHeight: 17.5,
+    flex: 1,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Journey
+  journeyBody: {
+    fontSize: 12.5,
+    color: Colors.tx2,
+    lineHeight: 19.4,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Pending banner
+  pendingCard: {
+    backgroundColor: PENDING_BG,
+    borderWidth: 1,
+    borderColor: PENDING_BORDER,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginTop: 14,
+    marginBottom: 0,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+  pendingBody: {
+    fontSize: 12.5,
+    color: PENDING_TEXT,
+    lineHeight: 18.75,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Rejected reason card
+  rejectedCard: {
+    backgroundColor: Colors.url,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginTop: 14,
+    marginBottom: 0,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+  rejectedHeader: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: Colors.ur,
+    marginBottom: 3,
+    fontFamily: FontFamily.sansBold,
+  },
+  rejectedBody: {
+    fontSize: 12.5,
+    color: Colors.ur,
+    lineHeight: 18.1,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Actions
+  actionsWrap: {
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 6,
+  },
+  messageBtn: {
+    width: '100%',
+    paddingVertical: 13,
+    paddingHorizontal: 22,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: Colors.bd2,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
-    marginTop: 1,
+    marginBottom: 10,
   },
-  checkboxChecked: { backgroundColor: Colors.fo, borderColor: Colors.fo },
-  checkmark: { color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold },
-  checkText: {
-    flex: 1,
-    fontSize: FontSize.smPlus,
+  messageBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
     color: Colors.tx,
-    lineHeight: FontSize.smPlus * 1.5,
+    fontFamily: FontFamily.sansBold,
   },
-  checkTextDone: { color: Colors.tx3, textDecorationLine: 'line-through' },
-  packingNote: {
-    fontSize: FontSize.sm,
-    color: Colors.fo,
-    fontWeight: FontWeight.semibold,
-    textAlign: 'right',
-  },
-
-  pendingBanner: {
-    borderColor: Colors.gdl,
-    backgroundColor: Colors.gdl,
-    gap: 6,
-  },
-  pendingTitle: { fontSize: FontSize.smPlus, fontWeight: FontWeight.bold, color: Colors.gd },
-  pendingBody: { fontSize: FontSize.smPlus, color: Colors.tx2, lineHeight: FontSize.smPlus * 1.6 },
-
-  rejectedBanner: {
-    borderColor: Colors.url,
-    backgroundColor: Colors.url,
-    gap: 6,
-  },
-  rejectedTitle: { fontSize: FontSize.smPlus, fontWeight: FontWeight.bold, color: Colors.ur },
-  rejectedBody: { fontSize: FontSize.smPlus, color: Colors.tx, lineHeight: FontSize.smPlus * 1.6 },
-
   withdrawBtn: {
-    borderWidth: 1.5,
-    borderColor: Colors.ur,
-    borderRadius: Radius.md,
+    width: '100%',
     paddingVertical: 13,
+    borderRadius: 13,
+    borderWidth: 1.5,
+    borderColor: WITHDRAW_BORDER,
+    backgroundColor: 'transparent',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  withdrawBtnText: { fontSize: FontSize.smPlus, fontWeight: FontWeight.bold, color: Colors.ur },
+  withdrawBtnText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: REJECTED_SOFT,
+    fontFamily: FontFamily.sansBold,
+  },
+
+  // Confirm panel
+  confirmPanel: {
+    padding: 12,
+    borderRadius: 13,
+    backgroundColor: WITHDRAW_BG,
+    borderWidth: 1.5,
+    borderColor: WITHDRAW_BORDER,
+  },
+  confirmBody: {
+    fontSize: 12.5,
+    color: WITHDRAW_BODY,
+    marginBottom: 10,
+    lineHeight: 17.5,
+    fontFamily: FontFamily.sansRegular,
+  },
+  confirmBtnRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.bd,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelBtnText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: Colors.tx2,
+    fontFamily: FontFamily.sansBold,
+  },
+  confirmBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: REJECTED_SOFT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmBtnText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: Colors.white,
+    fontFamily: FontFamily.sansBold,
+  },
+
+  // Withdrawn success state
+  withdrawnWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 28,
+    backgroundColor: Colors.cr,
+  },
+  withdrawnEmoji: { fontSize: 60, marginBottom: 16 },
+  withdrawnTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: SV_ACCENT,
+    marginBottom: 8,
+    textAlign: 'center',
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  withdrawnBody: {
+    fontSize: 13,
+    color: Colors.tx2,
+    lineHeight: 20.15,
+    marginBottom: 24,
+    maxWidth: 280,
+    textAlign: 'center',
+    fontFamily: FontFamily.sansRegular,
+  },
+  withdrawnCta: {
+    paddingVertical: 15,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  withdrawnCtaText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.white,
+    fontFamily: FontFamily.sansBold,
+  },
 });
