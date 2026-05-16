@@ -1,471 +1,411 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Routes, routeTo } from '@/routes';
-import { useTranslation } from 'react-i18next';
-import { Colors } from '@/theme/colors';
-import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
-import { Shadows } from '@/theme/shadows';
-import { SectionHeader } from '@/components/layout/SectionHeader';
-import { Chip } from '@/components/ui/Badge';
-import { courses as coursesData } from '@/data';
+/**
+ * Admin Calendar — implements `specs/26-admin-calendar.md`.
+ *
+ * Prototype-faithful port of `app.html:2430–2484` (`AdminCal`).
+ */
 
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
+import React, { useState } from 'react';
+import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+
+import { Routes } from '@/routes';
+import { Colors } from '@/theme/colors';
+import { FontFamily } from '@/theme/typography';
+
+interface Event {
+  day: number;
+  len: number;
+  center: string;
+  type: string;
+  teacher: string;
+  color: string;
+}
+
+const EVENTS: Event[] = [
+  {
+    day: 7,
+    len: 11,
+    center: 'Dhamma Shringa 🇳🇵',
+    type: '10-Day',
+    teacher: 'B. Ananda',
+    color: Colors.fo,
+  },
+  {
+    day: 15,
+    len: 11,
+    center: 'Dhamma Pokhara 🇳🇵',
+    type: '10-Day',
+    teacher: 'K. Gurung',
+    color: Colors.sf,
+  },
+  {
+    day: 3,
+    len: 11,
+    center: 'Dhamma Adhara 🇳🇵',
+    type: '10-Day',
+    teacher: 'A. Mehta',
+    color: Colors.bl,
+  },
+  {
+    day: 20,
+    len: 21,
+    center: 'Dhamma Shringa 🇳🇵',
+    type: '20-Day',
+    teacher: 'G. Thapa',
+    color: Colors.sfd,
+  },
 ];
 
-const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+const LEGEND = [
+  { color: Colors.fo, label: '10-Day' },
+  { color: Colors.bl, label: "Children's" },
+  { color: Colors.sf, label: 'Satipatthana' },
+  { color: Colors.ur, label: 'Unscheduled' },
+];
 
-// Color per course type
-const TYPE_COLOR: Record<string, string> = {
-  '10-Day': Colors.sf, // saffron
-  '20-Day': '#2A7A3A', // deeper green
-  '30-Day': '#166534', // forest
-  '45-Day': '#0891b2', // teal
-  '60-Day': '#0e7490', // dark teal
-  '3-Day': Colors.fo, // green
-  '1-Day': Colors.gd, // gold
-  'Satipatthana Sutta': '#7c3aed', // purple
-  "Children's Anapana": '#f59e0b', // amber
-  'Teen Course': '#d97706', // orange-amber
-  Executive: '#475569', // slate
-};
-
-function typeColor(type: string): string {
-  return TYPE_COLOR[type] ?? Colors.tx3;
+function eventIcon(type: string): string {
+  if (type === '10-Day') return '🪷';
+  if (type.includes('Child')) return '👦';
+  return '🧘';
 }
 
-interface CalendarCourse {
-  id: number;
-  type: string;
-  center: string;
-  dates: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-}
+const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 
-export default function AdminCalendar() {
+export default function AdminCalendarScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const [mo, setMo] = useState(6); // July
 
-  const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth()); // 0-indexed
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
-
-  const courses = coursesData as CalendarCourse[];
-
-  // Which days in the current month have courses?
-  const dayMap = useMemo(() => {
-    const map: Record<number, CalendarCourse[]> = {};
-    courses.forEach((c) => {
-      const start = new Date(c.startDate);
-      const end = new Date(c.endDate);
-      // Mark every day from start to end that falls in current month/year
-      const cur = new Date(start);
-      while (cur <= end) {
-        if (cur.getFullYear() === year && cur.getMonth() === month) {
-          const d = cur.getDate();
-          if (!map[d]) map[d] = [];
-          // Only add once per course per start day to avoid duplicates in list
-          if (!map[d].find((x) => x.id === c.id)) map[d].push(c);
-        }
-        cur.setDate(cur.getDate() + 1);
-      }
-    });
-    return map;
-  }, [courses, year, month]);
-
-  // Calendar grid
-  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells: (number | null)[] = [
-    ...Array(firstDay).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
-  // Pad to full weeks
-  while (cells.length % 7 !== 0) cells.push(null);
-
-  const prevMonth = () => {
-    if (month === 0) {
-      setYear((y) => y - 1);
-      setMonth(11);
-    } else setMonth((m) => m - 1);
-    setSelectedDay(null);
-  };
-  const nextMonth = () => {
-    if (month === 11) {
-      setYear((y) => y + 1);
-      setMonth(0);
-    } else setMonth((m) => m + 1);
-    setSelectedDay(null);
-  };
-
-  // Courses to show in the list below: either for selected day or all this month
-  const listedCourses = useMemo(() => {
-    if (selectedDay !== null) {
-      return dayMap[selectedDay] ?? [];
-    }
-    // Unique courses spanning this month
-    const seen = new Set<number>();
-    const result: CalendarCourse[] = [];
-    Object.values(dayMap)
-      .flat()
-      .forEach((c) => {
-        if (!seen.has(c.id)) {
-          seen.add(c.id);
-          result.push(c);
-        }
-      });
-    return result.sort((a, b) => a.startDate.localeCompare(b.startDate));
-  }, [dayMap, selectedDay]);
-
-  const isToday = (d: number) =>
-    d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+  const monthLabel = t(`admin.calendar.months.${mo}`);
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.cr }}>
-      <SectionHeader title={t('admin.calendar.title')} style={styles.header} />
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {/* Month nav */}
-        <View style={styles.navRow}>
-          <TouchableOpacity onPress={prevMonth} style={styles.navBtn} activeOpacity={0.7}>
-            <Text style={styles.navArrow}>‹</Text>
-          </TouchableOpacity>
-          <Text style={styles.monthLabel}>
-            {MONTHS[month]} {year}
-          </Text>
-          <TouchableOpacity onPress={nextMonth} style={styles.navBtn} activeOpacity={0.7}>
-            <Text style={styles.navArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Calendar card */}
-        <View style={styles.calCard}>
-          {/* Weekday headers */}
-          <View style={styles.weekRow}>
-            {WEEKDAYS.map((d) => (
-              <Text key={d} style={styles.weekday}>
-                {d}
-              </Text>
-            ))}
-          </View>
-
-          {/* Day grid */}
-          {Array.from({ length: cells.length / 7 }, (_, rowIdx) => (
-            <View key={rowIdx} style={styles.weekRow}>
-              {cells.slice(rowIdx * 7, rowIdx * 7 + 7).map((day, colIdx) => {
-                const hasCourses = day !== null && !!dayMap[day]?.length;
-                const isSelected = day !== null && day === selectedDay;
-                const dots = day !== null ? (dayMap[day] ?? []).slice(0, 3) : [];
-
-                return (
-                  <TouchableOpacity
-                    key={colIdx}
-                    style={[
-                      styles.dayCell,
-                      isSelected && styles.dayCellSelected,
-                      isToday(day!) && !isSelected && styles.dayCellToday,
-                    ]}
-                    onPress={() => day !== null && setSelectedDay(isSelected ? null : day)}
-                    activeOpacity={day !== null ? 0.7 : 1}
-                    disabled={day === null}
-                  >
-                    <Text
-                      style={[
-                        styles.dayNum,
-                        isSelected && styles.dayNumSelected,
-                        isToday(day!) && !isSelected && styles.dayNumToday,
-                        day === null && { opacity: 0 },
-                      ]}
-                    >
-                      {day ?? ''}
-                    </Text>
-                    {hasCourses && (
-                      <View style={styles.dotsRow}>
-                        {dots.map((c, i) => (
-                          <View
-                            key={i}
-                            style={[styles.dot, { backgroundColor: typeColor(c.type) }]}
-                          />
-                        ))}
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          ))}
-        </View>
-
-        {/* Legend */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.legend}
-        >
-          {Object.entries(TYPE_COLOR).map(([type, color]) => (
-            <View key={type} style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: color }]} />
-              <Text style={styles.legendLabel}>{type}</Text>
-            </View>
-          ))}
-        </ScrollView>
-
-        {/* Course list */}
-        <SectionHeader
-          title={
-            selectedDay !== null
-              ? `${MONTHS[month]} ${selectedDay}`
-              : `All courses — ${MONTHS[month]}`
-          }
-          action={selectedDay !== null ? 'Clear' : undefined}
-          onAction={() => setSelectedDay(null)}
-        />
-
-        {listedCourses.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>
-              No courses this {selectedDay !== null ? 'day' : 'month'}
-            </Text>
-          </View>
-        ) : (
-          listedCourses.map((course) => (
-            <View
-              key={course.id}
-              style={[styles.courseCard, { borderLeftColor: typeColor(course.type) }]}
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="dark-content" />
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ─── Header (white) ──────────────────────────────────── */}
+        <View style={[s.header, { paddingTop: Math.max(56, insets.top + 14) }]}>
+          <Text style={s.title}>{t('admin.calendar.title')}</Text>
+          <View style={s.monthNavRow}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              disabled={mo === 0}
+              onPress={() => setMo((m) => Math.max(0, m - 1))}
+              style={[s.navBtn, mo === 0 && { opacity: 0.5 }]}
             >
-              <View style={styles.courseTop}>
-                <View style={styles.courseInfo}>
-                  <Text style={[styles.courseType, { color: typeColor(course.type) }]}>
-                    {course.type}
-                  </Text>
-                  <Text style={styles.courseCenter}>{course.center}</Text>
-                  <Text style={styles.courseDates}>📅 {course.dates}</Text>
-                </View>
-                <View style={styles.courseRight}>
-                  <Chip
-                    label={
-                      course.status === 'open'
-                        ? 'Open'
-                        : course.status === 'waitlist'
-                          ? 'Waitlist'
-                          : course.status === 'not_yet_open'
-                            ? 'Upcoming'
-                            : 'Closed'
-                    }
-                    variant={
-                      course.status === 'open'
-                        ? 'orange'
-                        : course.status === 'waitlist'
-                          ? 'gold'
-                          : course.status === 'not_yet_open'
-                            ? 'gray'
-                            : 'red'
-                    }
+              <Text style={s.navBtnText}>‹</Text>
+            </TouchableOpacity>
+            <Text style={s.monthLabel}>{monthLabel} 2026</Text>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              disabled={mo === 11}
+              onPress={() => setMo((m) => Math.min(11, m + 1))}
+              style={[s.navBtn, mo === 11 && { opacity: 0.5 }]}
+            >
+              <Text style={s.navBtnText}>›</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ─── Legend ──────────────────────────────────────────── */}
+        <View style={s.legendRow}>
+          {LEGEND.map((l) => (
+            <View key={l.label} style={s.legendItem}>
+              <View style={[s.legendSwatch, { backgroundColor: l.color }]} />
+              <Text style={s.legendLabel}>{l.label}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* ─── Day strip card ──────────────────────────────────── */}
+        <View style={s.stripCard}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.stripInner}
+          >
+            {DAYS.map((d) => {
+              const ev = EVENTS.find((e) => d >= e.day && d < e.day + e.len);
+              return (
+                <View key={d} style={s.dayCol}>
+                  <Text style={s.dayNum}>{d}</Text>
+                  <View
+                    style={[
+                      s.dayCell,
+                      ev
+                        ? { backgroundColor: ev.color, opacity: 1 }
+                        : {
+                            backgroundColor: Colors.cr3,
+                            borderWidth: 1,
+                            borderColor: Colors.bd,
+                            opacity: 0.6,
+                          },
+                    ]}
                   />
-                  <TouchableOpacity
-                    onPress={() => router.push(Routes.adminSchedule)}
-                    style={styles.scheduleBtn}
-                  >
-                    <Text style={styles.scheduleBtnText}>Assign →</Text>
-                  </TouchableOpacity>
                 </View>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* ─── Section header ──────────────────────────────────── */}
+        <Text style={[s.sph, { marginTop: 14 }]}>
+          {t('admin.calendar.courses_in_month', {
+            count: EVENTS.length,
+            month: monthLabel,
+          })}
+        </Text>
+
+        {/* ─── Event cards ─────────────────────────────────────── */}
+        {EVENTS.map((e, i) => (
+          <View key={i} style={[s.card, { borderLeftWidth: 4, borderLeftColor: e.color }]}>
+            <View style={s.eventRow}>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text style={s.eventCenter}>{e.center}</Text>
+                <Text style={s.eventMeta}>
+                  {e.type} · Day {e.day}–{e.day + e.len - 1}
+                </Text>
+                <Text style={s.eventTeacher}>👤 {e.teacher}</Text>
+              </View>
+              <View style={[s.eventIconTile, { backgroundColor: e.color }]}>
+                <Text style={s.eventIconText}>{eventIcon(e.type)}</Text>
               </View>
             </View>
-          ))
-        )}
+          </View>
+        ))}
 
-        <View style={{ height: 32 }} />
+        {/* ─── Unscheduled banner ─────────────────────────────── */}
+        <View style={s.unscheduledCard}>
+          <Text style={s.unscheduledTitle}>{t('admin.calendar.unscheduled_title')}</Text>
+          <Text style={s.unscheduledBody}>Dhamma Shringa — 30-Day (Dec 1–30) · No AT assigned</Text>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push(Routes.adminSchedule)}
+            style={s.runAutoBtn}
+          >
+            <Text style={s.runAutoBtnText}>{t('admin.calendar.run_auto_schedule')}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ height: 20 }} />
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  header: { paddingTop: 20 },
-  scroll: { paddingBottom: 24 },
+const s = StyleSheet.create({
+  flex: { flex: 1 },
 
-  navRow: {
+  // Header
+  header: {
+    backgroundColor: Colors.white,
+    paddingHorizontal: 18,
+    paddingBottom: 14,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: Colors.tx,
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  monthNavRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Layout.horizontalPad,
-    paddingVertical: Spacing.sm,
+    gap: 11,
+    marginTop: 10,
   },
   navBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.white,
+    paddingHorizontal: 15,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: Colors.bd2,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    ...Shadows.card,
+    minWidth: 40,
   },
-  navArrow: {
-    fontSize: 22,
+  navBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
     color: Colors.tx,
-    lineHeight: 26,
+    fontFamily: FontFamily.sansBold,
   },
   monthLabel: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx,
-  },
-
-  calCard: {
-    backgroundColor: Colors.white,
-    marginHorizontal: Layout.horizontalPad,
-    borderRadius: Radius.lg,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    ...Shadows.card,
-    gap: 4,
-  },
-  weekRow: {
-    flexDirection: 'row',
-  },
-  weekday: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 10,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx3,
-    paddingBottom: 6,
-    textTransform: 'uppercase',
-  },
-  dayCell: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 5,
-    borderRadius: Radius.sm,
-    gap: 2,
-    minHeight: 44,
-  },
-  dayCellSelected: {
-    backgroundColor: Colors.bl,
-  },
-  dayCellToday: {
-    backgroundColor: Colors.bll,
-  },
-  dayNum: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.medium,
+    fontSize: 16,
+    fontWeight: '700',
     color: Colors.tx,
-  },
-  dayNumSelected: {
-    color: Colors.white,
-    fontWeight: FontWeight.bold,
-  },
-  dayNumToday: {
-    color: Colors.bl,
-    fontWeight: FontWeight.bold,
-  },
-  dotsRow: {
-    flexDirection: 'row',
-    gap: 2,
-    alignItems: 'center',
-  },
-  dot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
+    fontFamily: FontFamily.sansBold,
   },
 
-  legend: {
-    paddingHorizontal: Layout.horizontalPad,
-    paddingVertical: Spacing.sm,
-    gap: 10,
+  // Legend
+  legendRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 9,
+    paddingHorizontal: 18,
+    paddingTop: 6,
+    paddingBottom: 4,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  legendSwatch: {
+    width: 10,
+    height: 10,
+    borderRadius: 2,
   },
   legendLabel: {
+    fontSize: 10.5,
+    color: Colors.tx2,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Day strip card
+  stripCard: {
+    marginTop: 8,
+    marginHorizontal: 18,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+  stripInner: {
+    gap: 3,
+    paddingBottom: 4,
+  },
+  dayCol: {
+    alignItems: 'center',
+    gap: 3,
+    minWidth: 22,
+  },
+  dayNum: {
     fontSize: 10,
     color: Colors.tx3,
-    fontWeight: FontWeight.medium,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
+  },
+  dayCell: {
+    width: 22,
+    height: 22,
+    borderRadius: 5,
   },
 
-  empty: {
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyText: {
-    fontSize: FontSize.md,
-    color: Colors.tx3,
+  // sph
+  sph: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.tx2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.84,
+    marginHorizontal: 18,
+    marginBottom: 9,
+    fontFamily: FontFamily.sansBold,
   },
 
-  courseCard: {
+  // Event card
+  card: {
     backgroundColor: Colors.white,
-    marginHorizontal: Layout.horizontalPad,
-    marginVertical: 4,
-    borderRadius: Radius.lg,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    borderLeftWidth: 4,
-    ...Shadows.card,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 11,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
   },
-  courseTop: {
+  eventRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: 8,
   },
-  courseInfo: { flex: 1, gap: 3 },
-  courseType: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  courseCenter: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
+  eventCenter: {
+    fontSize: 14,
+    fontWeight: '700',
     color: Colors.tx,
+    fontFamily: FontFamily.sansBold,
   },
-  courseDates: {
-    fontSize: FontSize.sm,
+  eventMeta: {
+    fontSize: 12.5,
+    color: Colors.tx2,
+    fontFamily: FontFamily.sansRegular,
+  },
+  eventTeacher: {
+    fontSize: 11.5,
     color: Colors.tx3,
+    marginTop: 2,
+    fontFamily: FontFamily.sansRegular,
   },
-  courseRight: {
-    alignItems: 'flex-end',
-    gap: 8,
+  eventIconTile: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
     flexShrink: 0,
   },
-  scheduleBtn: {
-    backgroundColor: Colors.bll,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: Radius.full,
+  eventIconText: {
+    fontSize: 19,
+    color: Colors.white,
   },
-  scheduleBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.bl,
+
+  // Unscheduled banner
+  unscheduledCard: {
+    backgroundColor: Colors.url,
+    borderWidth: 1,
+    borderColor: Colors.urd,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 12,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+  unscheduledTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.ur,
+    marginBottom: 4,
+    fontFamily: FontFamily.sansBold,
+  },
+  unscheduledBody: {
+    fontSize: 12.5,
+    color: Colors.ur,
+    fontFamily: FontFamily.sansRegular,
+  },
+  runAutoBtn: {
+    backgroundColor: Colors.url,
+    borderWidth: 1.5,
+    borderColor: Colors.urd,
+    paddingHorizontal: 15,
+    paddingVertical: 7,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  runAutoBtnText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: Colors.ur,
+    fontFamily: FontFamily.sansBold,
   },
 });

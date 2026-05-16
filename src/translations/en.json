@@ -536,7 +536,24 @@
       "draft_assignments": "Draft Assignments"
     },
     "calendar": {
-      "title": "Course Calendar"
+      "title": "Course Calendar",
+      "courses_in_month": "{{count}} courses in {{month}}",
+      "unscheduled_title": "⚠ Unscheduled",
+      "run_auto_schedule": "⚡ Run Auto-Schedule",
+      "months": {
+        "0": "Jan",
+        "1": "Feb",
+        "2": "Mar",
+        "3": "Apr",
+        "4": "May",
+        "5": "Jun",
+        "6": "Jul",
+        "7": "Aug",
+        "8": "Sep",
+        "9": "Oct",
+        "10": "Nov",
+        "11": "Dec"
+      }
     },
     "notifications": {
       "title": "Notifications",
