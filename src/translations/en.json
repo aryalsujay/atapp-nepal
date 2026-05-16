@@ -560,6 +560,32 @@
       "sent_to_teachers": "Sent to teachers",
       "email_preview": "Email Preview",
       "compose": "✍️ Compose Notification"
+    },
+    "serverInbox": {
+      "title": "Server Applications",
+      "pending_lbl": "pending",
+      "reviewed_lbl": "reviewed",
+      "filter_all": "All",
+      "no_pending": "No pending applications. Sadhu! 🙏",
+      "back_inbox": "Back to Inbox",
+      "courses_lbl": "courses",
+      "courses_served": "courses served",
+      "last_lbl": "last",
+      "applying_for": "Applying for",
+      "applied_lbl": "Applied",
+      "duration_lbl": "Duration",
+      "full_course": "Full course",
+      "partial_lbl": "Partial",
+      "their_history": "Their Service History",
+      "history_courses": "Courses",
+      "history_last": "Last",
+      "history_gender": "Gender",
+      "history_footnote": "Full history available in server profile",
+      "decision": "Decision",
+      "reason_placeholder": "Reason (sent to applicant)",
+      "approve": "✓ Approve",
+      "reject": "✗ Reject",
+      "view_applicant": "View Applicant →"
     }
   },
   "server": {

@@ -1,414 +1,779 @@
-import React, { useState } from 'react';
+/**
+ * Admin Server Inbox — implements `specs/29-admin-server-inbox.md`.
+ *
+ * Prototype-faithful port of `app.html:3492–3646` (`AdminServerInbox`).
+ */
+
+import React, { useMemo, useState } from 'react';
 import {
-  View,
-  Text,
   ScrollView,
-  TouchableOpacity,
-  TextInput,
+  StatusBar,
   StyleSheet,
-  Alert,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useToast } from '@/components/ui/Toast';
-import { Colors } from '@/theme/colors';
-import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
-import { Shadows } from '@/theme/shadows';
-import { SectionHeader } from '@/components/layout/SectionHeader';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import Svg, { Path } from 'react-native-svg';
+
+import { Routes } from '@/routes';
+import { Colors, Gradients, GradientDirection } from '@/theme/colors';
+import { FontFamily } from '@/theme/typography';
+import { DashedDivider } from '@/components/ui/DashedDivider';
 import { SERVICE_AREAS } from '@/data/serviceAreas';
+import { serverApplicants, type ServerApplicant } from '@/data';
 
-type AppStatus = 'pending' | 'approved' | 'rejected';
+type FilterMode = 'all' | 'course';
+type Decision = 'approved' | 'rejected';
 
-interface ServerApp {
-  id: number;
-  name: string;
-  email: string;
-  gender: 'M' | 'F';
-  coursesServed: number;
-  courseId: number;
-  center: string;
-  dates: string;
-  areas: string[];
-  partial: boolean;
-  days: string | null;
-  appliedOn: string;
-  status: AppStatus;
-  note: string;
+const AVATAR_BG_F = '#F3DDF0';
+const AVATAR_BG_M = '#D6E5F0';
+const REJECT_TEXT = '#B85040';
+const REJECT_BORDER = '#E8B0A0';
+
+function simplifyCourseLabel(c: string): string {
+  return c.replace('Dhamma ', '').replace(' — ', ' · ');
 }
 
-const APPS: ServerApp[] = [
-  {
-    id: 1,
-    name: 'Priya Thapa',
-    email: 'priya@dhamma.np',
-    gender: 'F',
-    coursesServed: 12,
-    courseId: 1,
-    center: 'Dharma Shringa',
-    dates: 'Jul 7–18',
-    areas: ['kitchen', 'dining'],
-    partial: false,
-    days: null,
-    appliedOn: 'Apr 20',
-    status: 'pending',
-    note: '',
-  },
-  {
-    id: 2,
-    name: 'Bikram KC',
-    email: 'bikram.kc@gmail.com',
-    gender: 'M',
-    coursesServed: 5,
-    courseId: 2,
-    center: 'Dhamma Pokhara',
-    dates: 'Jul 15–26',
-    areas: ['compound'],
-    partial: false,
-    days: null,
-    appliedOn: 'Apr 21',
-    status: 'pending',
-    note: '',
-  },
-  {
-    id: 3,
-    name: 'Anita Shrestha',
-    email: 'anita.shresta@yahoo.com',
-    gender: 'F',
-    coursesServed: 8,
-    courseId: 1,
-    center: 'Dharma Shringa',
-    dates: 'Jul 7–18',
-    areas: ['dhamma', 'at_assist'],
-    partial: true,
-    days: 'Day 3–8',
-    appliedOn: 'Apr 22',
-    status: 'pending',
-    note: '',
-  },
-  {
-    id: 4,
-    name: 'Ram Bahadur',
-    email: 'ram.bdr@gmail.com',
-    gender: 'M',
-    coursesServed: 3,
-    courseId: 3,
-    center: 'Dhamma Adhara',
-    dates: 'Aug 2–13',
-    areas: ['kitchen'],
-    partial: false,
-    days: null,
-    appliedOn: 'Apr 19',
-    status: 'approved',
-    note: 'Experienced kitchen seva.',
-  },
-];
+export default function AdminServerInboxScreen() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const [filter, setFilter] = useState<FilterMode>('all');
+  const [filterVal, setFilterVal] = useState<string | null>(null);
+  const [sel, setSel] = useState<ServerApplicant | null>(null);
+  const [decisions, setDecisions] = useState<Record<number, Decision>>({});
+  const [reason, setReason] = useState('');
 
-const STATUS_COLOR: Record<AppStatus, { bg: string; text: string }> = {
-  pending: { bg: Colors.gdl, text: Colors.gd },
-  approved: { bg: Colors.fol, text: Colors.fo },
-  rejected: { bg: Colors.url, text: Colors.ur },
-};
+  const apps = useMemo(
+    () =>
+      serverApplicants.filter((a) => {
+        if (decisions[a.id]) return false;
+        if (filter === 'course' && filterVal && a.course !== filterVal) return false;
+        return true;
+      }),
+    [decisions, filter, filterVal],
+  );
 
-export default function AdminServerInbox() {
-  const toast = useToast();
-  const [filter, setFilter] = useState<'all' | AppStatus>('all');
-  const [apps, setApps] = useState<ServerApp[]>(APPS);
-  const [expanded, setExpanded] = useState<number | null>(null);
-  const [decisionNote, setDecisionNote] = useState('');
+  const reviewedCount = Object.keys(decisions).length;
 
-  const filtered = filter === 'all' ? apps : apps.filter((a) => a.status === filter);
+  const courseOpts = useMemo(() => Array.from(new Set(serverApplicants.map((a) => a.course))), []);
 
-  const handleDecision = (id: number, decision: AppStatus) => {
-    setApps((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status: decision, note: decisionNote } : a)),
-    );
-    setExpanded(null);
-    setDecisionNote('');
-    if (decision === 'approved') {
-      toast.success(`Application approved. Notification will be sent.`, 'Approved');
-    } else {
-      toast.info(`Application rejected. Notification will be sent.`, 'Rejected');
-    }
+  const decideAndClose = (id: number, d: Decision) => {
+    setDecisions((prev) => ({ ...prev, [id]: d }));
+    setSel(null);
+    setReason('');
   };
 
-  const pending = apps.filter((a) => a.status === 'pending').length;
+  // ─── Detail view ───────────────────────────────────────────────
+  if (sel) {
+    const a = sel;
+    const avatarBg = a.g === 'F' ? AVATAR_BG_F : AVATAR_BG_M;
+    const durationText = a.partial
+      ? `${t('admin.serverInbox.partial_lbl')} · ${a.days ?? ''}`
+      : t('admin.serverInbox.full_course');
 
-  return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: Colors.cr }}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 110 }}
-    >
-      <SectionHeader title="Server Inbox" style={styles.header} />
-      <Text style={styles.subtitle}>
-        {pending} pending · {apps.length} total
-      </Text>
-
-      {/* Filter tabs */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterScroll}
-      >
-        {(['all', 'pending', 'approved', 'rejected'] as const).map((f) => (
-          <TouchableOpacity
-            key={f}
-            onPress={() => setFilter(f)}
-            style={[styles.filterChip, filter === f && styles.filterChipActive]}
-          >
-            <Text style={[styles.filterChipText, filter === f && styles.filterChipTextActive]}>
-              {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      <View style={{ paddingHorizontal: Layout.horizontalPad, gap: 10, marginTop: Spacing.sm }}>
-        {filtered.length === 0 && <Text style={styles.empty}>No {filter} applications.</Text>}
-
-        {filtered.map((app) => {
-          const isExp = expanded === app.id;
-          const sc = STATUS_COLOR[app.status];
-
-          return (
+    return (
+      <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+        <StatusBar barStyle="dark-content" />
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={[s.header, { paddingTop: Math.max(56, insets.top + 14) }]}>
             <TouchableOpacity
-              key={app.id}
-              onPress={() => setExpanded(isExp ? null : app.id)}
-              activeOpacity={0.88}
-              style={styles.card}
+              onPress={() => {
+                setSel(null);
+                setReason('');
+              }}
+              activeOpacity={0.7}
+              style={s.backRow}
+              hitSlop={8}
             >
-              {/* Header row */}
-              <View style={styles.cardRow}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{app.name[0]}</Text>
-                </View>
-                <View style={styles.cardBody}>
-                  <View style={styles.nameRow}>
-                    <Text style={styles.name}>{app.name}</Text>
-                    <View style={[styles.statusPill, { backgroundColor: sc.bg }]}>
-                      <Text style={[styles.statusText, { color: sc.text }]}>{app.status}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.meta}>
-                    {app.center} · {app.dates}
-                  </Text>
-                  <View style={styles.areaRow}>
-                    {app.areas.map((aId) => {
-                      const area = SERVICE_AREAS.find((a) => a.id === aId);
-                      return area ? (
-                        <View
-                          key={aId}
-                          style={[styles.areaChip, { backgroundColor: area.color + '22' }]}
-                        >
-                          <Text style={[styles.areaChipText, { color: area.color }]}>
-                            {area.label}
-                          </Text>
-                        </View>
-                      ) : null;
-                    })}
-                    {app.partial && (
-                      <View style={styles.partialChip}>
-                        <Text style={styles.partialChipText}>{app.days}</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-                <Text style={styles.chevron}>{isExp ? '▲' : '▼'}</Text>
-              </View>
-
-              {/* Expanded */}
-              {isExp && (
-                <View style={styles.expanded}>
-                  <View style={styles.detailGrid}>
-                    <View style={styles.detailItem}>
-                      <Text style={styles.detailLabel}>Gender</Text>
-                      <Text style={styles.detailValue}>
-                        {app.gender === 'M' ? 'Male' : 'Female'}
-                      </Text>
-                    </View>
-                    <View style={styles.detailItem}>
-                      <Text style={styles.detailLabel}>Courses Served</Text>
-                      <Text style={styles.detailValue}>{app.coursesServed}</Text>
-                    </View>
-                    <View style={styles.detailItem}>
-                      <Text style={styles.detailLabel}>Applied On</Text>
-                      <Text style={styles.detailValue}>{app.appliedOn}</Text>
-                    </View>
-                    <View style={styles.detailItem}>
-                      <Text style={styles.detailLabel}>Full / Partial</Text>
-                      <Text style={styles.detailValue}>
-                        {app.partial ? `Partial (${app.days})` : 'Full course'}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {app.note ? (
-                    <View style={styles.noteBox}>
-                      <Text style={styles.noteLabel}>Decision Note</Text>
-                      <Text style={styles.noteText}>{app.note}</Text>
-                    </View>
-                  ) : null}
-
-                  {app.status === 'pending' && (
-                    <>
-                      <TextInput
-                        value={decisionNote}
-                        onChangeText={setDecisionNote}
-                        placeholder="Add a note (optional)"
-                        placeholderTextColor={Colors.tx3}
-                        style={styles.noteInput}
-                        multiline
-                        numberOfLines={2}
-                      />
-                      <View style={styles.decisionRow}>
-                        <TouchableOpacity
-                          style={[styles.decisionBtn, { backgroundColor: Colors.url }]}
-                          onPress={() => handleDecision(app.id, 'rejected')}
-                        >
-                          <Text style={[styles.decisionBtnText, { color: Colors.ur }]}>Reject</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.decisionBtn, { backgroundColor: Colors.fol }]}
-                          onPress={() => handleDecision(app.id, 'approved')}
-                        >
-                          <Text style={[styles.decisionBtnText, { color: Colors.fo }]}>
-                            Approve
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </>
-                  )}
-                </View>
-              )}
+              <BackArrow />
+              <Text style={s.backText}>{t('admin.serverInbox.back_inbox')}</Text>
             </TouchableOpacity>
-          );
-        })}
+
+            <View style={s.detailIdentity}>
+              <View style={[s.detailAvatar, { backgroundColor: avatarBg }]}>
+                <Text style={s.detailAvatarText}>{a.g === 'F' ? '👩' : '👨'}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.detailName}>{a.name}</Text>
+                <Text style={s.detailMeta}>
+                  {a.courses} {t('admin.serverInbox.courses_served')} ·{' '}
+                  {t('admin.serverInbox.last_lbl')}: {a.last}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={{ height: 8, backgroundColor: Colors.cr }} />
+
+          {/* Applying for */}
+          <Text style={s.sph}>📋 {t('admin.serverInbox.applying_for')}</Text>
+          <View style={[s.sectionCard, { borderLeftWidth: 4, borderLeftColor: Colors.bl }]}>
+            <Text style={s.courseTitle}>{a.course}</Text>
+            <Text style={s.appliedRow}>
+              {t('admin.serverInbox.applied_lbl')}: {a.applied}
+            </Text>
+            <View style={s.areaChipsRow}>
+              {a.areas.map((id) => {
+                const sa = SERVICE_AREAS.find((x) => x.id === id);
+                if (!sa) return null;
+                return (
+                  <View key={id} style={s.areaChipBig}>
+                    <Text style={s.areaChipBigText}>
+                      {sa.emoji} {sa.label}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+            <Text style={s.durationLine}>
+              {t('admin.serverInbox.duration_lbl')}:{' '}
+              <Text style={s.durationValue}>{durationText}</Text>
+            </Text>
+            <DashedDivider marginVertical={8} />
+            <Text style={s.noteText}>&ldquo;{a.note}&rdquo;</Text>
+          </View>
+
+          {/* Their history */}
+          <Text style={s.sph}>📖 {t('admin.serverInbox.their_history')}</Text>
+          <View style={s.sectionCard}>
+            <View style={s.statTilesRow}>
+              <StatTile n={String(a.courses)} label={t('admin.serverInbox.history_courses')} />
+              <StatTile n={a.last} label={t('admin.serverInbox.history_last')} />
+              <StatTile n={a.g === 'F' ? '♀' : '♂'} label={t('admin.serverInbox.history_gender')} />
+            </View>
+            <Text style={s.historyFootnote}>{t('admin.serverInbox.history_footnote')}</Text>
+          </View>
+
+          {/* Decision */}
+          <Text style={s.sph}>⚖️ {t('admin.serverInbox.decision')}</Text>
+          <View style={{ paddingHorizontal: 18 }}>
+            <TextInput
+              value={reason}
+              onChangeText={setReason}
+              multiline
+              textAlignVertical="top"
+              placeholder={t('admin.serverInbox.reason_placeholder')}
+              placeholderTextColor={Colors.tx3}
+              style={s.reasonInput}
+            />
+            <View style={s.detailDecisionRow}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => decideAndClose(a.id, 'rejected')}
+                style={[s.detailRejectBtn, { flex: 1 }]}
+              >
+                <Text style={s.detailRejectBtnText}>{t('admin.serverInbox.reject')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => decideAndClose(a.id, 'approved')}
+                style={{ flex: 1 }}
+              >
+                <LinearGradient
+                  colors={Gradients.forestCta}
+                  start={GradientDirection.button.start}
+                  end={GradientDirection.button.end}
+                  style={s.detailApproveBtn}
+                >
+                  <Text style={s.detailApproveBtnText}>{t('admin.serverInbox.approve')}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={{ height: 20 }} />
+        </ScrollView>
       </View>
-    </ScrollView>
+    );
+  }
+
+  // ─── List view ─────────────────────────────────────────────────
+  return (
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="dark-content" />
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View style={[s.header, { paddingTop: Math.max(56, insets.top + 14) }]}>
+          <TouchableOpacity
+            onPress={() => router.push(Routes.adminServerBoard)}
+            activeOpacity={0.7}
+            style={s.backRow}
+            hitSlop={8}
+          >
+            <BackArrow />
+            <Text style={s.backText}>{t('common.back')}</Text>
+          </TouchableOpacity>
+          <Text style={s.listTitle}>{t('admin.serverInbox.title')}</Text>
+          <Text style={s.listSubtitle}>
+            {apps.length} {t('admin.serverInbox.pending_lbl')} · {reviewedCount}{' '}
+            {t('admin.serverInbox.reviewed_lbl')}
+          </Text>
+        </View>
+
+        {/* Filter chips (white wrapper continues) */}
+        <View style={s.filterWrap}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.filterChipsContent}
+          >
+            <FilterChip
+              label={t('admin.serverInbox.filter_all')}
+              active={filter === 'all'}
+              onPress={() => {
+                setFilter('all');
+                setFilterVal(null);
+              }}
+            />
+            {courseOpts.map((co) => (
+              <FilterChip
+                key={co}
+                label={simplifyCourseLabel(co)}
+                active={filter === 'course' && filterVal === co}
+                onPress={() => {
+                  setFilter('course');
+                  setFilterVal(co);
+                }}
+              />
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Cream gap */}
+        <View style={{ height: 8, backgroundColor: Colors.cr }} />
+
+        {/* Cards / empty state */}
+        {apps.length === 0 ? (
+          <View style={s.emptyWrap}>
+            <Text style={s.emptyEmoji}>🙏</Text>
+            <Text style={s.emptyText}>{t('admin.serverInbox.no_pending')}</Text>
+          </View>
+        ) : (
+          apps.map((a) => {
+            const avatarBg = a.g === 'F' ? AVATAR_BG_F : AVATAR_BG_M;
+            const durationText = a.partial
+              ? `${t('admin.serverInbox.partial_lbl')} · ${a.days ?? ''}`
+              : t('admin.serverInbox.full_course');
+            return (
+              <TouchableOpacity
+                key={a.id}
+                activeOpacity={0.85}
+                onPress={() => setSel(a)}
+                style={s.card}
+              >
+                <View style={s.cardTopRow}>
+                  <View style={[s.avatar, { backgroundColor: avatarBg }]}>
+                    <Text style={s.avatarText}>{a.g === 'F' ? '👩' : '👨'}</Text>
+                  </View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <View style={s.nameRow}>
+                      <Text style={s.name} numberOfLines={1}>
+                        {a.name}
+                      </Text>
+                      <Text style={s.applied}>{a.applied}</Text>
+                    </View>
+                    <Text style={s.historyLine}>
+                      {a.courses} {t('admin.serverInbox.courses_lbl')} · {a.last}
+                    </Text>
+                    <Text style={s.courseLine}>{a.course}</Text>
+                  </View>
+                </View>
+
+                <View style={s.chipsRow}>
+                  {a.areas.map((id) => {
+                    const sa = SERVICE_AREAS.find((x) => x.id === id);
+                    if (!sa) return null;
+                    return (
+                      <View key={id} style={s.areaChip}>
+                        <Text style={s.areaChipText}>
+                          {sa.emoji} {sa.label}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                  <View style={s.durationChip}>
+                    <Text style={s.durationChipText}>{durationText}</Text>
+                  </View>
+                </View>
+
+                <View style={s.actionsRow}>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => setDecisions((d) => ({ ...d, [a.id]: 'rejected' }))}
+                    style={[s.actionBtn, s.rejectBtn, { flex: 1 }]}
+                  >
+                    <Text numberOfLines={1} style={[s.actionBtnText, { color: REJECT_TEXT }]}>
+                      {t('admin.serverInbox.reject')}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => setDecisions((d) => ({ ...d, [a.id]: 'approved' }))}
+                    style={{ flex: 1, minHeight: 34 }}
+                  >
+                    <LinearGradient
+                      colors={Gradients.forestCta}
+                      start={GradientDirection.button.start}
+                      end={GradientDirection.button.end}
+                      style={[s.actionBtn, { flex: 1 }]}
+                    >
+                      <Text numberOfLines={1} style={[s.actionBtnText, { color: Colors.white }]}>
+                        {t('admin.serverInbox.approve')}
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => setSel(a)}
+                    style={[s.actionBtn, { flex: 1, backgroundColor: Colors.bl }]}
+                  >
+                    <Text numberOfLines={1} style={[s.actionBtnText, { color: Colors.white }]}>
+                      {t('admin.serverInbox.view_applicant')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            );
+          })
+        )}
+
+        <View style={{ height: 20 }} />
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  header: { paddingTop: 20 },
-  subtitle: {
-    fontSize: FontSize.sm,
-    color: Colors.tx2,
-    paddingHorizontal: Layout.horizontalPad,
-    paddingBottom: Spacing.sm,
-  },
-  filterScroll: {
-    paddingHorizontal: Layout.horizontalPad,
-    paddingBottom: Spacing.sm,
-    gap: 8,
-  },
-  filterChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: Radius.full,
+// ─── Sub-components ─────────────────────────────────────────────
+
+function BackArrow() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 18L9 12L15 6"
+        stroke={Colors.bl}
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function FilterChip({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      style={[
+        s.fchip,
+        active
+          ? { backgroundColor: Colors.bl, borderColor: Colors.bl }
+          : { backgroundColor: Colors.white, borderColor: Colors.bd2 },
+      ]}
+    >
+      <Text numberOfLines={1} style={[s.fchipText, { color: active ? Colors.white : Colors.tx2 }]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+function StatTile({ n, label }: { n: string; label: string }) {
+  return (
+    <View style={s.statTile}>
+      <Text style={s.statTileNumber}>{n}</Text>
+      <Text style={s.statTileLabel}>{label}</Text>
+    </View>
+  );
+}
+
+const s = StyleSheet.create({
+  flex: { flex: 1 },
+
+  // Header
+  header: {
     backgroundColor: Colors.white,
+    paddingHorizontal: 18,
+    paddingBottom: 12,
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 6,
+  },
+  backText: {
+    fontSize: 13,
+    color: Colors.bl,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
+  },
+  listTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: Colors.tx,
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  listSubtitle: {
+    fontSize: 13,
+    color: Colors.tx2,
+    marginTop: 2,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Filter
+  filterWrap: {
+    backgroundColor: Colors.white,
+    paddingBottom: 12,
+  },
+  filterChipsContent: {
+    paddingHorizontal: 18,
+    gap: 6,
+  },
+  fchip: {
+    flexShrink: 0,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: Colors.bd,
   },
-  filterChipActive: { backgroundColor: Colors.bl, borderColor: Colors.bl },
-  filterChipText: { fontSize: FontSize.sm, fontWeight: FontWeight.bold, color: Colors.tx2 },
-  filterChipTextActive: { color: Colors.white },
-  empty: {
+  fchipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
+  },
+
+  // Empty state
+  emptyWrap: {
+    paddingVertical: 60,
+    paddingHorizontal: 22,
+    alignItems: 'center',
+  },
+  emptyEmoji: { fontSize: 46, marginBottom: 12 },
+  emptyText: {
+    fontSize: 14,
+    color: Colors.tx2,
+    lineHeight: 21,
     textAlign: 'center',
-    color: Colors.tx3,
-    fontSize: FontSize.smPlus,
-    paddingVertical: Spacing.xl,
+    fontFamily: FontFamily.sansRegular,
   },
+
+  // List card
   card: {
     backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    gap: 10,
-    ...Shadows.card,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 11,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
   },
-  cardRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  cardTopRow: {
+    flexDirection: 'row',
+    gap: 11,
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.bll,
+    width: 42,
+    height: 42,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  avatarText: { fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.bl },
-  cardBody: { flex: 1, gap: 3 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  name: { fontSize: FontSize.smPlus, fontWeight: FontWeight.bold, color: Colors.tx },
-  statusPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full },
-  statusText: { fontSize: FontSize.xs, fontWeight: FontWeight.bold },
-  meta: { fontSize: FontSize.sm, color: Colors.tx2 },
-  areaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 2 },
-  areaChip: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: Radius.full },
-  areaChipText: { fontSize: FontSize.xs, fontWeight: FontWeight.semibold },
-  partialChip: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.gdl,
-  },
-  partialChipText: { fontSize: FontSize.xs, color: Colors.gd, fontWeight: FontWeight.semibold },
-  chevron: { fontSize: 10, color: Colors.tx3, flexShrink: 0, marginTop: 4 },
-
-  expanded: {
-    borderTopWidth: 1,
-    borderTopColor: Colors.bd,
-    paddingTop: Spacing.md,
-    gap: Spacing.sm,
-  },
-  detailGrid: {
+  avatarText: { fontSize: 20 },
+  nameRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 0,
-    backgroundColor: Colors.cr,
-    borderRadius: Radius.md,
-    padding: 12,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 6,
   },
-  detailItem: { width: '50%', paddingVertical: 4 },
-  detailLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.tx3,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  detailValue: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.semibold,
+  name: {
+    fontSize: 14,
+    fontWeight: '700',
     color: Colors.tx,
-    marginTop: 2,
-  },
-
-  noteBox: {
-    backgroundColor: Colors.gdl,
-    borderRadius: Radius.sm,
-    padding: 10,
-    gap: 4,
-  },
-  noteLabel: { fontSize: FontSize.xs, color: Colors.gd, fontWeight: FontWeight.bold },
-  noteText: { fontSize: FontSize.sm, color: Colors.tx },
-
-  noteInput: {
-    backgroundColor: Colors.cr,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    borderRadius: Radius.md,
-    padding: 10,
-    fontSize: FontSize.smPlus,
-    color: Colors.tx,
-    minHeight: 60,
-    textAlignVertical: 'top',
-  },
-  decisionRow: { flexDirection: 'row', gap: 10 },
-  decisionBtn: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: Radius.md,
+    fontFamily: FontFamily.sansBold,
+  },
+  applied: {
+    fontSize: 10.5,
+    color: Colors.tx3,
+    flexShrink: 0,
+    fontFamily: FontFamily.sansRegular,
+  },
+  historyLine: {
+    fontSize: 11.5,
+    color: Colors.tx2,
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
+  },
+  courseLine: {
+    fontSize: 11.5,
+    color: Colors.bl,
+    fontWeight: '600',
+    marginTop: 3,
+    fontFamily: FontFamily.sansSemiBold,
+  },
+
+  // Chips row
+  chipsRow: {
+    flexDirection: 'row',
+    gap: 5,
+    flexWrap: 'wrap',
+    marginBottom: 9,
+  },
+  areaChip: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 20,
+    backgroundColor: Colors.svl,
+  },
+  areaChipText: {
+    fontSize: 10,
+    color: '#9B6B14',
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+  durationChip: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 20,
+    backgroundColor: Colors.cr2,
+  },
+  durationChipText: {
+    fontSize: 10,
+    color: Colors.tx2,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
+  },
+
+  // Action buttons (list)
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  actionBtn: {
+    paddingHorizontal: 6,
+    paddingVertical: 9,
+    borderRadius: 10,
+    minHeight: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+  rejectBtn: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: REJECT_BORDER,
+  },
+
+  // ─── Detail view ─────────────────────────────────────────────
+  detailIdentity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  detailAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  detailAvatarText: { fontSize: 22 },
+  detailName: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.tx,
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  detailMeta: {
+    fontSize: 12,
+    color: Colors.tx2,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Section header
+  sph: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.tx2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.84,
+    marginHorizontal: 18,
+    marginTop: 18,
+    marginBottom: 9,
+    fontFamily: FontFamily.sansBold,
+  },
+
+  // Section card (margin 0 18)
+  sectionCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 0,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+  courseTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.tx,
+    fontFamily: FontFamily.sansBold,
+  },
+  appliedRow: {
+    fontSize: 12,
+    color: Colors.tx3,
+    marginTop: 2,
+    fontFamily: FontFamily.sansRegular,
+  },
+  areaChipsRow: {
+    flexDirection: 'row',
+    gap: 5,
+    flexWrap: 'wrap',
+    marginTop: 8,
+  },
+  areaChipBig: {
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 20,
+    backgroundColor: Colors.svl,
+  },
+  areaChipBigText: {
+    fontSize: 10.5,
+    color: '#9B6B14',
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+  durationLine: {
+    fontSize: 12,
+    color: Colors.tx2,
+    marginTop: 8,
+    fontFamily: FontFamily.sansRegular,
+  },
+  durationValue: {
+    fontWeight: '700',
+    color: Colors.tx,
+    fontFamily: FontFamily.sansBold,
+  },
+  noteText: {
+    fontSize: 12,
+    color: Colors.tx2,
+    fontStyle: 'italic',
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // History stat tiles
+  statTilesRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 9,
+  },
+  statTile: {
+    flex: 1,
+    backgroundColor: Colors.cr,
+    borderRadius: 11,
+    paddingHorizontal: 4,
+    paddingVertical: 8,
     alignItems: 'center',
   },
-  decisionBtnText: { fontSize: FontSize.smPlus, fontWeight: FontWeight.bold },
+  statTileNumber: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: Colors.bl,
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  statTileLabel: {
+    fontSize: 9.5,
+    color: Colors.tx3,
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
+  },
+  historyFootnote: {
+    fontSize: 11.5,
+    color: Colors.tx3,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Decision
+  reasonInput: {
+    width: '100%',
+    minHeight: 60,
+    backgroundColor: Colors.cr,
+    borderWidth: 1.5,
+    borderColor: Colors.bd,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 13,
+    color: Colors.tx,
+    marginBottom: 12,
+    fontFamily: FontFamily.sansRegular,
+  },
+  detailDecisionRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  detailRejectBtn: {
+    paddingVertical: 13,
+    paddingHorizontal: 22,
+    borderRadius: 13,
+    borderWidth: 1.5,
+    borderColor: REJECT_BORDER,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailRejectBtnText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: REJECT_TEXT,
+    fontFamily: FontFamily.sansBold,
+  },
+  detailApproveBtn: {
+    paddingVertical: 13,
+    paddingHorizontal: 22,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailApproveBtnText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: Colors.white,
+    fontFamily: FontFamily.sansBold,
+  },
 });

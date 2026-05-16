@@ -554,6 +554,32 @@
       "sent_to_teachers": "आचार्यहरूलाई पठाइएका",
       "email_preview": "इमेल पूर्वावलोकन",
       "compose": "✍️ नयाँ सूचना"
+    },
+    "serverInbox": {
+      "title": "सेवक आवेदनहरू",
+      "pending_lbl": "विचाराधीन",
+      "reviewed_lbl": "समीक्षा भयो",
+      "filter_all": "सबै",
+      "no_pending": "विचाराधीन आवेदन छैन। साधु! 🙏",
+      "back_inbox": "इनबक्समा फर्कनुहोस्",
+      "courses_lbl": "शिविर",
+      "courses_served": "शिविर सेवा",
+      "last_lbl": "अघिल्लो",
+      "applying_for": "का लागि आवेदन",
+      "applied_lbl": "आवेदन",
+      "duration_lbl": "अवधि",
+      "full_course": "पूरा शिविर",
+      "partial_lbl": "आंशिक",
+      "their_history": "उनको सेवा इतिहास",
+      "history_courses": "शिविर",
+      "history_last": "अघिल्लो",
+      "history_gender": "लिङ्ग",
+      "history_footnote": "पूर्ण इतिहास सेवक प्रोफाइलमा",
+      "decision": "निर्णय",
+      "reason_placeholder": "कारण (आवेदकलाई पठाइनेछ)",
+      "approve": "✓ स्वीकृत",
+      "reject": "✗ अस्वीकार",
+      "view_applicant": "आवेदक हेर्नुहोस् →"
     }
   },
   "months": {

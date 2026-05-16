@@ -1,0 +1,67 @@
+[
+  {
+    "id": 1,
+    "name": "Suman Karki",
+    "g": "M",
+    "courses": 5,
+    "last": "Jan 2026",
+    "areas": ["kitchen", "compound"],
+    "partial": false,
+    "days": null,
+    "applied": "2 days ago",
+    "course": "Dhamma Shringa — Jul 10-Day",
+    "note": "Local · drives own vehicle. Available all 11 days."
+  },
+  {
+    "id": 2,
+    "name": "Maya Tamang",
+    "g": "F",
+    "courses": 8,
+    "last": "Mar 2026",
+    "areas": ["dining", "reception"],
+    "partial": true,
+    "days": "Day 1–5",
+    "applied": "1 day ago",
+    "course": "Dhamma Shringa — Jul 10-Day",
+    "note": "Available first half only · sister's wedding on Day 7."
+  },
+  {
+    "id": 3,
+    "name": "Krishna Shrestha",
+    "g": "M",
+    "courses": 3,
+    "last": "Sep 2025",
+    "areas": ["dhamma"],
+    "partial": false,
+    "days": null,
+    "applied": "5 hrs ago",
+    "course": "Dhamma Pokhara — Jul 10-Day",
+    "note": "First time at Pokhara · served 3× at Shringa."
+  },
+  {
+    "id": 4,
+    "name": "Anita Rai",
+    "g": "F",
+    "courses": 11,
+    "last": "Feb 2026",
+    "areas": ["kitchen", "dining", "at_assist"],
+    "partial": false,
+    "days": null,
+    "applied": "6 hrs ago",
+    "course": "Dhamma Adhara — Aug 10-Day",
+    "note": "Senior server · willing to lead kitchen team."
+  },
+  {
+    "id": 5,
+    "name": "Bikash Lama",
+    "g": "M",
+    "courses": 2,
+    "last": "Nov 2025",
+    "areas": ["compound", "residence"],
+    "partial": true,
+    "days": "Day 6–11",
+    "applied": "3 days ago",
+    "course": "Dhamma Janani — Aug 10-Day",
+    "note": "Coming from Itahari · second half availability."
+  }
+]
