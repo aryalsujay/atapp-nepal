@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import Svg, { Path } from 'react-native-svg';
 
 import { Routes, routeTo } from '@/routes';
 import { useAuthStore } from '@/store/authStore';
@@ -75,11 +76,36 @@ export default function AdminDashboardScreen() {
           <LotusHero color="white" opacity={0.07} size={220} />
           <MountainSilhouette color="rgba(255,255,255,0.06)" />
 
-          <Text style={[s.kicker, lang === 'ne' && { fontFamily: FontFamily.devanagari }]}>
-            {t('admin.dashboard.kicker')}
-          </Text>
-          <Text style={s.title}>Dashboard</Text>
-          <Text style={s.subline}>Dhamma Shringa · Kathmandu Valley 🇳🇵</Text>
+          <View style={s.heroTopRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={[s.kicker, lang === 'ne' && { fontFamily: FontFamily.devanagari }]}>
+                {t('admin.dashboard.kicker')}
+              </Text>
+              <Text style={s.title}>Dashboard</Text>
+              <Text style={s.subline}>Dhamma Shringa · Kathmandu Valley 🇳🇵</Text>
+            </View>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push(Routes.adminNotifications)}
+              style={s.bellTile}
+              hitSlop={8}
+            >
+              <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M18 8C18 6.4 17.37 4.84 16.24 3.71C15.1 2.57 13.55 2 12 2C10.45 2 8.9 2.57 7.76 3.71C6.63 4.84 6 6.4 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z"
+                  stroke={Colors.white}
+                  strokeWidth={1.8}
+                />
+                <Path
+                  d="M13.73 21C13.56 21.3 13.32 21.55 13.03 21.72C12.74 21.89 12.4 21.98 12.06 21.98C11.72 21.98 11.39 21.89 11.1 21.72C10.81 21.55 10.57 21.3 10.4 21"
+                  stroke={Colors.white}
+                  strokeWidth={1.8}
+                  strokeLinecap="round"
+                />
+              </Svg>
+              <View style={s.bellDot} />
+            </TouchableOpacity>
+          </View>
 
           <View style={s.statsRow}>
             <StatChip n="4" label={t('admin.dashboard.applications')} color={Colors.gd} />
@@ -290,6 +316,33 @@ const s = StyleSheet.create({
     paddingBottom: 22,
     overflow: 'hidden',
     position: 'relative',
+  },
+  heroTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    position: 'relative',
+  },
+  bellTile: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    flexShrink: 0,
+  },
+  bellDot: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: Colors.ur,
+    borderWidth: 1.5,
+    borderColor: Colors.white,
   },
   kicker: {
     fontSize: 12.5,

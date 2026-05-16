@@ -74,7 +74,7 @@ Legend: `📝 draft` · `👀 review` · `✅ approved` · `🔨 in progress` ·
 | 24 | [Admin Directory](./24-admin-directory.md) | `/(admin)/directory` | `app.html:2115` | ✓ done |
 | 25 | [Admin Auto-Schedule](./25-admin-auto-schedule.md) | `/(admin)/schedule` | `app.html:2291` | ✓ done |
 | 26 | [Admin Calendar](./26-admin-calendar.md) | `/(admin)/calendar` | `app.html:2430` | ✓ done |
-| 27 | Admin Notifications | `/(admin)/notifications` | `app.html:2487` | — |
+| 27 | [Admin Notifications](./27-admin-notifications.md) | `/(admin)/notifications` | `app.html:2487` | ✓ done |
 | 28 | Admin Centres | `/(admin)/centres` | (new — not in prototype) | — |
 | 29 | Admin Server Inbox | `/(admin)/server/inbox` | `app.html:3492` | — |
 | 30 | Admin Server Board | `/(admin)/server/board` | `app.html:3649` | — |

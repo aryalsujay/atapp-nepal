@@ -557,10 +557,9 @@
     },
     "notifications": {
       "title": "Notifications",
-      "compose": "Compose",
-      "emailPreview": "Email Preview",
-      "copyEmail": "Copy",
-      "resend": "Resend"
+      "sent_to_teachers": "Sent to teachers",
+      "email_preview": "Email Preview",
+      "compose": "✍️ Compose Notification"
     }
   },
   "server": {

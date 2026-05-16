@@ -551,10 +551,9 @@
     },
     "notifications": {
       "title": "सूचनाहरू",
-      "compose": "लेख्नुहोस्",
-      "emailPreview": "इमेल पूर्वावलोकन",
-      "copyEmail": "कपी",
-      "resend": "पुन: पठाउनुहोस्"
+      "sent_to_teachers": "आचार्यहरूलाई पठाइएका",
+      "email_preview": "इमेल पूर्वावलोकन",
+      "compose": "✍️ नयाँ सूचना"
     }
   },
   "months": {
