@@ -427,3 +427,19 @@ Existing reusable key: `lang_toggle` (already shipped — toggles between "न�
 - [ ] No console warnings about font / image
 - [ ] Tab bar visible on this screen (no `tabBarStyle: display: 'none'`)
 - [ ] Spec 12 still routes here on completion (`Routes.serverHome`)
+
+---
+
+## Implementation notes (post-build corrections)
+
+The prototype is **mixed bilingual by design**: many small UI labels stay in English even in Nepali mode. Aligning with the prototype, the following keys were **removed** from `server.home.*` and rendered as English literals in both languages:
+
+- `slots_left` → hardcoded `"{n} slots left"`
+- `filled` → hardcoded `"{filled}/{total} filled"`
+- `serving_since` → hardcoded `"Serving since 2018"`
+- `last_served` → hardcoded `"Last served: Mar 2026"`
+
+Other prototype-faithful decisions:
+- Area chips on opportunity cards always render `sa.label` (English), never `sa.nepali`.
+- Upcoming-service card area name ("Kitchen") stays English even in NE.
+- All numeric digits stay Latin in NE mode (no Devanagari substitution). Prototype renders raw `Number(n)`.

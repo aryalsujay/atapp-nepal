@@ -249,3 +249,9 @@ Hard-coded English literals (per prototype):
 ### Cross-cutting
 - [ ] Tab bar visible
 - [ ] No TS errors
+
+---
+
+## Implementation notes (post-build corrections)
+
+- **Day-strip cell sizing bumped** from prototype's 17×17 r4 to **22×22 r5**, with day-number fontSize 8 → 10/600. Reason: prototype's smaller cells looked too cramped on RN with the horizontal scroll. Gap and minWidth adjusted accordingly (`gap: 3`, `minWidth: 22`) so ~12–15 cells are visible per viewport — matches the prototype's *visible-cell density* even though the absolute pixel sizes differ.

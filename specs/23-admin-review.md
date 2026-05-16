@@ -355,3 +355,11 @@ Reuse: `common.back` is **not** used here (the back link says "Back to Inbox" no
 ### Cross-cutting
 - [ ] Tab bar hidden on this route
 - [ ] No TS errors
+
+---
+
+## Implementation notes (post-build corrections)
+
+- **Approve/Reject buttons wired to `useAdminApplicationsStore`** — tapping now mutates global state and the corresponding card moves to the matching tab on the inbox screen. Both decision pathways (inbox card buttons + this review screen's bottom buttons) hit the same store actions.
+- **Re-opening a decided application** initializes `dec` from `useAdminApplicationsStore.statusFor(id)` so the result card renders immediately (no re-decide flow). Approve/Reject buttons are hidden until status is reset by another path.
+- Approved + Rejected applications can still be opened from their respective inbox tabs; they show the same result card UI.

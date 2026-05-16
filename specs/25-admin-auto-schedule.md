@@ -379,3 +379,13 @@ Reuse: `common.coming_soon` for Re-generate.
 ### Cross-cutting
 - [ ] Tab bar visible
 - [ ] No TS errors
+
+---
+
+## Implementation notes (post-build corrections)
+
+- **Matching criteria chips render 4-per-row** via `width: '22.7%'` + `gap: 5` on each chip (with `numberOfLines={1}` so "Travel distance" stays single-line). Prototype's `flexWrap: 'wrap'` produced unreliable 3-per-row.
+- **Override modal uses dropdown-style selects** instead of always-visible vertical lists. Pattern: single-line button (`"Choose a teacher… ▾"`) that toggles a bordered expansion below. Mutually exclusive via `expandedField` state. Chevron rotates 180° when open. Closer to the prototype's native `<select>` UX.
+- **Footer Re-generate + Finalize buttons normalised** to identical padding (`13/22`) and fontSize 14, even though prototype's CSS would render them at slightly different heights (`.btn.ou` 13/14 vs `.btn.fo-btn` 15/15).
+- Re-generate button is a v1 no-op (`coming_soon` Alert).
+- Reason field is a vertical-list select with the 5 prototype options.

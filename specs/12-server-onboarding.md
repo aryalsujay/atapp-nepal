@@ -344,3 +344,10 @@ All copy in `server.onboarding.*` keys (en + ne, Acharya-correct). Use prototype
 - [ ] All copy through `server.onboarding.*` i18n (en + ne)
 - [ ] No language toggle on this flow (matches prototype)
 - [ ] Typecheck clean, tests pass
+
+---
+
+## Implementation notes (post-build corrections)
+
+- Q2 ("Are you sitting regularly at home?") icon is the **animated dhamma-wheel GIF** at `assets/logo-dhamma.gif`, not the `🧘` emoji. The recap row shows `☸️` glyph for the same question. Sentinel value `'wheel'` in the `QUESTIONS` array drives the conditional render.
+- `resultSub` style is `fontSize: 14, lineHeight: 21` (bumped from spec's 13/19.5) so the blocked-state body text wraps naturally with "Contact..." on its own line.

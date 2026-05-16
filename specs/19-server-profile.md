@@ -531,3 +531,11 @@ No write operations. Profile data is hard-coded in v1.
 - [ ] Tab bar visible
 - [ ] No TS errors
 - [ ] Reused i18n keys from `server.home.*` not duplicated
+
+---
+
+## Implementation notes (post-build corrections)
+
+- **Availability grid**: rendered as 2 explicit rows of 6 cells (`[0, 6].map(rowStart => MONTHS.slice(rowStart, rowStart + 6))`) instead of `flexWrap`'d 12-cell grid. Visually identical (gap 5, second row marginTop 5), but RN's flex behavior made the wrap unreliable.
+- **"View all courses →"** is wired to a `coming_soon` Alert. Real per-server history routing lands when the SQLite history sync is built.
+- Added shared `common.coming_soon` i18n key (EN: "Coming soon", NE: "छिट्टै आउँदैछ") for this and other deferred actions.
