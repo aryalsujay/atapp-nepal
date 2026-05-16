@@ -1,341 +1,605 @@
-import React, { useState } from 'react';
-import { DimensionValue, View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Routes, routeTo } from '@/routes';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '@/theme/colors';
-import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
-import { useAuthStore } from '@/store/authStore';
+/**
+ * Server Onboarding — implements `specs/12-server-onboarding.md`.
+ *
+ * Prototype-faithful port of `app.html:2973–3075`. 5-question yes/no
+ * wizard with a top progress bar; on completion either routes to the
+ * server dashboard (all yes) or shows the blocked path with "Review
+ * answers" + "Continue anyway" CTAs (any no).
+ *
+ * Inline literal font sizes match the prototype; no FontSize tokens used.
+ * Per-text fontFamily ties weights to registered Plus Jakarta Sans variants.
+ */
 
-interface Question {
-  id: number;
-  question: string;
-  subtext: string;
-  required: boolean; // true = must answer 'yes' to pass
+import React, { useState } from 'react';
+import {
+  Image,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path } from 'react-native-svg';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+
+import { Routes } from '@/routes';
+import { useAuthStore } from '@/store/authStore';
+import { useSettingsStore } from '@/store/settingsStore';
+import { Colors } from '@/theme/colors';
+import { FontFamily } from '@/theme/typography';
+import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
+import { DashedDivider } from '@/components/ui/DashedDivider';
+
+type Answer = 'yes' | 'no';
+
+const DHAMMA_WHEEL = require('../../assets/logo-dhamma.gif');
+
+// `icon` is either an emoji string (rendered as Text) or the sentinel
+// 'wheel' which renders the animated dhamma-wheel GIF instead. The recap
+// row maps 'wheel' → ☸️ so a tiny static glyph stays inline with text.
+const QUESTIONS = [
+  { key: 'q1', icon: '🪷' },
+  { key: 'q2', icon: 'wheel' },
+  { key: 'q3', icon: '📅' },
+  { key: 'q4', icon: '💚' },
+  { key: 'q5', icon: '📜' },
+] as const;
+type QKey = (typeof QUESTIONS)[number]['key'];
+
+function inlineGlyph(icon: string): string {
+  return icon === 'wheel' ? '☸️' : icon;
 }
 
-const QUESTIONS: Question[] = [
-  {
-    id: 1,
-    question: 'Have you completed at least one 10-Day Vipassana course?',
-    subtext: 'Servers must have personal experience with the technique.',
-    required: true,
-  },
-  {
-    id: 2,
-    question: 'Are you able to maintain Noble Silence during the course?',
-    subtext: 'Servers observe Noble Silence alongside meditating students.',
-    required: true,
-  },
-  {
-    id: 3,
-    question: 'Can you commit to the full duration of your selected service period?',
-    subtext: 'Leaving mid-course disrupts the community and is generally not permitted.',
-    required: true,
-  },
-  {
-    id: 4,
-    question: 'Do you understand that serving is done without payment or compensation?',
-    subtext: 'Dhamma service (dāna) is offered freely in the spirit of Dhamma.',
-    required: true,
-  },
-  {
-    id: 5,
-    question:
-      'Are you free from serious physical limitations that would prevent active service work?',
-    subtext: 'Kitchen and compound roles require standing and light physical activity.',
-    required: false, // nice-to-have, not blocking
-  },
-];
+const YES_FG = '#9B6B14';
+const YES_BG = '#FBF0E0';
+const NO_FG = '#B5523A';
+const NO_BG = '#FBE8E0';
 
-type Answer = 'yes' | 'no' | null;
+const HERO_GRAD = ['#5A3800', '#9B6B14', '#D4A050'] as [string, string, string];
+const RESULT_GRAD_OK = ['#5A3800', '#9B6B14'] as [string, string];
+const RESULT_GRAD_BLOCKED = ['#7A2A20', '#B85040'] as [string, string];
+const BTN_GRAD = ['#9B6B14', '#6B4610'] as [string, string];
+
+const DEVANAGARI_DIGITS = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+function digit(n: number, lang: string): string {
+  if (lang !== 'ne') return String(n);
+  return String(n)
+    .split('')
+    .map((c) => (c >= '0' && c <= '9' ? DEVANAGARI_DIGITS[Number(c)] : c))
+    .join('');
+}
 
 export default function ServerOnboarding() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const setAuth = useAuthStore((s) => s.setAuth);
-  const { role, userId } = useAuthStore();
+  const setOnboarded = useAuthStore((s) => s.setOnboarded);
+  const language = useSettingsStore((s) => s.language);
 
-  const [step, setStep] = useState(0); // 0 = intro, 1–5 = questions, 6 = result
-  const [answers, setAnswers] = useState<Answer[]>(Array(QUESTIONS.length).fill(null));
+  const [answers, setAnswers] = useState<Partial<Record<QKey, Answer>>>({});
+  const [step, setStep] = useState(0);
 
-  const isIntro = step === 0;
-  const isDone = step > QUESTIONS.length;
-  const currentQ = !isIntro && !isDone ? QUESTIONS[step - 1] : null;
+  const allYes = QUESTIONS.every((q) => answers[q.key] === 'yes');
+  const anyNo = QUESTIONS.some((q) => answers[q.key] === 'no');
+  const isResult = step >= QUESTIONS.length;
 
-  const progress = isDone ? 1 : step / QUESTIONS.length;
-
-  const hasFailure = answers.some((a, i) => QUESTIONS[i].required && a === 'no');
-
-  const handleAnswer = (answer: Answer) => {
-    const newAnswers = [...answers];
-    newAnswers[step - 1] = answer;
-    setAnswers(newAnswers);
-
-    if (step < QUESTIONS.length) {
-      setStep(step + 1);
-    } else {
-      setStep(QUESTIONS.length + 1);
-    }
-  };
-
-  const handleFinish = async () => {
-    if (!hasFailure) {
-      await setAuth(role!, userId!, true);
-      router.replace(Routes.serverHome);
+  const goBack = () => {
+    if (step > 0) {
+      setStep(step - 1);
     } else {
       router.replace(Routes.login);
     }
   };
 
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <LinearGradient
-        colors={['#5A3800', '#8B5E14', '#C8900A']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <Text style={styles.headerTitle}>Server Eligibility</Text>
-        <Text style={styles.headerSub}>
-          {isIntro
-            ? '5 quick questions'
-            : isDone
-              ? 'All done'
-              : `Question ${step} of ${QUESTIONS.length}`}
-        </Text>
+  const onAnswer = (key: QKey, value: Answer) => {
+    setAnswers((prev) => ({ ...prev, [key]: value }));
+  };
 
-        {/* Progress bar */}
-        {!isIntro && (
-          <View style={styles.progressTrack}>
-            <View
-              style={[styles.progressFill, { width: `${progress * 100}%` as DimensionValue }]}
-            />
-          </View>
-        )}
-      </LinearGradient>
+  const onContinue = () => {
+    const cur = QUESTIONS[step];
+    if (!answers[cur.key]) return;
+    setStep(step + 1);
+  };
 
-      <ScrollView
-        style={styles.body}
-        contentContainerStyle={styles.bodyContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Intro */}
-        {isIntro && (
-          <View style={styles.card}>
-            <Text style={styles.lotusIcon}>🪷</Text>
-            <Text style={styles.introTitle}>Welcome, Dhamma Server</Text>
-            <Text style={styles.introBody}>
-              Before you begin, we need to confirm your eligibility to serve at a Vipassana centre.
-              {'\n\n'}
-              This takes less than a minute and helps ensure a harmonious experience for everyone.
+  const finishOnboarding = async () => {
+    await setOnboarded(true);
+    router.replace(Routes.serverHome);
+  };
+
+  const reviewAnswers = () => {
+    setAnswers({});
+    setStep(0);
+  };
+
+  // ─── Result step ────────────────────────────────────────────────────────
+  if (isResult) {
+    const isBlocked = anyNo;
+    return (
+      <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+        <StatusBar barStyle="light-content" />
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: insets.bottom + 20, flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <LinearGradient
+            colors={isBlocked ? RESULT_GRAD_BLOCKED : RESULT_GRAD_OK}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[s.resultHero, { paddingTop: Math.max(58, insets.top + 14) }]}
+          >
+            <LotusHero color="white" opacity={0.1} size={240} right={-50} bottom={-50} />
+            <Text style={s.resultEmoji}>{isBlocked ? '⚠️' : '🙏'}</Text>
+            <Text style={s.resultTitle}>
+              {t(isBlocked ? 'server.onboarding.blocked' : 'server.onboarding.complete')}
             </Text>
-            <TouchableOpacity style={styles.primaryBtn} onPress={() => setStep(1)}>
-              <Text style={styles.primaryBtnText}>Begin Eligibility Check</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+            <Text style={s.resultSub}>
+              {t(isBlocked ? 'server.onboarding.blocked_sub' : 'server.onboarding.complete_sub')}
+            </Text>
+          </LinearGradient>
 
-        {/* Question */}
-        {currentQ && (
-          <View style={styles.card}>
-            <View style={styles.qNumber}>
-              <Text style={styles.qNumberText}>{step}</Text>
+          <View style={s.resultBody}>
+            <View style={s.recapCard}>
+              <Text style={s.recapTitle}>{t('server.onboarding.responses_title')}</Text>
+              {QUESTIONS.map((q, i) => {
+                const ans = answers[q.key];
+                const isYes = ans === 'yes';
+                return (
+                  <React.Fragment key={q.key}>
+                    <View style={s.recapRow}>
+                      <Text style={s.recapQuestion} numberOfLines={3}>
+                        {inlineGlyph(q.icon)} {t(`server.onboarding.${q.key}`)}
+                      </Text>
+                      <Text style={[s.recapStatus, { color: isYes ? Colors.fo : Colors.ur }]}>
+                        {isYes
+                          ? `✓ ${t('server.onboarding.yes')}`
+                          : `✗ ${t('server.onboarding.no')}`}
+                      </Text>
+                    </View>
+                    {i < QUESTIONS.length - 1 ? <DashedDivider marginVertical={0} /> : null}
+                  </React.Fragment>
+                );
+              })}
             </View>
-            <Text style={styles.qText}>{currentQ.question}</Text>
-            <Text style={styles.qSub}>{currentQ.subtext}</Text>
 
-            <View style={styles.answerRow}>
-              <TouchableOpacity
-                style={[styles.answerBtn, styles.answerNo]}
-                onPress={() => handleAnswer('no')}
-              >
-                <Text style={[styles.answerBtnText, { color: Colors.ur }]}>No</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.answerBtn, styles.answerYes]}
-                onPress={() => handleAnswer('yes')}
-              >
-                <Text style={[styles.answerBtnText, { color: Colors.fo }]}>Yes</Text>
-              </TouchableOpacity>
-            </View>
-
-            {step > 1 && (
-              <TouchableOpacity onPress={() => setStep(step - 1)} style={styles.backLink}>
-                <Text style={styles.backLinkText}>← Go back</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-
-        {/* Result */}
-        {isDone && (
-          <View style={styles.card}>
-            {hasFailure ? (
+            {isBlocked ? (
               <>
-                <Text style={styles.resultIcon}>🚫</Text>
-                <Text style={styles.resultTitle}>Not Yet Eligible</Text>
-                <Text style={styles.resultBody}>
-                  Based on your answers, you do not yet meet the requirements to serve at a
-                  Vipassana centre.
-                  {'\n\n'}
-                  Please sit a 10-Day course first if you haven't done so, and return when you're
-                  ready.
-                  {'\n\n'}
-                  Sadhu for your interest in Dhamma service. 🙏
-                </Text>
-                <TouchableOpacity style={styles.secondaryBtn} onPress={handleFinish}>
-                  <Text style={styles.secondaryBtnText}>Return to Login</Text>
+                <TouchableOpacity onPress={reviewAnswers} activeOpacity={0.85}>
+                  <LinearGradient
+                    colors={BTN_GRAD}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={s.primaryBtn}
+                  >
+                    <Text style={s.primaryBtnText}>{t('server.onboarding.cta_review')}</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+                <View style={{ height: 10 }} />
+                <TouchableOpacity
+                  onPress={finishOnboarding}
+                  activeOpacity={0.85}
+                  style={s.outlineBtn}
+                >
+                  <Text style={s.outlineBtnText}>{t('server.onboarding.cta_continue_anyway')}</Text>
                 </TouchableOpacity>
               </>
             ) : (
-              <>
-                <Text style={styles.resultIcon}>✅</Text>
-                <Text style={styles.resultTitle}>You're Eligible!</Text>
-                <Text style={styles.resultBody}>
-                  You meet all requirements to serve at a Vipassana centre. You can now browse
-                  service opportunities and apply.
-                  {'\n\n'}
-                  May your service be a source of Dhamma. Sadhu 🙏
-                </Text>
-                <TouchableOpacity style={styles.primaryBtn} onPress={handleFinish}>
-                  <Text style={styles.primaryBtnText}>Continue to App</Text>
-                </TouchableOpacity>
-              </>
+              <TouchableOpacity onPress={finishOnboarding} activeOpacity={0.85}>
+                <LinearGradient
+                  colors={BTN_GRAD}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={s.primaryBtn}
+                >
+                  <Text style={s.primaryBtnText}>{t('server.onboarding.cta_dashboard')}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             )}
           </View>
-        )}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // ─── Question step ──────────────────────────────────────────────────────
+  const cur = QUESTIONS[step];
+  const curAnswer = answers[cur.key];
+  const continueEnabled = Boolean(curAnswer);
+  const isLastQuestion = step === QUESTIONS.length - 1;
+
+  return (
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hero */}
+        <LinearGradient
+          colors={HERO_GRAD}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[s.hero, { paddingTop: Math.max(50, insets.top + 14) }]}
+        >
+          <LotusHero color="white" opacity={0.1} size={220} right={-40} bottom={-40} />
+          <MountainSilhouette color="rgba(255,255,255,0.08)" />
+
+          <TouchableOpacity
+            onPress={goBack}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={s.backRow}
+          >
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M15 18L9 12L15 6"
+                stroke="rgba(255,255,255,0.85)"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+            <Text style={s.backText}>{t('common.back')}</Text>
+          </TouchableOpacity>
+
+          <Text style={s.kicker}>{t('server.onboarding.title')}</Text>
+          <Text style={s.heroTitle}>{t('server.onboarding.sub')}</Text>
+
+          <View style={s.progressRow}>
+            {QUESTIONS.map((q, i) => (
+              <View
+                key={q.key}
+                style={[
+                  s.progressSeg,
+                  {
+                    backgroundColor: i <= step ? Colors.white : 'rgba(255,255,255,0.25)',
+                  },
+                ]}
+              />
+            ))}
+          </View>
+          <Text style={s.stepCounter}>
+            {digit(step + 1, language)} / {digit(QUESTIONS.length, language)}
+          </Text>
+        </LinearGradient>
+
+        {/* Question body */}
+        <View style={s.qBody}>
+          {cur.icon === 'wheel' ? (
+            <Image source={DHAMMA_WHEEL} style={s.qWheel} resizeMode="contain" />
+          ) : (
+            <Text style={s.qEmoji}>{cur.icon}</Text>
+          )}
+          <Text style={s.qText}>{t(`server.onboarding.${cur.key}`)}</Text>
+
+          <View style={s.optionsRow}>
+            <OptionTile
+              variant="yes"
+              selected={curAnswer === 'yes'}
+              label={t('server.onboarding.yes')}
+              onPress={() => onAnswer(cur.key, 'yes')}
+            />
+            <OptionTile
+              variant="no"
+              selected={curAnswer === 'no'}
+              label={t('server.onboarding.no')}
+              onPress={() => onAnswer(cur.key, 'no')}
+            />
+          </View>
+        </View>
+
+        {/* Footer */}
+        <View style={s.footerWrap}>
+          <TouchableOpacity
+            onPress={onContinue}
+            activeOpacity={continueEnabled ? 0.85 : 1}
+            disabled={!continueEnabled}
+          >
+            {continueEnabled ? (
+              <LinearGradient
+                colors={BTN_GRAD}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={s.continueBtnEnabled}
+              >
+                <Text style={s.continueBtnEnabledText}>
+                  {isLastQuestion
+                    ? t('server.onboarding.see_result')
+                    : `${t('server.onboarding.continue')} →`}
+                </Text>
+              </LinearGradient>
+            ) : (
+              <View style={s.continueBtnDisabled}>
+                <Text style={s.continueBtnDisabledText}>
+                  {isLastQuestion
+                    ? t('server.onboarding.see_result')
+                    : `${t('server.onboarding.continue')} →`}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.cr },
-  header: {
-    paddingHorizontal: Layout.horizontalPad,
-    paddingTop: Spacing.xl,
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+function OptionTile({
+  variant,
+  selected,
+  label,
+  onPress,
+}: {
+  variant: 'yes' | 'no';
+  selected: boolean;
+  label: string;
+  onPress: () => void;
+}) {
+  const colorFg = variant === 'yes' ? YES_FG : NO_FG;
+  const colorBg = variant === 'yes' ? YES_BG : NO_BG;
+  const glyph = variant === 'yes' ? '✓' : '✗';
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      style={[
+        s.optionTile,
+        {
+          backgroundColor: selected ? colorFg : colorBg,
+          borderColor: selected ? colorFg : 'transparent',
+        },
+      ]}
+    >
+      <Text style={[s.optionGlyph, { color: selected ? Colors.white : Colors.tx }]}>{glyph}</Text>
+      <Text style={[s.optionLabel, { color: selected ? Colors.white : colorFg }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
+const s = StyleSheet.create({
+  flex: { flex: 1 },
+
+  // Hero (question steps)
+  hero: {
+    paddingHorizontal: 22,
     paddingBottom: 28,
-    gap: 4,
-  },
-  headerTitle: {
-    fontSize: FontSize.h2,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.white,
-  },
-  headerSub: {
-    fontSize: FontSize.sm,
-    color: 'rgba(255,255,255,0.75)',
-    fontWeight: FontWeight.medium,
-  },
-  progressTrack: {
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    borderRadius: 2,
-    marginTop: 12,
     overflow: 'hidden',
+    position: 'relative',
   },
-  progressFill: {
-    height: '100%',
-    backgroundColor: Colors.white,
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 10,
+    position: 'relative',
+  },
+  backText: {
+    fontSize: 13,
+    fontFamily: FontFamily.sansRegular,
+    color: 'rgba(255,255,255,0.85)',
+  },
+  kicker: {
+    fontSize: 13,
+    fontFamily: FontFamily.devanagari,
+    color: 'rgba(255,255,255,0.85)',
+  },
+  heroTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
+    color: Colors.white,
+    lineHeight: 26,
+    marginTop: 4,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    gap: 5,
+    marginTop: 18,
+    position: 'relative',
+  },
+  progressSeg: {
+    flex: 1,
+    height: 4,
     borderRadius: 2,
   },
-  body: { flex: 1 },
-  bodyContent: {
-    padding: Layout.horizontalPad,
-    paddingTop: Spacing.lg,
-    paddingBottom: 110,
-  },
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.xl,
-    padding: 24,
-    gap: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    alignItems: 'center',
-  },
-  lotusIcon: { fontSize: 52 },
-  introTitle: {
-    fontSize: FontSize.h2,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.tx,
-    textAlign: 'center',
-  },
-  introBody: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx2,
-    lineHeight: FontSize.smPlus * 1.7,
-    textAlign: 'center',
+  stepCounter: {
+    fontSize: 11,
+    fontFamily: FontFamily.sansRegular,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 6,
+    position: 'relative',
   },
 
-  qNumber: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.svl,
+  // Question body
+  qBody: {
+    paddingHorizontal: 22,
+    paddingTop: 28,
+    flexGrow: 1,
+  },
+  qEmoji: {
+    fontSize: 46,
+    marginBottom: 14,
+    textAlign: 'center',
+  },
+  qWheel: {
+    width: 60,
+    height: 60,
+    marginBottom: 14,
+    alignSelf: 'center',
+  },
+  qText: {
+    fontSize: 17,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.tx,
+    lineHeight: 25,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  optionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  optionTile: {
+    flex: 1,
+    paddingVertical: 22,
+    borderRadius: 14,
+    alignItems: 'center',
+    borderWidth: 2,
+  },
+  optionGlyph: {
+    fontSize: 26,
+    marginBottom: 4,
+    fontFamily: FontFamily.sansBold,
+  },
+  optionLabel: {
+    fontSize: 14,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
+  },
+
+  // Footer (question steps)
+  footerWrap: {
+    paddingHorizontal: 22,
+    paddingTop: 18,
+    paddingBottom: 22,
+  },
+  continueBtnEnabled: {
+    paddingVertical: 15,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  qNumberText: { fontSize: FontSize.md, fontWeight: FontWeight.extrabold, color: Colors.sv },
-  qText: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx,
-    textAlign: 'center',
-    lineHeight: FontSize.md * 1.5,
+  continueBtnEnabledText: {
+    fontSize: 15,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.white,
   },
-  qSub: {
-    fontSize: FontSize.smPlus,
+  continueBtnDisabled: {
+    paddingVertical: 15,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.cr3,
+  },
+  continueBtnDisabledText: {
+    fontSize: 15,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
     color: Colors.tx3,
-    textAlign: 'center',
-    lineHeight: FontSize.smPlus * 1.6,
   },
-  answerRow: { flexDirection: 'row', gap: 12, width: '100%', marginTop: Spacing.sm },
-  answerBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: Radius.lg,
-    alignItems: 'center',
-    borderWidth: 1.5,
-  },
-  answerNo: { backgroundColor: Colors.url, borderColor: Colors.ur + '40' },
-  answerYes: { backgroundColor: Colors.fol, borderColor: Colors.fo + '40' },
-  answerBtnText: { fontSize: FontSize.md, fontWeight: FontWeight.extrabold },
-  backLink: { paddingVertical: 4 },
-  backLinkText: { fontSize: FontSize.sm, color: Colors.tx3 },
 
-  resultIcon: { fontSize: 56 },
+  // Result hero
+  resultHero: {
+    paddingHorizontal: 24,
+    paddingBottom: 36,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  resultEmoji: {
+    fontSize: 50,
+    marginBottom: 8,
+  },
   resultTitle: {
-    fontSize: FontSize.h2,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.tx,
-    textAlign: 'center',
+    fontSize: 24,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
+    color: Colors.white,
+    lineHeight: 29,
   },
-  resultBody: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx2,
-    lineHeight: FontSize.smPlus * 1.7,
-    textAlign: 'center',
+  resultSub: {
+    fontSize: 14,
+    fontFamily: FontFamily.sansRegular,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 6,
+    lineHeight: 21,
   },
 
-  primaryBtn: {
-    backgroundColor: Colors.sv,
-    borderRadius: Radius.lg,
-    paddingVertical: 14,
-    width: '100%',
-    alignItems: 'center',
+  // Result body
+  resultBody: {
+    paddingHorizontal: 18,
+    paddingTop: 22,
+    flexGrow: 1,
   },
-  primaryBtnText: { color: Colors.white, fontSize: FontSize.md, fontWeight: FontWeight.bold },
-  secondaryBtn: {
+  recapCard: {
+    backgroundColor: Colors.fol,
     borderWidth: 1.5,
-    borderColor: Colors.bd2,
-    borderRadius: Radius.lg,
-    paddingVertical: 14,
-    width: '100%',
-    alignItems: 'center',
+    borderColor: Colors.fom,
+    borderRadius: 16,
+    padding: 15,
+    marginBottom: 14,
   },
-  secondaryBtnText: { color: Colors.tx2, fontSize: FontSize.md, fontWeight: FontWeight.semibold },
+  recapTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.fo,
+    marginBottom: 9,
+  },
+  recapRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    gap: 10,
+  },
+  recapQuestion: {
+    flex: 1,
+    paddingRight: 10,
+    fontSize: 12,
+    fontFamily: FontFamily.sansRegular,
+    color: Colors.tx2,
+    lineHeight: 17,
+  },
+  recapStatus: {
+    fontSize: 11,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
+    flexShrink: 0,
+  },
+
+  // Result CTAs
+  primaryBtn: {
+    paddingHorizontal: 22,
+    paddingVertical: 15,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.32,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  primaryBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.white,
+  },
+  outlineBtn: {
+    paddingHorizontal: 22,
+    paddingVertical: 13,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Colors.bd2,
+    backgroundColor: 'transparent',
+  },
+  outlineBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+    color: Colors.tx,
+  },
 });

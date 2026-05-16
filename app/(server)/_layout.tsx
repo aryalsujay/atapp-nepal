@@ -80,7 +80,11 @@ export default function ServerLayout() {
       <Tabs.Screen name="opportunities/[id]" options={{ href: null }} />
       <Tabs.Screen name="apply/[id]" options={{ href: null }} />
       <Tabs.Screen name="applications/[id]" options={{ href: null }} />
-      <Tabs.Screen name="onboarding" options={{ href: null }} />
+      {/* Onboarding is a first-run wizard — hide the bottom tab bar so it
+          renders full-screen. `href: null` hides the tab itself; the
+          per-screen `tabBarStyle: { display: 'none' }` hides the bar when
+          the route is active. */}
+      <Tabs.Screen name="onboarding" options={{ href: null, tabBarStyle: { display: 'none' } }} />
     </Tabs>
   );
 }

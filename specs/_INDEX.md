@@ -54,7 +54,7 @@ Legend: `📝 draft` · `👀 review` · `✅ approved` · `🔨 in progress` ·
 
 | # | Spec | Route | Prototype | Status |
 |---|---|---|---|---|
-| 12 | Server Onboarding | `/(server)/onboarding` | `app.html:2973` | — |
+| 12 | [Server Onboarding](./12-server-onboarding.md) | `/(server)/onboarding` | `app.html:2973` | ✓ done |
 | 13 | Server Dashboard | `/(server)/home` | `app.html:2529` | — |
 | 14 | Server Opportunities | `/(server)/opportunities` | `app.html:2618` | — |
 | 15 | Server Course Detail | `/(server)/opportunities/[id]` | `app.html:3082` | — |
