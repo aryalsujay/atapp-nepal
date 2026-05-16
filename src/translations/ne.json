@@ -479,7 +479,7 @@
       "urgent": "अत्यावश्यक — आचार्य चाहिन्छ",
       "recent_apps": "हालका आवेदनहरू",
       "notif_center": "सूचना केन्द्र",
-      "notif_center_sub": "आचार्यका इमेल हेर्नुहोस् र पुनः पठाउनुहोस् · द्वैभाषिक",
+      "notif_center_sub": "आचार्यका इमेल हेर्नुहोस् र पुनः पठाउनुहोस् · दुई भाषामा",
       "feature_visibility": "सुविधा दृश्यता",
       "coteacher_title": "सह-आचार्य खण्ड",
       "coteacher_sub": "शिविर विवरणमा सह-आचार्य जानकारी देखाउनुहोस्"
@@ -490,18 +490,16 @@
       "empty_state": "यस श्रेणीमा कुनै आवेदन छैन।"
     },
     "review": {
-      "title": "आवेदन समीक्षा",
-      "eligibility": "योग्यता जाँच",
-      "matchScore": "मिलान स्कोर",
-      "adminNotes": "एडमिन नोट",
-      "notesPlaceholder": "यो आवेदनबारे नोट थप्नुहोस्...",
-      "approveConfirm": "आवेदन स्वीकृत गर्नुहोस्",
-      "rejectConfirm": "आवेदन अस्वीकार गर्नुहोस्",
-      "rejectReason": "अस्वीकारको कारण",
-      "rejectPlaceholder": "अस्वीकारको कारण...",
-      "decision": "निर्णय",
-      "approved": "स्वीकृत ✓",
-      "rejected": "अस्वीकार"
+      "back_inbox": "इनबक्समा फर्कनुहोस्",
+      "match_score": "मिलान अंक",
+      "eligibility": "योग्यता",
+      "admin_notes": "व्यवस्थापक टिप्पणी",
+      "approve_btn": "✓ आवेदन स्वीकृत",
+      "reject_btn": "✗ कारण सहित अस्वीकार",
+      "approved_title": "आवेदन स्वीकृत भयो!",
+      "rejected_title": "आवेदन अस्वीकृत",
+      "approved_body": "आचार्यलाई इमेलबाट सूचित गरियो। साधु! 🙏",
+      "rejected_body": "आचार्यलाई कारण सहित सूचित गरियो।"
     },
     "directory": {
       "title": "आचार्य निर्देशिका",
