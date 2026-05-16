@@ -13,6 +13,7 @@ import centersJson from './centers.json';
 import coursesJson from './courses.json';
 import hallsJson from './halls.json';
 import adminApplicationsJson from './adminApplications.json';
+import serverApplicantsJson from './serverApplicants.json';
 import serverApplicationsJson from './serverApplications.json';
 import serverCoursesJson from './serverCourses.json';
 import serverNotificationsJson from './serverNotifications.json';
@@ -107,3 +108,19 @@ export interface AdminApplication {
 }
 
 export const adminApplications = adminApplicationsJson as AdminApplication[];
+
+export interface ServerApplicant {
+  id: number;
+  name: string;
+  g: 'M' | 'F';
+  courses: number;
+  last: string;
+  areas: string[];
+  partial: boolean;
+  days: string | null;
+  applied: string;
+  course: string;
+  note: string;
+}
+
+export const serverApplicants = serverApplicantsJson as ServerApplicant[];
