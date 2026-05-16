@@ -5,15 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import {
-  Alert,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -135,7 +127,7 @@ export default function AdminDashboardScreen() {
               </View>
               <TouchableOpacity
                 activeOpacity={0.85}
-                onPress={() => Alert.alert(t('common.coming_soon'))}
+                onPress={() => router.push(Routes.adminDirectory)}
               >
                 <LinearGradient
                   colors={Gradients.primaryCta}
