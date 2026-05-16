@@ -13,6 +13,7 @@
     "reject": "अस्वीकार",
     "loading": "लोड हुँदैछ...",
     "noResults": "कुनै परिणाम फेला परेन",
+    "coming_soon": "छिट्टै आउँदैछ",
     "search": "खोज्नुहोस्",
     "done": "सम्पन्न",
     "confirm": "पुष्टि गर्नुहोस्",
@@ -754,13 +755,17 @@
       }
     },
     "profile": {
-      "title": "मेरो प्रोफाइल",
-      "role": "धम्म सेवक",
-      "coursesServed": "सेवा गरेका पाठ्यक्रम",
-      "centers": "केन्द्रहरू",
-      "since": "देखि",
-      "serviceHistory": "सेवा इतिहास",
-      "eligible": "सेवा गर्न योग्य"
+      "courses_lbl": "शिविर",
+      "last_served": "अघिल्लो सेवा",
+      "stat_eligible": "योग्य",
+      "areas_expertise": "विशेषज्ञताका क्षेत्रहरू",
+      "pref_areas": "मनपर्ने सेवा क्षेत्रहरू",
+      "avail_2026": "उपलब्धता २०२६",
+      "festival_blocks": "🎑 Festival blocks: Buddha Jayanti (May) · Dashain (Oct) · Tihar (Nov)",
+      "pref_centers": "मनपर्ने केन्द्रहरू",
+      "service_history": "सेवा इतिहास",
+      "view_all_courses": "सबै शिविरहरू हेर्नुहोस् →",
+      "edit_avail": "प्रोफाइल र उपलब्धता सम्पादन"
     }
   }
 }
