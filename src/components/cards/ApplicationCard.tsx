@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-nativ
 import { Application, Course } from '@/types';
 import { Colors } from '@/theme/colors';
 import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
+import { Radius, Layout } from '@/theme/spacing';
 import { Shadows } from '@/theme/shadows';
 import { useTranslation } from 'react-i18next';
 

@@ -110,6 +110,7 @@ export default function RootLayout() {
     loadCourses().then(() => {
       if (shouldAutoSync()) syncCourses();
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dbReady]);
 
   // Preload the teacher's applications once the session is restored so the
@@ -128,6 +129,7 @@ export default function RootLayout() {
       }
     });
     return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hydrated = dbReady && !authLoading && teachersLoaded && coursesLoaded && notifsLoaded;

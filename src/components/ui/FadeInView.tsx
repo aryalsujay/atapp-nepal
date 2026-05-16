@@ -35,6 +35,7 @@ export const FadeInView: React.FC<FadeInViewProps> = ({
         useNativeDriver: true,
       }),
     ]).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

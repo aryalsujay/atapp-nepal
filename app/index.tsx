@@ -40,6 +40,7 @@ export default function Index() {
       }
       return;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, isOnboarded, isLoading]);
 
   return (

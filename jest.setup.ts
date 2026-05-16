@@ -9,6 +9,7 @@ import '@testing-library/jest-native/extend-expect';
 
 // AsyncStorage — most stores hit this on boot
 jest.mock('@react-native-async-storage/async-storage', () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
@@ -33,4 +34,5 @@ jest.mock('expo-font', () => ({
 }));
 
 // Silence noisy reanimated warnings during tests
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
