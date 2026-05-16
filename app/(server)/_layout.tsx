@@ -158,7 +158,10 @@ export default function ServerLayout() {
         options={{ href: null, tabBarStyle: { display: 'none' } }}
       />
       <Tabs.Screen name="apply/[id]" options={{ href: null, tabBarStyle: { display: 'none' } }} />
-      <Tabs.Screen name="applications/[id]" options={{ href: null }} />
+      <Tabs.Screen
+        name="applications/[id]"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
       <Tabs.Screen name="onboarding" options={{ href: null, tabBarStyle: { display: 'none' } }} />
     </Tabs>
   );

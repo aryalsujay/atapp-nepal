@@ -60,7 +60,7 @@ Legend: `📝 draft` · `👀 review` · `✅ approved` · `🔨 in progress` ·
 | 15 | [Server Course Detail](./15-server-course-detail.md) | `/(server)/opportunities/[id]` | `app.html:3082` | ✓ done |
 | 16 | [Server Apply](./16-server-apply.md) | `/(server)/apply/[id]` | `app.html:2679` | ✓ done |
 | 17 | [Server Applications](./17-server-applications.md) | `/(server)/applications` | `app.html:2823` | ✓ done |
-| 18 | Server Application Detail | `/(server)/applications/[id]` | `app.html:3173` | — |
+| 18 | [Server Application Detail](./18-server-application-detail.md) | `/(server)/applications/[id]` | `app.html:3173` | ✓ done |
 | 19 | Server Profile | `/(server)/profile` | `app.html:2864` | — |
 | 20 | Server Notifications | `/(server)/notifications` | `app.html:3307` | — |
 
