@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "type": "approval",
+    "time": "2 hours ago",
+    "read": false,
+    "center": "Dhamma Shringa",
+    "course": "Dhamma Shringa — Jul 10-Day",
+    "subj": "Your service application has been approved",
+    "en": "Dear Priya Ji,\n\nWith great joy we confirm your service at Dhamma Shringa for the 10-Day course Jul 7–18, 2026 in the Kitchen & Dining areas.\n\nPlease arrive by 7:00 AM on July 6. Bring your ID, two pairs of comfortable clothing, a shawl, and a flashlight.\n\nIn Dhamma,\nDhamma Shringa Management",
+    "np": "प्रिय प्रिया जी,\n\nधम्म श्रृंगमा जुलाई ७–१८, २०२६ को १०-दिने पाठ्यक्रममा भान्सा र भोजन कक्षमा तपाईंको सेवा पुष्टि गर्न पाउँदा खुसी छौं।\n\nकृपया जुलाई ६ को बिहान ७:०० बजेसम्म आइपुग्नुहोस्। परिचयपत्र, दुई जोर सजिलो लुगा, शाल र टर्च ल्याउनुहोस्।\n\nधम्ममा,\nधम्म श्रृंग व्यवस्थापन"
+  },
+  {
+    "id": 2,
+    "type": "reminder",
+    "time": "Yesterday",
+    "read": false,
+    "center": "Dhamma Shringa",
+    "course": "Pre-arrival reminder",
+    "subj": "Reminder: arrival in 2 weeks",
+    "en": "Dear Priya Ji,\n\nThis is a reminder that your service at Dhamma Shringa begins on July 7. Please review the arrival checklist in the app.\n\nSadhu 🙏",
+    "np": "प्रिय प्रिया जी,\n\nधम्म श्रृंगमा तपाईंको सेवा जुलाई ७ बाट सुरु हुन्छ। कृपया एपमा आगमन चेकलिस्ट हेर्नुहोस्।\n\nसाधु 🙏"
+  },
+  {
+    "id": 3,
+    "type": "rejection",
+    "time": "3 days ago",
+    "read": true,
+    "center": "Dhamma Adhara",
+    "course": "Dhamma Adhara — Aug 10-Day",
+    "subj": "Application update — Dhamma Adhara",
+    "en": "Dear Priya Ji,\n\nThank you for offering to serve. The Compound area for Aug 2–13 is now fully booked. We will keep you in mind for future courses.\n\nIn Dhamma,\nDhamma Adhara",
+    "np": "प्रिय प्रिया जी,\n\nसेवा गर्ने प्रस्तावका लागि धन्यवाद। अगस्ट २–१३ का लागि परिसर क्षेत्र पूर्ण भइसकेको छ। भविष्यका शिविरहरूका लागि सम्झनेछौं।\n\nधम्ममा,\nधम्म आधार"
+  }
+]
