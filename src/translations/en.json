@@ -581,14 +581,30 @@
       "cta_review": "Review answers",
       "cta_continue_anyway": "Continue anyway (limited access)"
     },
+    "nav": {
+      "home": "Home",
+      "serve": "Serve",
+      "my_service": "My Service",
+      "notifications": "Notifications",
+      "profile": "Profile"
+    },
     "home": {
-      "greeting": "Namaste",
-      "subtitle": "Dhamma Server",
-      "upcomingService": "My Upcoming Service",
-      "openOpportunities": "Open Opportunities",
-      "seeAll": "See All",
+      "dhamma_server": "Dhamma Server",
+      "old_student": "Old Student",
+      "stat_served": "Courses Served",
+      "stat_centers": "Nepal Centers",
+      "stat_upcoming": "Upcoming",
+      "upcoming_service": "My Upcoming Service",
+      "open_opps": "Open Opportunities",
+      "open_slots": "open slots across",
+      "courses": "courses",
+      "confirmed": "✓ Confirmed",
+      "full_course_lbl": "Full course",
+      "partial_lbl": "Partial",
       "eligible": "Eligible to Serve",
-      "eligibleBody": "You have completed the required courses and rest period."
+      "eligible_sub": "Completed 10-day course · Sitting regularly",
+      "lang_toggle_en": "नेपाली",
+      "lang_toggle_ne": "English"
     },
     "opportunities": {
       "title": "Serve a Course",

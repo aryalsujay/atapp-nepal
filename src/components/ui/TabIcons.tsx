@@ -33,37 +33,35 @@ export const HomeIcon: React.FC<IconProps> = ({ size = 24, active, accentColor =
 
 export const LotusIcon: React.FC<IconProps> = ({ size = 24, active, accentColor = Colors.sf }) => {
   const color = active ? accentColor : INACTIVE;
+  const op = active ? 1 : 0.78;
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Ellipse cx={12} cy={12} rx={3} ry={6} stroke={color} strokeWidth={1.7} />
-      <Ellipse
-        cx={12}
-        cy={12}
-        rx={3}
-        ry={6}
-        stroke={color}
-        strokeWidth={1.7}
-        transform="rotate(45 12 12)"
-      />
-      <Ellipse
-        cx={12}
-        cy={12}
-        rx={3}
-        ry={6}
-        stroke={color}
-        strokeWidth={1.7}
-        transform="rotate(90 12 12)"
-      />
-      <Ellipse
-        cx={12}
-        cy={12}
-        rx={3}
-        ry={6}
-        stroke={color}
-        strokeWidth={1.7}
-        transform="rotate(135 12 12)"
-      />
-      <Circle cx={12} cy={12} r={2.2} fill={color} />
+    <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      {[0, 45, 90, 135].map((r) => (
+        <Ellipse
+          key={`outer-${r}`}
+          cx={16}
+          cy={16}
+          rx={4.5}
+          ry={11}
+          fill={color}
+          opacity={op * 0.35}
+          transform={`rotate(${r} 16 16)`}
+        />
+      ))}
+      {[22.5, 67.5, 112.5, 157.5].map((r) => (
+        <Ellipse
+          key={`inner-${r}`}
+          cx={16}
+          cy={16}
+          rx={3}
+          ry={8}
+          fill={color}
+          opacity={op * 0.6}
+          transform={`rotate(${r} 16 16)`}
+        />
+      ))}
+      <Circle cx={16} cy={16} r={5} fill={color} opacity={op} />
+      <Circle cx={16} cy={16} r={2.5} fill="rgba(255,255,255,0.35)" />
     </Svg>
   );
 };

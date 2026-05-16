@@ -1,528 +1,566 @@
+/**
+ * Server Dashboard — implements `specs/13-server-dashboard.md`.
+ *
+ * Prototype-faithful port of `app.html:2529–2616` (`ServerDash`). Inline
+ * literal font sizes match the prototype CSS; no FontSize tokens used.
+ */
+
 import React from 'react';
-import { DimensionValue, View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Routes, routeTo } from '@/routes';
+import {
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  type DimensionValue,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+
+import { Routes, routeTo } from '@/routes';
 import { useAuthStore } from '@/store/authStore';
 import { useTeachersStore } from '@/store/teachersStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { Colors } from '@/theme/colors';
-import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
-import { Shadows } from '@/theme/shadows';
-import { SectionHeader } from '@/components/layout/SectionHeader';
+import { FontFamily } from '@/theme/typography';
 import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
-import { FadeInView } from '@/components/ui/FadeInView';
 import { SERVICE_AREAS } from '@/data/serviceAreas';
-import {
-  serverApplications as serverApplicationsData,
-  serverCourses as serverCoursesData,
-} from '@/data';
+import { serverApplications, serverCourses } from '@/data';
 
-const SV_GRADIENT: [string, string, string] = ['#5A3800', '#8B5E14', '#C8900A'];
-
-function AreaChip({ areaId }: { areaId: string }) {
-  const area = SERVICE_AREAS.find((a) => a.id === areaId);
-  if (!area) return null;
-  return (
-    <View style={[styles.areaChip, { backgroundColor: Colors.svl }]}>
-      <Text style={styles.areaChipText}>
-        {area.emoji} {area.label}
-      </Text>
-    </View>
-  );
-}
-
-function ProgressBar({ filled, total }: { filled: number; total: number }) {
-  const pct = total > 0 ? Math.min(filled / total, 1) : 0;
-  return (
-    <View style={styles.progressTrack}>
-      <View style={[styles.progressFill, { width: `${pct * 100}%` as DimensionValue }]} />
-    </View>
-  );
-}
+const HERO_GRADIENT: [string, string, string] = ['#5A3800', '#9B6B14', '#C8900A'];
+const SV_ACCENT = '#9B6B14';
 
 export default function ServerHomeScreen() {
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { language, setLanguage } = useSettingsStore();
+  const lang = i18n.language;
+  const setLanguage = useSettingsStore((s) => s.setLanguage);
   const userId = useAuthStore((s) => s.userId) ?? '';
   const findTeacher = useTeachersStore((s) => s.findTeacher);
   const user = findTeacher(userId);
+  const displayName = user?.name ?? 'Priya Thapa';
 
-  const name = user?.name ?? 'Server';
-  const firstName = name.split(' ')[0];
-  const initials = name
-    .split(' ')
-    .map((w: string) => w[0])
-    .join('')
-    .toUpperCase();
+  const openSlots = serverCourses.reduce((sum, c) => sum + (c.total - c.filled), 0);
+  const totalCourses = serverCourses.length;
+  const unread = 0;
 
-  const approvedApp = serverApplicationsData.find((a) => a.status === 'approved');
-  const openCourses = serverCoursesData.slice(0, 3);
+  const upcomingApp =
+    serverApplications.find((a) => a.status === 'approved') ?? serverApplications[0];
+  const upcomingCourse = upcomingApp
+    ? serverCourses.find((c) => c.id === upcomingApp.courseId)
+    : undefined;
+  const upcomingArea = SERVICE_AREAS.find((a) => a.id === upcomingApp?.areas[0]);
+  const upcomingAreaIcon = upcomingArea?.emoji ?? '🍳';
+  // Prototype always uses the English label here, even in NE mode.
+  const upcomingAreaLabelText = upcomingArea?.label ?? 'Kitchen';
+  const upcomingDuration = upcomingApp?.partial
+    ? `${t('server.home.partial_lbl')}: ${upcomingApp.days ?? ''}`
+    : t('server.home.full_course_lbl');
+  const upcomingCity = upcomingCourse
+    ? `${upcomingCourse.city}${upcomingCourse.flag ? ' ' + upcomingCourse.flag : ' 🇳🇵'}`
+    : 'Budhanilkantha, Kathmandu 🇳🇵';
+
+  const langToggleText =
+    lang === 'ne' ? t('server.home.lang_toggle_ne') : t('server.home.lang_toggle_en');
+
+  const top3 = serverCourses.slice(0, 3);
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.cr }}>
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="light-content" />
       <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 110 }}
       >
-        {/* Hero */}
+        {/* ─── Hero ─────────────────────────────────────────────────── */}
         <LinearGradient
-          colors={SV_GRADIENT}
+          colors={HERO_GRADIENT}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.hero, { paddingTop: insets.top + 16 }]}
+          end={{ x: 0.671, y: 0.97 }}
+          style={[s.hero, { paddingTop: Math.max(56, insets.top + 12) }]}
         >
-          <LotusHero color="white" opacity={0.09} size={240} />
+          <LotusHero color="white" opacity={0.08} size={210} right={-30} bottom={-30} />
           <MountainSilhouette />
 
-          {/* Top row */}
-          <View style={styles.heroTopRow}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{initials}</Text>
+          <View style={s.heroRow}>
+            <View style={{ flexShrink: 1 }}>
+              <Text style={[s.kicker, lang === 'ne' && { fontFamily: FontFamily.devanagari }]}>
+                {t('server.home.dhamma_server')}
+              </Text>
+              <Text style={s.name}>{displayName} 🙏</Text>
+              <Text style={s.subline}>{t('server.home.old_student')} · Serving since 2018</Text>
             </View>
-            <View style={{ flex: 1 }} />
-            <View style={styles.heroTopRight}>
+
+            <View style={s.heroRight}>
+              <View style={s.badge}>
+                <Text style={s.badgeGlyph}>🌿</Text>
+                {unread > 0 && (
+                  <View style={s.badgeDot}>
+                    <Text style={s.badgeDotText}>{unread}</Text>
+                  </View>
+                )}
+              </View>
               <TouchableOpacity
-                onPress={() => setLanguage(language === 'en' ? 'ne' : 'en')}
-                style={styles.langBtn}
+                onPress={() => setLanguage(lang === 'ne' ? 'en' : 'ne')}
+                activeOpacity={0.8}
+                style={s.langPill}
+                hitSlop={8}
               >
-                <Text style={styles.langBtnText}>{language === 'en' ? 'NE' : 'EN'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => router.push(Routes.serverNotifications)}
-                style={styles.bellBtn}
-              >
-                <Text style={styles.bellText}>🔔</Text>
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>2</Text>
-                </View>
+                <Text
+                  style={[s.langPillText, lang === 'en' && { fontFamily: FontFamily.devanagari }]}
+                >
+                  🌐 {langToggleText}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Greeting */}
-          <Text style={styles.greeting}>🙏 Namaste, {firstName}!</Text>
-          <Text style={styles.role}>Dhamma Server · सेवक</Text>
-
-          {/* Stats row */}
-          <View style={styles.statsRow}>
-            <StatCard value={String(user?.totalCourses ?? 0)} label="Courses Served" />
-            <StatCard value={String(user?.centersServed ?? 0)} label="Centers" />
-            <StatCard value={String(user?.coursesThisYear ?? 0)} label="Upcoming" />
+          <View style={s.statsRow}>
+            {[
+              { ic: '🍳', n: 12, l: t('server.home.stat_served') },
+              { ic: '🏛', n: 8, l: t('server.home.stat_centers') },
+              { ic: '📅', n: 1, l: t('server.home.stat_upcoming') },
+            ].map((stat) => (
+              <View key={stat.l} style={s.statChip}>
+                <Text style={s.statIcon}>{stat.ic}</Text>
+                <Text style={s.statNumber}>{stat.n}</Text>
+                <Text style={s.statLabel}>{stat.l}</Text>
+              </View>
+            ))}
           </View>
         </LinearGradient>
 
-        {/* Upcoming Service */}
-        {approvedApp && (
-          <>
-            <SectionHeader title="My Upcoming Service" />
-            <FadeInView delay={60}>
-              <View style={styles.approvedCard}>
-                <View style={styles.approvedHeader}>
-                  <View style={styles.approvedBadge}>
-                    <Text style={styles.approvedBadgeText}>✓ Approved</Text>
-                  </View>
-                  <Text style={styles.approvedMeta}>
-                    {approvedApp.type} · {approvedApp.dates}
+        {/* ─── My Upcoming Service ──────────────────────────────────── */}
+        <Text style={s.sph}>🙏 {t('server.home.upcoming_service')}</Text>
+        {upcomingApp ? (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push(routeTo.serverApplicationDetail(upcomingApp.id))}
+            style={[s.card, { borderLeftWidth: 4, borderLeftColor: SV_ACCENT }]}
+          >
+            <View style={s.cardRow}>
+              <View style={s.iconTile}>
+                <Text style={s.iconTileGlyph}>{upcomingAreaIcon}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.upcomingTitle}>{upcomingApp.center}</Text>
+                <Text style={s.upcomingSub}>
+                  {upcomingAreaLabelText} · {upcomingDuration} ({upcomingApp.dates})
+                </Text>
+                <Text style={s.upcomingMeta}>{upcomingCity}</Text>
+              </View>
+              <View style={s.confirmedPill}>
+                <Text style={s.confirmedPillText}>{t('server.home.confirmed')}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ) : null}
+
+        {/* ─── Open Opportunities ───────────────────────────────────── */}
+        <View style={s.opphHeaderRow}>
+          <Text style={[s.sph, { margin: 0 }]}>🌟 {t('server.home.open_opps')}</Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.push(Routes.serverOpportunities)}
+            hitSlop={8}
+          >
+            <Text style={s.seeAll}>{t('home.see_all')}</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={s.opphSub}>
+          {openSlots} {t('server.home.open_slots')} {totalCourses} {t('server.home.courses')}
+        </Text>
+
+        {top3.map((c) => {
+          const open = c.total - c.filled;
+          const pct = c.total > 0 ? Math.round((c.filled / c.total) * 100) : 0;
+          const fillColor = pct > 80 ? Colors.ur : pct > 50 ? SV_ACCENT : Colors.fo;
+          const slotsLeftColor = open <= 3 ? Colors.ur : SV_ACCENT;
+          const visibleAreas = c.areas.slice(0, 4);
+          const overflow = c.areas.length - visibleAreas.length;
+
+          return (
+            <TouchableOpacity
+              key={c.id}
+              activeOpacity={0.85}
+              onPress={() => router.push(routeTo.serverOpportunityDetail(c.id))}
+              style={[s.card, { borderLeftWidth: 4, borderLeftColor: SV_ACCENT }]}
+            >
+              <View style={s.oppTopRow}>
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <Text style={s.oppTitle}>{c.center}</Text>
+                  <Text style={s.oppCity}>{c.city}</Text>
+                  <Text style={s.oppMeta}>
+                    📅 {c.dates} · {c.type}
                   </Text>
                 </View>
-                <Text style={styles.approvedCenter}>{approvedApp.center}</Text>
-                <View style={styles.chipRow}>
-                  {approvedApp.areas.map((a) => (
-                    <AreaChip key={a} areaId={a} />
-                  ))}
-                </View>
-                <View style={styles.approvedInfoRow}>
-                  <View style={styles.approvedInfoItem}>
-                    <Text style={styles.infoLabel}>Arrive by</Text>
-                    <Text style={styles.infoValue}>{approvedApp.arriveBy}</Text>
-                  </View>
-                  <View style={styles.approvedInfoItem}>
-                    <Text style={styles.infoLabel}>Coordinator</Text>
-                    <Text style={styles.infoValue}>{approvedApp.coordinator}</Text>
-                  </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={[s.slotsLeft, { color: slotsLeftColor }]}>{open} slots left</Text>
+                  <Text style={s.slotsBreakdown}>
+                    {c.mServers}M + {c.fServers}F
+                  </Text>
                 </View>
               </View>
-            </FadeInView>
-          </>
-        )}
 
-        {/* Open Opportunities */}
-        <SectionHeader
-          title="Open Opportunities"
-          action="See All"
-          onAction={() => router.push(Routes.serverOpportunities)}
-        />
-        {openCourses.map((course, i) => {
-          const open = course.total - course.filled;
-          const pct = course.total > 0 ? course.filled / course.total : 0;
-          return (
-            <FadeInView key={course.id} delay={80 + i * 60}>
-              <TouchableOpacity
-                style={styles.courseCard}
-                activeOpacity={0.88}
-                onPress={() => router.push(routeTo.serverOpportunityDetail(course.id))}
-              >
-                <View style={styles.courseCardHeader}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.courseName}>
-                      {course.center} {course.flag}
-                    </Text>
-                    <Text style={styles.courseMeta}>
-                      {course.city} · {course.dates}
-                    </Text>
-                  </View>
-                  <View style={styles.courseTypeBadge}>
-                    <Text style={styles.courseTypeText}>{course.type}</Text>
-                  </View>
+              <View style={s.progressRow}>
+                <View style={s.progressTrack}>
+                  <View
+                    style={[
+                      s.progressFill,
+                      {
+                        width: `${pct}%` as DimensionValue,
+                        backgroundColor: fillColor,
+                      },
+                    ]}
+                  />
                 </View>
+                <Text style={s.progressLabel}>
+                  {c.filled}/{c.total} filled
+                </Text>
+              </View>
 
-                {/* Progress */}
-                <View style={styles.progressRow}>
-                  <ProgressBar filled={course.filled} total={course.total} />
-                  <Text style={styles.progressLabel}>
-                    {course.filled}/{course.total} filled
-                  </Text>
-                </View>
-                <View style={styles.slotRow}>
-                  <View style={styles.openBadge}>
-                    <Text style={styles.openText}>{open} open</Text>
-                  </View>
-                  <Text style={styles.genderSlots}>
-                    {course.mServers}m + {course.fServers}f
-                  </Text>
-                </View>
-
-                {/* Area chips */}
-                <View style={styles.chipRow}>
-                  {course.areas.slice(0, 4).map((a) => (
-                    <AreaChip key={a} areaId={a} />
-                  ))}
-                  {course.areas.length > 4 && (
-                    <View style={styles.areaChip}>
-                      <Text style={styles.areaChipText}>+{course.areas.length - 4}</Text>
+              <View style={s.chipsRow}>
+                {visibleAreas.map((aid) => {
+                  const sa = SERVICE_AREAS.find((x) => x.id === aid);
+                  if (!sa) return null;
+                  return (
+                    <View key={aid} style={s.areaChip}>
+                      <Text style={s.areaChipText}>
+                        {sa.emoji} {sa.label}
+                      </Text>
                     </View>
-                  )}
-                </View>
-
-                <Text style={styles.viewLink}>View Details →</Text>
-              </TouchableOpacity>
-            </FadeInView>
+                  );
+                })}
+                {overflow > 0 && <Text style={s.areaOverflow}>+{overflow} more</Text>}
+              </View>
+            </TouchableOpacity>
           );
         })}
 
-        {/* Eligibility card */}
-        <FadeInView delay={200}>
-          <View style={styles.eligibilityCard}>
-            <Text style={styles.eligibilityIcon}>✅</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.eligibilityTitle}>Eligible to Serve</Text>
-              <Text style={styles.eligibilityBody}>
-                You have completed the required courses and rest period. You may apply for upcoming
-                service.
-              </Text>
-            </View>
-          </View>
-        </FadeInView>
+        {/* ─── Eligible to Serve ────────────────────────────────────── */}
+        <View
+          style={[s.card, { backgroundColor: Colors.fol, borderWidth: 1, borderColor: Colors.fom }]}
+        >
+          <Text style={s.eligibleTitle}>✅ {t('server.home.eligible')}</Text>
+          <Text style={s.eligibleSub}>{t('server.home.eligible_sub')} · Last served: Mar 2026</Text>
+        </View>
+
+        <View style={{ height: 20 }} />
       </ScrollView>
     </View>
   );
 }
 
-function StatCard({ value, label }: { value: string; label: string }) {
-  return (
-    <View style={styles.statCard}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
+const s = StyleSheet.create({
+  flex: { flex: 1 },
 
-const styles = StyleSheet.create({
+  // Hero
   hero: {
-    paddingHorizontal: Layout.horizontalPad,
-    paddingBottom: 28,
+    paddingHorizontal: 18,
+    paddingBottom: 24,
     overflow: 'hidden',
+    position: 'relative',
   },
-  heroTopRow: {
+  heroRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    justifyContent: 'space-between',
+    position: 'relative',
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 13,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.35)',
+  kicker: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.72)',
+    fontFamily: FontFamily.sansRegular,
   },
-  avatarText: {
+  name: {
+    fontSize: 22,
+    fontWeight: '800',
     color: Colors.white,
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.sansExtraBold,
   },
-  heroTopRight: {
-    flexDirection: 'row',
+  subline: {
+    fontSize: 12.5,
+    color: 'rgba(255,255,255,0.7)',
+    fontFamily: FontFamily.sansRegular,
+  },
+  heroRight: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
     gap: 8,
-    alignItems: 'center',
   },
-  langBtn: {
+  badge: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: Radius.full,
-  },
-  langBtnText: {
-    color: Colors.white,
-    fontSize: 11,
-    fontWeight: FontWeight.bold,
-    letterSpacing: 0.5,
-  },
-  bellBtn: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    width: 36,
-    height: 36,
-    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
-  bellText: { fontSize: 16 },
-  badge: {
+  badgeGlyph: { fontSize: 26 },
+  badgeDot: {
     position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
     backgroundColor: Colors.ur,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#9B6B14',
   },
-  badgeText: { fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold },
-
-  greeting: {
-    fontSize: FontSize.h2,
-    fontWeight: FontWeight.extrabold,
+  badgeDotText: {
+    fontSize: 10,
+    fontWeight: '800',
     color: Colors.white,
-    marginBottom: 4,
+    fontFamily: FontFamily.sansExtraBold,
   },
-  role: {
-    fontSize: FontSize.smPlus,
-    color: 'rgba(255,255,255,0.72)',
-    fontWeight: FontWeight.medium,
-    marginBottom: Spacing.lg,
-  },
-  statsRow: { flexDirection: 'row', gap: 7 },
-  statCard: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderRadius: Radius.md,
-    padding: 10,
-    gap: 3,
+  langPill: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 11,
+    paddingVertical: 4,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: 'rgba(255,255,255,0.3)',
   },
-  statValue: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+  langPillText: {
     color: Colors.white,
+    fontSize: 10.5,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+
+  // Stats row
+  statsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 18,
+    position: 'relative',
+  },
+  statChip: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.22)',
+    borderRadius: 13,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  statIcon: { fontSize: 16, marginBottom: 2, lineHeight: 16 },
+  statNumber: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.white,
+    lineHeight: 18,
+    fontFamily: FontFamily.sansExtraBold,
   },
   statLabel: {
-    fontSize: 9,
-    fontWeight: FontWeight.semibold,
-    color: 'rgba(255,255,255,0.65)',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    fontSize: 9.5,
+    color: 'rgba(255,255,255,0.78)',
+    marginTop: 3,
+    fontFamily: FontFamily.sansRegular,
+    textAlign: 'center',
   },
 
-  approvedCard: {
-    backgroundColor: Colors.white,
-    marginHorizontal: Layout.horizontalPad,
-    borderRadius: Radius.lg,
-    padding: Layout.cardPad,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    ...Shadows.card,
-    gap: Spacing.sm,
+  // Section header (.sph)
+  sph: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.tx2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.84,
+    marginHorizontal: 18,
+    marginTop: 18,
+    marginBottom: 9,
+    fontFamily: FontFamily.sansBold,
   },
-  approvedHeader: {
+
+  // Card (.card)
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 11,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+
+  // Upcoming service card
+  cardRow: {
     flexDirection: 'row',
+    gap: 11,
     alignItems: 'center',
-    gap: Spacing.sm,
   },
-  approvedBadge: {
+  iconTile: {
+    width: 46,
+    height: 46,
+    borderRadius: 13,
+    backgroundColor: Colors.svl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  iconTileGlyph: { fontSize: 22 },
+  upcomingTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.tx,
+    fontFamily: FontFamily.sansBold,
+  },
+  upcomingSub: {
+    fontSize: 12,
+    color: Colors.tx2,
+    fontFamily: FontFamily.sansRegular,
+  },
+  upcomingMeta: {
+    fontSize: 11,
+    color: Colors.tx3,
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
+  },
+  confirmedPill: {
     backgroundColor: Colors.fol,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 20,
+    flexShrink: 0,
   },
-  approvedBadgeText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
+  confirmedPillText: {
+    fontSize: 10,
+    fontWeight: '700',
     color: Colors.fo,
-  },
-  approvedMeta: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-    flex: 1,
-  },
-  approvedCenter: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx,
-  },
-  approvedInfoRow: {
-    flexDirection: 'row',
-    gap: Spacing.lg,
-    marginTop: 4,
-  },
-  approvedInfoItem: { gap: 2 },
-  infoLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.tx3,
-    fontWeight: FontWeight.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  infoValue: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx,
-    fontWeight: FontWeight.semibold,
+    fontFamily: FontFamily.sansBold,
   },
 
-  chipRow: {
+  // Open Opportunities header
+  opphHeaderRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 5,
-    marginTop: 4,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingTop: 4,
+    paddingBottom: 7,
   },
-  areaChip: {
-    backgroundColor: Colors.svl,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
+  seeAll: {
+    fontSize: 13,
+    color: SV_ACCENT,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
   },
-  areaChipText: {
-    fontSize: FontSize.xs,
-    color: Colors.sv,
-    fontWeight: FontWeight.semibold,
+  opphSub: {
+    fontSize: 12,
+    color: Colors.tx3,
+    paddingHorizontal: 18,
+    paddingBottom: 9,
+    fontStyle: 'italic',
+    fontFamily: FontFamily.sansRegular,
   },
 
-  courseCard: {
-    backgroundColor: Colors.white,
-    marginHorizontal: Layout.horizontalPad,
-    marginVertical: 5,
-    borderRadius: Radius.lg,
-    padding: Layout.cardPad,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    ...Shadows.card,
-    gap: Spacing.sm,
-  },
-  courseCardHeader: {
+  // Opportunity card
+  oppTopRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: Spacing.sm,
+    marginBottom: 7,
   },
-  courseName: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
+  oppTitle: {
+    fontSize: 14,
+    fontWeight: '700',
     color: Colors.tx,
+    fontFamily: FontFamily.sansBold,
   },
-  courseMeta: {
-    fontSize: FontSize.sm,
+  oppCity: {
+    fontSize: 12,
+    color: Colors.tx2,
+    fontFamily: FontFamily.sansRegular,
+  },
+  oppMeta: {
+    fontSize: 11,
     color: Colors.tx3,
-    marginTop: 2,
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
   },
-  courseTypeBadge: {
-    backgroundColor: Colors.svl,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.sm,
+  slotsLeft: {
+    fontSize: 13,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
   },
-  courseTypeText: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    color: Colors.sv,
+  slotsBreakdown: {
+    fontSize: 10,
+    color: Colors.tx3,
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
   },
   progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginBottom: 7,
   },
   progressTrack: {
     flex: 1,
-    height: 6,
+    height: 5,
     backgroundColor: Colors.cr3,
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: Colors.sv,
     borderRadius: 3,
   },
   progressLabel: {
-    fontSize: FontSize.xs,
+    fontSize: 10,
     color: Colors.tx3,
-    fontWeight: FontWeight.medium,
+    flexShrink: 0,
+    fontFamily: FontFamily.sansRegular,
   },
-  slotRow: {
+  chipsRow: {
     flexDirection: 'row',
+    gap: 4,
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: Spacing.sm,
   },
-  openBadge: {
-    backgroundColor: Colors.url,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
+  areaChip: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 20,
+    backgroundColor: Colors.svl,
   },
-  openText: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    color: Colors.ur,
+  areaChipText: {
+    fontSize: 10,
+    color: SV_ACCENT,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
   },
-  genderSlots: {
-    fontSize: FontSize.sm,
+  areaOverflow: {
+    fontSize: 10,
     color: Colors.tx3,
-    fontWeight: FontWeight.medium,
-  },
-  viewLink: {
-    fontSize: FontSize.sm,
-    color: Colors.sv,
-    fontWeight: FontWeight.bold,
-    marginTop: 2,
+    fontFamily: FontFamily.sansRegular,
   },
 
-  eligibilityCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    backgroundColor: Colors.fol,
-    marginHorizontal: Layout.horizontalPad,
-    marginTop: Spacing.lg,
-    borderRadius: Radius.lg,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.fom,
-  },
-  eligibilityIcon: { fontSize: 22 },
-  eligibilityTitle: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
+  // Eligible card overrides handled inline
+  eligibleTitle: {
+    fontSize: 13,
+    fontWeight: '700',
     color: Colors.fo,
+    marginBottom: 4,
+    fontFamily: FontFamily.sansBold,
   },
-  eligibilityBody: {
-    fontSize: FontSize.sm,
-    color: Colors.fo,
-    marginTop: 2,
-    lineHeight: FontSize.sm * 1.5,
+  eligibleSub: {
+    fontSize: 12,
+    color: Colors.tx2,
+    fontFamily: FontFamily.sansRegular,
   },
 });
