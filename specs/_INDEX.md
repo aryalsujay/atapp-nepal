@@ -68,7 +68,7 @@ Legend: `📝 draft` · `👀 review` · `✅ approved` · `🔨 in progress` ·
 
 | # | Spec | Route | Prototype | Status |
 |---|---|---|---|---|
-| 21 | Admin Dashboard | `/(admin)/dashboard` | `app.html:1935` | — |
+| 21 | [Admin Dashboard](./21-admin-dashboard.md) | `/(admin)/dashboard` | `app.html:1935` | ✓ done |
 | 22 | Admin Inbox | `/(admin)/inbox` | `app.html:2013` | — |
 | 23 | Admin Review | `/(admin)/inbox/[id]` | `app.html:2059` | — |
 | 24 | Admin Directory | `/(admin)/directory` | `app.html:2115` | — |
