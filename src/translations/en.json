@@ -508,14 +508,9 @@
       "rejected_body": "Teacher notified with reason."
     },
     "directory": {
-      "title": "Teacher Directory",
-      "search": "Search teachers...",
-      "allLanguages": "All",
-      "available": "Available",
-      "unavailable": "Unavailable",
-      "assign": "Assign",
-      "viewProfile": "Profile",
-      "addTeacher": "Add Teacher"
+      "title": "Teachers",
+      "add_teacher": "+ Add Teacher",
+      "empty_state": "No teachers match your search."
     },
     "addTeacher": {
       "title": "Add New Teacher",
