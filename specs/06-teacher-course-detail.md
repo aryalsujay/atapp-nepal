@@ -176,3 +176,17 @@ All copy goes through `courseDetail.*` keys in `en.json` + `ne.json`. Notable Ne
 - [x] Status pills render on courses browse for approved/pending/rejected
 - [x] Typecheck clean
 - [x] All tests pass (95/95)
+
+---
+
+## Implementation notes
+
+### Phase 3 refactor (Apr 2026)
+Screen reduced from 839 → 230 LOC. Sub-components extracted to `src/components/teacher/courseDetail/`:
+- `CourseHero` — gradient hero with back chevron, kicker, match badge, AT-needed pill, LotusHero + MountainSilhouette decorations
+- `CourseInfoTable` — 5-row info card (owns private `InfoRow`)
+- `ATPairCard` — section header + co-teacher card / empty state + dashed divider + looking-for chips
+- `EligibilityCheck` — 5-row checklist with `CheckIcon`/`XIcon` SVGs; exports the `buildPrototypeChecks(course, profile, t)` helper + `Check` type
+- `ApplyCta` — 3 mutually-exclusive states (assigned / submitted / default)
+
+Screen retains all data fetching (`enrichedCourse`, `travel`, `matchProfile` memos) and `onApply` async submit. No data JSON file — eligibility is computed live from profile + course.

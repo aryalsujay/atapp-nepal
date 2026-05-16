@@ -337,3 +337,4 @@ If `course` (resolved from URL `id` against `coursesStore`) is null → render a
 | Date | Author | Change |
 |---|---|---|
 | 2026-05-14 | Sujay + Claude | Initial draft from prototype `app.html:1225–1382` |
+| 2026-05-16 | Sujay + Claude | Phase 3 refactor: 834 → 271 LOC, 10 sub-components extracted to `src/components/teacher/brief/` (BriefHero, ArrivalCard, CoTeacherCard, CoordinatorCard, StudentsCard, TravelCard, WhatToBringCard, NotesCard, StepDownAction, SectionHeader). All wiring (`useConfirm`, `useToast`, `applicationsStore.requestWithdrawal`) preserved verbatim. |

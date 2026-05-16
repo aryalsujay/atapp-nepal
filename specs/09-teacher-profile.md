@@ -242,3 +242,20 @@ The current `app/(teacher)/profile/index.tsx` is ~428 lines and uses generic `Se
 - [ ] Sign Out red-outline button at bottom triggers confirm + signOut + login redirect
 - [ ] All copy through i18n (en + ne, Acharya-correct Nepali)
 - [ ] Typecheck clean, tests pass
+
+---
+
+## Implementation notes
+
+### Phase 3 refactor (Apr 2026)
+Screen reduced from 1176 → 222 LOC. Sub-components extracted to `src/components/teacher/profile/`:
+- `ProfileHero` — saffron-gradient hero with avatar + 4-stat row
+- `EligibilityCard` — green ready-to-teach banner
+- `AvailabilityCalendar` — month grid + legend + reset chips
+- `LanguagesSection` — owns LANGUAGE_META / LANGUAGE_NOTES
+- `CourseAuthorizationsList` — locked authorizations card
+- `PreferredCentersSection` — ranked region rows
+- `RecentTeachingSection` — collapsible view-all
+- `PersonalNoteCard`, `SignOutButton`
+
+Screen orchestrates `profile` store + mutation handlers; children are pure presentation.

@@ -389,3 +389,7 @@ Reuse: `common.coming_soon` for Re-generate.
 - **Footer Re-generate + Finalize buttons normalised** to identical padding (`13/22`) and fontSize 14, even though prototype's CSS would render them at slightly different heights (`.btn.ou` 13/14 vs `.btn.fo-btn` 15/15).
 - Re-generate button is a v1 no-op (`coming_soon` Alert).
 - Reason field is a vertical-list select with the 5 prototype options.
+
+### Phase 3 refactor (Apr 2026)
+Screen reduced from 958 → 293 LOC. Sub-components extracted to
+`src/components/admin/schedule/`: `ConfidencePill` (+ `confidenceBorderColor` helper), `DraftCard`, `MatchingCriteriaChips`, `OverrideModal`. Static rows moved to `src/data/admin/scheduleDraft.json` + `availableTeachers.json`. Types `ScheduleDraftRow`, `ScheduleConfidence`, `AvailableTeacher` exported from `@/data`.
