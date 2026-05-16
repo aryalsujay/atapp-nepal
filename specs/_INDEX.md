@@ -73,7 +73,7 @@ Legend: `📝 draft` · `👀 review` · `✅ approved` · `🔨 in progress` ·
 | 23 | [Admin Review](./23-admin-review.md) | `/(admin)/inbox/[id]` | `app.html:2059` | ✓ done |
 | 24 | [Admin Directory](./24-admin-directory.md) | `/(admin)/directory` | `app.html:2115` | ✓ done |
 | 25 | [Admin Auto-Schedule](./25-admin-auto-schedule.md) | `/(admin)/schedule` | `app.html:2291` | ✓ done |
-| 26 | Admin Calendar | `/(admin)/calendar` | `app.html:2430` | — |
+| 26 | [Admin Calendar](./26-admin-calendar.md) | `/(admin)/calendar` | `app.html:2430` | ✓ done |
 | 27 | Admin Notifications | `/(admin)/notifications` | `app.html:2487` | — |
 | 28 | Admin Centres | `/(admin)/centres` | (new — not in prototype) | — |
 | 29 | Admin Server Inbox | `/(admin)/server/inbox` | `app.html:3492` | — |
