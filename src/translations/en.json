@@ -496,18 +496,16 @@
       "empty_state": "No applications in this category."
     },
     "review": {
-      "title": "Application Review",
-      "eligibility": "Eligibility Check",
-      "matchScore": "Match Score",
-      "adminNotes": "Admin Notes",
-      "notesPlaceholder": "Add notes about this application...",
-      "approveConfirm": "Approve Application",
-      "rejectConfirm": "Reject Application",
-      "rejectReason": "Rejection Reason",
-      "rejectPlaceholder": "Reason for rejection...",
-      "decision": "Decision",
-      "approved": "Approved ✓",
-      "rejected": "Rejected"
+      "back_inbox": "Back to Inbox",
+      "match_score": "Match Score",
+      "eligibility": "Eligibility",
+      "admin_notes": "Admin Notes",
+      "approve_btn": "✓ Approve Application",
+      "reject_btn": "✗ Reject with Reason",
+      "approved_title": "Application Approved!",
+      "rejected_title": "Application Rejected",
+      "approved_body": "Teacher notified by email. Sadhu! 🙏",
+      "rejected_body": "Teacher notified with reason."
     },
     "directory": {
       "title": "Teacher Directory",

@@ -91,6 +91,8 @@ export interface ServerNotification {
 
 export const serverNotifications = serverNotificationsJson as ServerNotification[];
 
+export type AdminApplicationStatus = 'pending' | 'approved' | 'rejected';
+
 export interface AdminApplication {
   id: number;
   name: string;
@@ -101,6 +103,7 @@ export interface AdminApplication {
   match: number;
   courses: number;
   note: string;
+  status?: AdminApplicationStatus;
 }
 
 export const adminApplications = adminApplicationsJson as AdminApplication[];

@@ -70,7 +70,7 @@ Legend: `📝 draft` · `👀 review` · `✅ approved` · `🔨 in progress` ·
 |---|---|---|---|---|
 | 21 | [Admin Dashboard](./21-admin-dashboard.md) | `/(admin)/dashboard` | `app.html:1935` | ✓ done |
 | 22 | [Admin Inbox](./22-admin-inbox.md) | `/(admin)/inbox` | `app.html:2013` | ✓ done |
-| 23 | Admin Review | `/(admin)/inbox/[id]` | `app.html:2059` | — |
+| 23 | [Admin Review](./23-admin-review.md) | `/(admin)/inbox/[id]` | `app.html:2059` | ✓ done |
 | 24 | Admin Directory | `/(admin)/directory` | `app.html:2115` | — |
 | 25 | Admin Auto-Schedule | `/(admin)/schedule` | `app.html:2291` | — |
 | 26 | Admin Calendar | `/(admin)/calendar` | `app.html:2430` | — |

@@ -4,16 +4,8 @@
  * Prototype-faithful port of `app.html:2013–2056` (`AdminInbox`).
  */
 
-import React, { useState } from 'react';
-import {
-  Alert,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +16,7 @@ import { Routes, routeTo } from '@/routes';
 import { Colors, Gradients, GradientDirection } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { adminApplications, type AdminApplication } from '@/data';
+import { useAdminApplicationsStore } from '@/store/adminApplicationsStore';
 
 type Tab = 'pending' | 'approved' | 'rejected';
 const TABS: Tab[] = ['pending', 'approved', 'rejected'];
@@ -40,20 +33,32 @@ function mbadgeStyle(match: number) {
   return { bg: Colors.cr2, color: Colors.tx3 };
 }
 
-const STATS = [
-  { n: '4', label: 'Pending', color: Colors.gd, bg: Colors.gdl },
-  { n: '2', label: 'Urgent', color: Colors.ur, bg: Colors.url },
-  { n: '18', label: 'Month', color: Colors.fo, bg: Colors.fol },
-] as const;
-
 export default function AdminInboxScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<Tab>('pending');
+  const statuses = useAdminApplicationsStore((s) => s.statuses);
+  const approve = useAdminApplicationsStore((s) => s.approve);
+  const reject = useAdminApplicationsStore((s) => s.reject);
 
-  // v1: all admApps are treated as pending; approved/rejected empty.
-  const filtered: AdminApplication[] = tab === 'pending' ? adminApplications : [];
+  const filtered: AdminApplication[] = useMemo(
+    () => adminApplications.filter((a) => (statuses[a.id] ?? 'pending') === tab),
+    [tab, statuses],
+  );
+
+  const counts = useMemo(() => {
+    let pending = 0;
+    let approved = 0;
+    let rejected = 0;
+    for (const a of adminApplications) {
+      const st = statuses[a.id] ?? 'pending';
+      if (st === 'approved') approved += 1;
+      else if (st === 'rejected') rejected += 1;
+      else pending += 1;
+    }
+    return { pending, approved, rejected };
+  }, [statuses]);
 
   return (
     <View style={[s.flex, { backgroundColor: Colors.cr }]}>
@@ -81,12 +86,18 @@ export default function AdminInboxScreen() {
           </View>
 
           <View style={s.statsRow}>
-            {STATS.map((stat) => (
-              <View key={stat.label} style={[s.statChip, { backgroundColor: stat.bg }]}>
-                <Text style={[s.statNumber, { color: stat.color }]}>{stat.n}</Text>
-                <Text style={[s.statLabel, { color: stat.color }]}>{stat.label}</Text>
-              </View>
-            ))}
+            <View style={[s.statChip, { backgroundColor: Colors.gdl }]}>
+              <Text style={[s.statNumber, { color: Colors.gd }]}>{counts.pending}</Text>
+              <Text style={[s.statLabel, { color: Colors.gd }]}>Pending</Text>
+            </View>
+            <View style={[s.statChip, { backgroundColor: Colors.url }]}>
+              <Text style={[s.statNumber, { color: Colors.ur }]}>{counts.rejected}</Text>
+              <Text style={[s.statLabel, { color: Colors.ur }]}>Rejected</Text>
+            </View>
+            <View style={[s.statChip, { backgroundColor: Colors.fol }]}>
+              <Text style={[s.statNumber, { color: Colors.fo }]}>{counts.approved}</Text>
+              <Text style={[s.statLabel, { color: Colors.fo }]}>Approved</Text>
+            </View>
           </View>
         </View>
 
@@ -155,34 +166,80 @@ export default function AdminInboxScreen() {
                   </View>
                 </View>
                 <View style={s.actionsRow}>
-                  <TouchableOpacity
-                    activeOpacity={0.85}
-                    onPress={() => Alert.alert(t('common.coming_soon'))}
-                    style={{ flex: 1 }}
-                  >
-                    <LinearGradient
-                      colors={Gradients.forestCta}
-                      start={GradientDirection.button.start}
-                      end={GradientDirection.button.end}
-                      style={s.actionBtn}
-                    >
-                      <Text style={[s.actionBtnText, { color: Colors.white }]}>✓ Approve</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    activeOpacity={0.85}
-                    onPress={() => Alert.alert(t('common.coming_soon'))}
-                    style={[s.actionBtn, s.rejectBtn, { flex: 1 }]}
-                  >
-                    <Text style={[s.actionBtnText, { color: Colors.ur }]}>✗ Reject</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    activeOpacity={0.85}
-                    onPress={() => router.push(routeTo.adminApplicationReview(a.id))}
-                    style={[s.actionBtn, s.reviewBtn, { flex: 1 }]}
-                  >
-                    <Text style={[s.actionBtnText, { color: Colors.tx }]}>Review →</Text>
-                  </TouchableOpacity>
+                  {tab === 'pending' ? (
+                    <>
+                      <TouchableOpacity
+                        activeOpacity={0.85}
+                        onPress={() => approve(a.id)}
+                        style={{ flex: 1, minHeight: 34 }}
+                      >
+                        <LinearGradient
+                          colors={Gradients.forestCta}
+                          start={GradientDirection.button.start}
+                          end={GradientDirection.button.end}
+                          style={[s.actionBtn, { flex: 1 }]}
+                        >
+                          <Text
+                            numberOfLines={1}
+                            style={[s.actionBtnText, { color: Colors.white }]}
+                          >
+                            ✓ Approve
+                          </Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        activeOpacity={0.85}
+                        onPress={() => reject(a.id)}
+                        style={[s.actionBtn, s.rejectBtn, { flex: 1 }]}
+                      >
+                        <Text numberOfLines={1} style={[s.actionBtnText, { color: Colors.ur }]}>
+                          ✗ Reject
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        activeOpacity={0.85}
+                        onPress={() => router.push(routeTo.adminApplicationReview(a.id))}
+                        style={[s.actionBtn, s.reviewBtn, { flex: 1 }]}
+                      >
+                        <Text numberOfLines={1} style={[s.actionBtnText, { color: Colors.tx }]}>
+                          Review →
+                        </Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      <View
+                        style={[
+                          s.actionBtn,
+                          {
+                            flex: 1,
+                            backgroundColor: tab === 'approved' ? Colors.fol : Colors.url,
+                          },
+                        ]}
+                      >
+                        <Text
+                          numberOfLines={1}
+                          style={[
+                            s.actionBtnText,
+                            {
+                              color: tab === 'approved' ? Colors.fo : Colors.ur,
+                            },
+                          ]}
+                        >
+                          {tab === 'approved' ? '✓ Approved' : '✗ Rejected'}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        activeOpacity={0.85}
+                        onPress={() => router.push(routeTo.adminApplicationReview(a.id))}
+                        style={[s.actionBtn, s.reviewBtn, { flex: 1 }]}
+                      >
+                        <Text numberOfLines={1} style={[s.actionBtnText, { color: Colors.tx }]}>
+                          Review →
+                        </Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </View>
               </TouchableOpacity>
             );
@@ -426,9 +483,10 @@ const s = StyleSheet.create({
     marginTop: 10,
   },
   actionBtn: {
-    paddingHorizontal: 15,
+    paddingHorizontal: 8,
     paddingVertical: 7,
     borderRadius: 10,
+    minHeight: 34,
     alignItems: 'center',
     justifyContent: 'center',
   },

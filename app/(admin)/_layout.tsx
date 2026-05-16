@@ -154,7 +154,7 @@ export default function AdminLayout() {
         }}
       />
       {/* Hidden screens */}
-      <Tabs.Screen name="inbox/[id]" options={{ href: null }} />
+      <Tabs.Screen name="inbox/[id]" options={{ href: null, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="server/inbox" options={{ href: null }} />
       <Tabs.Screen name="centres/index" options={{ href: null }} />
