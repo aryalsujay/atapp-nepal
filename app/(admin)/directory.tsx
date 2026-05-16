@@ -1,638 +1,514 @@
-import React, { useState } from 'react';
+/**
+ * Admin Directory — implements `specs/24-admin-directory.md`.
+ *
+ * Prototype-faithful port of `app.html:2115–2206` (`AdminDir`).
+ */
+
+import React, { useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
-  Modal,
   Alert,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useToast } from '@/components/ui/Toast';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Colors } from '@/theme/colors';
-import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
-import { Shadows } from '@/theme/shadows';
-import { SectionHeader } from '@/components/layout/SectionHeader';
-import { SearchBar } from '@/components/ui/SearchBar';
-import { Chip } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { useTeachersStore, StoredTeacher } from '@/store/teachersStore';
+import Svg, { Circle, Path } from 'react-native-svg';
 
-const ALL_LANGUAGES = ['All', 'Nepali', 'English', 'Hindi'];
+import { routeTo } from '@/routes';
+import { Colors, Gradients, GradientDirection } from '@/theme/colors';
+import { FontFamily } from '@/theme/typography';
+import { adminApplications } from '@/data';
 
-export default function AdminDirectory() {
+type LangFilter = 'All' | 'Nepali' | 'English' | 'Hindi' | 'German';
+const FILTERS: LangFilter[] = ['All', 'Nepali', 'English', 'Hindi', 'German'];
+
+interface DirectoryTeacher {
+  name: string;
+  gender: 'M' | 'F';
+  langs: string[];
+  regions: string[];
+  types: string;
+  total: number;
+  avail: boolean;
+  flag: string;
+}
+
+const TEACHERS: DirectoryTeacher[] = [
+  {
+    name: 'Bhikkhu Ananda',
+    gender: 'M',
+    langs: ['Nepali', 'English', 'Hindi'],
+    regions: ['Kathmandu', 'Pokhara', 'Lumbini'],
+    types: '10-Day, Satip., 20-Day',
+    total: 47,
+    avail: true,
+    flag: '🇳🇵',
+  },
+  {
+    name: 'Asha Mehta',
+    gender: 'F',
+    langs: ['Nepali', 'English'],
+    regions: ['Kathmandu'],
+    types: '10-Day, Satip.',
+    total: 23,
+    avail: true,
+    flag: '🇳🇵',
+  },
+  {
+    name: 'Ram Prasad Sharma',
+    gender: 'M',
+    langs: ['Nepali', 'Hindi'],
+    regions: ['Lumbini', 'Madhesh'],
+    types: '10-Day',
+    total: 18,
+    avail: true,
+    flag: '🇳🇵',
+  },
+  {
+    name: 'Sita Devi',
+    gender: 'F',
+    langs: ['Nepali'],
+    regions: ['Koshi', 'Itahari'],
+    types: '10-Day',
+    total: 14,
+    avail: false,
+    flag: '🇳🇵',
+  },
+  {
+    name: 'Gopal Thapa',
+    gender: 'M',
+    langs: ['Nepali', 'English'],
+    regions: ['Kathmandu', 'Pokhara'],
+    types: '10-Day, 20-Day, 30-Day',
+    total: 29,
+    avail: true,
+    flag: '🇳🇵',
+  },
+  {
+    name: 'Kamala Gurung',
+    gender: 'F',
+    langs: ['Nepali', 'English'],
+    regions: ['Pokhara', 'Gandaki'],
+    types: '10-Day, Satip.',
+    total: 12,
+    avail: true,
+    flag: '🇳🇵',
+  },
+];
+
+export default function AdminDirectoryScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const toast = useToast();
+  const insets = useSafeAreaInsets();
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<LangFilter>('All');
 
-  const [search, setSearch] = useState('');
-  const [langFilter, setLangFilter] = useState('All');
-  const [showAddSheet, setShowAddSheet] = useState(false);
-  const [newTeacher, setNewTeacher] = useState({
-    name: '',
-    gender: 'M' as 'M' | 'F',
-    yearAuthorized: '',
-    region: '',
-    authorizations: [] as string[],
-    contactMethod: 'email' as 'email' | 'phone',
-    contact: '',
-  });
-  const [inviteResult, setInviteResult] = useState<{
-    name: string;
-    email: string;
-    password: string;
-  } | null>(null);
+  const filtered = useMemo(
+    () =>
+      TEACHERS.filter(
+        (tc) =>
+          (query === '' || tc.name.toLowerCase().includes(query.toLowerCase())) &&
+          (filter === 'All' || tc.langs.includes(filter)),
+      ),
+    [query, filter],
+  );
 
-  const { allTeachers, addTeacher } = useTeachersStore();
-
-  const teachers = allTeachers.filter((teacher) => {
-    const matchSearch =
-      search === '' ||
-      teacher.name.toLowerCase().includes(search.toLowerCase()) ||
-      (teacher.region ?? '').toLowerCase().includes(search.toLowerCase());
-
-    const matchLang =
-      langFilter === 'All' ||
-      Object.entries(teacher.languages as Record<string, string>).some(
-        ([lang, level]) => lang === langFilter && level !== 'off',
-      );
-
-    return matchSearch && matchLang;
-  });
-
-  const handleCreateTeacher = async () => {
-    if (!newTeacher.name.trim()) {
-      toast.error('Please enter teacher name.', 'Required');
-      return;
-    }
-    const num = String(allTeachers.length + 1).padStart(3, '0');
-    const code = `AT-${num}`;
-    const id = `teacher-${Date.now()}`;
-    const teacher: StoredTeacher = {
-      id,
-      name: newTeacher.name.trim(),
-      gender: newTeacher.gender,
-      email: newTeacher.contact.includes('@') ? newTeacher.contact.trim() : `${id}@dhamma.np`,
-      inviteCode: code,
-      passwordHash: 'demo123',
-      region: newTeacher.region.trim() || 'Nepal',
-      flag: '🇳🇵',
-      authorizedSince: parseInt(newTeacher.yearAuthorized) || new Date().getFullYear(),
-      totalCourses: 0,
-      centersServed: 0,
-      coursesThisYear: 0,
-      authorizations: newTeacher.authorizations,
-      languages: { Nepali: 'primary', English: 'secondary' },
-      preferredRegions: newTeacher.region ? [newTeacher.region] : ['Kathmandu Valley'],
-      availableMonths: [],
-      festivalMonths: [],
-      personalNote: '',
-      teachingHistory: [],
-      isOnboarded: false,
-    };
-    await addTeacher(teacher);
-    setInviteResult({ name: newTeacher.name, email: teacher.email, password: 'demo123' });
+  const openProfile = (name: string) => {
+    const match = adminApplications.find((a) => a.name === name) ?? adminApplications[0];
+    router.push(routeTo.adminApplicationReview(match.id));
   };
 
-  const langLabel = (langs: Record<string, string>) =>
-    Object.entries(langs)
-      .filter(([, v]) => v === 'primary')
-      .map(([k]) => k)
-      .slice(0, 2)
-      .join(', ');
-
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.cr }}>
-      <SectionHeader
-        title={t('admin.directory.title')}
-        action={`+ ${t('admin.directory.addTeacher')}`}
-        onAction={() => setShowAddSheet(true)}
-        style={styles.header}
-      />
-
-      <SearchBar
-        value={search}
-        onChangeText={setSearch}
-        placeholder={t('admin.directory.search')}
-      />
-
-      {/* Language filter */}
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="dark-content" />
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        {ALL_LANGUAGES.map((lang) => (
-          <TouchableOpacity
-            key={lang}
-            onPress={() => setLangFilter(lang)}
-            style={[
-              styles.filterChip,
-              langFilter === lang && { backgroundColor: Colors.bl, borderColor: Colors.bl },
-            ]}
-          >
-            <Text
-              style={[
-                styles.filterChipText,
-                { color: langFilter === lang ? Colors.white : Colors.tx2 },
-              ]}
+        {/* ─── Header (white) ──────────────────────────────────── */}
+        <View style={[s.header, { paddingTop: Math.max(56, insets.top + 14) }]}>
+          <View style={s.headerTopRow}>
+            <View style={{ flex: 1, paddingRight: 12 }}>
+              <Text style={s.title}>{t('admin.directory.title')}</Text>
+              <Text style={s.subtitle}>138 active assistant teachers</Text>
+            </View>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => Alert.alert(t('common.coming_soon'))}
             >
-              {lang}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
-        {teachers.map((teacher) => {
-          const primaryLangs = langLabel(teacher.languages);
-          const isAvailable = teacher.availableMonths.length > 0;
-
-          return (
-            <View key={teacher.id} style={styles.teacherCard}>
-              <View style={styles.cardHeader}>
-                <View
-                  style={[
-                    styles.avatar,
-                    { backgroundColor: teacher.gender === 'F' ? '#FBE8F0' : Colors.fol },
-                  ]}
-                >
-                  <Text style={styles.avatarText}>{teacher.name.charAt(0)}</Text>
-                </View>
-                <View style={styles.teacherInfo}>
-                  <Text style={styles.teacherName}>{teacher.name}</Text>
-                  <Text style={styles.teacherMeta}>
-                    {teacher.gender === 'F' ? '👩' : '👨'} · {primaryLangs} · {teacher.region}
-                  </Text>
-                  <Text style={styles.teacherStats}>
-                    {teacher.totalCourses} courses · Since {teacher.authorizedSince}
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.availBadge,
-                    { backgroundColor: isAvailable ? Colors.fol : Colors.cr3 },
-                  ]}
-                >
-                  <Text style={[styles.availText, { color: isAvailable ? Colors.fo : Colors.tx3 }]}>
-                    {isAvailable ? 'Available' : 'Busy'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Authorizations */}
-              <View style={styles.authRow}>
-                {(teacher.authorizations as string[]).slice(0, 3).map((auth: string) => (
-                  <Chip key={auth} label={auth} variant="green" style={styles.authChip} />
-                ))}
-                {(teacher.authorizations as string[]).length > 3 && (
-                  <Chip
-                    label={`+${(teacher.authorizations as string[]).length - 3}`}
-                    variant="gray"
-                  />
-                )}
-              </View>
-
-              {/* Action buttons */}
-              <View style={styles.cardActions}>
-                <TouchableOpacity style={styles.profileBtn} activeOpacity={0.8}>
-                  <Text style={styles.profileBtnText}>{t('admin.directory.viewProfile')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.assignBtn} activeOpacity={0.8}>
-                  <Text style={styles.assignBtnText}>{t('admin.directory.assign')} →</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          );
-        })}
-      </ScrollView>
-
-      {/* Add Teacher Bottom Sheet */}
-      <Modal
-        visible={showAddSheet}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowAddSheet(false)}
-      >
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPress={() => setShowAddSheet(false)}
-        />
-        <View style={styles.sheet}>
-          <View style={styles.sheetHandle} />
-
-          {inviteResult ? (
-            <View style={styles.inviteSuccess}>
-              <Text style={styles.successEmoji}>🎉</Text>
-              <Text style={styles.successTitle}>Teacher Added!</Text>
-              <Text style={styles.successName}>{inviteResult.name}</Text>
-              <View style={styles.codeBox}>
-                <Text style={styles.codeLabel}>Login Credentials</Text>
-                <Text style={styles.codeValue} numberOfLines={1} adjustsFontSizeToFit>
-                  {inviteResult.email}
+              <LinearGradient
+                colors={Gradients.primaryCta}
+                start={GradientDirection.button.start}
+                end={GradientDirection.button.end}
+                style={s.addBtn}
+              >
+                <Text numberOfLines={1} style={s.addBtnText}>
+                  {t('admin.directory.add_teacher')}
                 </Text>
-                <Text style={styles.codeHint}>Password: {inviteResult.password}</Text>
-              </View>
-              <Text style={styles.codeInstructions}>
-                Share these credentials with the teacher. They will complete onboarding on first
-                login.
-              </Text>
-              <Button
-                label="Done"
-                variant="primary"
-                fullWidth
-                onPress={() => {
-                  setShowAddSheet(false);
-                  setInviteResult(null);
-                  setNewTeacher({
-                    name: '',
-                    gender: 'M',
-                    yearAuthorized: '',
-                    region: '',
-                    authorizations: [],
-                    contactMethod: 'email',
-                    contact: '',
-                  });
-                }}
-              />
-            </View>
-          ) : (
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.sheetTitle}>{t('admin.addTeacher.title')}</Text>
-
-              <Text style={styles.fieldLabel}>{t('admin.addTeacher.name')}</Text>
-              <TextInput
-                value={newTeacher.name}
-                onChangeText={(v) => setNewTeacher((p) => ({ ...p, name: v }))}
-                style={styles.sheetInput}
-                placeholder={t('admin.addTeacher.namePlaceholder')}
-                placeholderTextColor={Colors.tx3}
-              />
-
-              <Text style={styles.fieldLabel}>{t('admin.addTeacher.gender')}</Text>
-              <View style={styles.genderRow}>
-                {(['M', 'F'] as const).map((g) => (
-                  <TouchableOpacity
-                    key={g}
-                    onPress={() => setNewTeacher((p) => ({ ...p, gender: g }))}
-                    style={[
-                      styles.genderBtn,
-                      newTeacher.gender === g && {
-                        backgroundColor: Colors.sf,
-                        borderColor: Colors.sf,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.genderBtnText,
-                        { color: newTeacher.gender === g ? Colors.white : Colors.tx2 },
-                      ]}
-                    >
-                      {g === 'M' ? '👨 Male' : '👩 Female'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={styles.fieldLabel}>{t('admin.addTeacher.yearAuthorized')}</Text>
-              <TextInput
-                value={newTeacher.yearAuthorized}
-                onChangeText={(v) => setNewTeacher((p) => ({ ...p, yearAuthorized: v }))}
-                style={styles.sheetInput}
-                placeholder="e.g. 2014"
-                placeholderTextColor={Colors.tx3}
-                keyboardType="numeric"
-              />
-
-              <Text style={styles.fieldLabel}>{t('admin.addTeacher.homeRegion')}</Text>
-              <TextInput
-                value={newTeacher.region}
-                onChangeText={(v) => setNewTeacher((p) => ({ ...p, region: v }))}
-                style={styles.sheetInput}
-                placeholder="e.g. Kathmandu Valley"
-                placeholderTextColor={Colors.tx3}
-              />
-
-              <Text style={styles.fieldLabel}>{t('admin.addTeacher.authorizations')}</Text>
-              <View style={styles.authToggleRow}>
-                {[
-                  '10-Day',
-                  '20-Day',
-                  'Satipatthana Sutta',
-                  "Children's Anapana",
-                  'Teen Course',
-                ].map((type) => {
-                  const selected = newTeacher.authorizations.includes(type);
-                  return (
-                    <TouchableOpacity
-                      key={type}
-                      onPress={() =>
-                        setNewTeacher((p) => ({
-                          ...p,
-                          authorizations: selected
-                            ? p.authorizations.filter((a) => a !== type)
-                            : [...p.authorizations, type],
-                        }))
-                      }
-                      style={[
-                        styles.authToggle,
-                        selected && { backgroundColor: Colors.fo, borderColor: Colors.fo },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.authToggleText,
-                          { color: selected ? Colors.white : Colors.tx2 },
-                        ]}
-                      >
-                        {type}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              <Text style={styles.fieldLabel}>{t('admin.addTeacher.contact')}</Text>
-              <TextInput
-                value={newTeacher.contact}
-                onChangeText={(v) => setNewTeacher((p) => ({ ...p, contact: v }))}
-                style={styles.sheetInput}
-                placeholder="Email or phone"
-                placeholderTextColor={Colors.tx3}
-                autoCapitalize="none"
-              />
-
-              <View style={styles.sheetActions}>
-                <Button
-                  label={t('common.cancel')}
-                  variant="outline"
-                  onPress={() => setShowAddSheet(false)}
-                  style={styles.cancelBtn}
-                />
-                <Button
-                  label={t('admin.addTeacher.sendInvite')}
-                  variant="primary"
-                  onPress={handleCreateTeacher}
-                  style={styles.inviteBtn}
-                />
-              </View>
-            </ScrollView>
-          )}
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
-      </Modal>
+
+        {/* ─── Search + filter row (white wrapper) ─────────────── */}
+        <View style={s.filterWrap}>
+          <View style={s.sbar}>
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+              <Circle cx={11} cy={11} r={7} stroke={Colors.tx3} strokeWidth={1.8} />
+              <Path
+                d="M16.5 16.5L21 21"
+                stroke={Colors.tx3}
+                strokeWidth={1.8}
+                strokeLinecap="round"
+              />
+            </Svg>
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search by name…"
+              placeholderTextColor={Colors.tx3}
+              style={s.searchInput}
+            />
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.frowContent}
+          >
+            {FILTERS.map((f) => {
+              const active = filter === f;
+              return (
+                <TouchableOpacity
+                  key={f}
+                  onPress={() => setFilter(f)}
+                  activeOpacity={0.85}
+                  style={[
+                    s.fchip,
+                    active
+                      ? { backgroundColor: Colors.sf, borderColor: Colors.sf }
+                      : {
+                          backgroundColor: Colors.white,
+                          borderColor: Colors.bd2,
+                        },
+                  ]}
+                >
+                  <Text style={[s.fchipText, { color: active ? Colors.white : Colors.tx2 }]}>
+                    {f}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* ─── Cream gap ───────────────────────────────────────── */}
+        <View style={{ height: 8, backgroundColor: Colors.cr }} />
+
+        {/* ─── Teacher cards ───────────────────────────────────── */}
+        {filtered.length === 0 ? (
+          <Text style={s.emptyState}>{t('admin.directory.empty_state')}</Text>
+        ) : (
+          filtered.map((tc) => (
+            <View key={tc.name} style={s.card}>
+              <View style={s.cardTopRow}>
+                <View style={{ position: 'relative' }}>
+                  <View style={s.avatar}>
+                    <Text style={s.avatarText}>{tc.name[0]}</Text>
+                  </View>
+                  {tc.avail && <View style={s.availDot} />}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={s.nameRow}>
+                    <Text style={s.name} numberOfLines={1}>
+                      {tc.name} {tc.flag}
+                    </Text>
+                    <View
+                      style={[
+                        s.spill,
+                        {
+                          backgroundColor: tc.avail ? Colors.fol : Colors.url,
+                        },
+                      ]}
+                    >
+                      <Text style={[s.spillText, { color: tc.avail ? Colors.fo : Colors.ur }]}>
+                        {tc.avail ? '● Available' : '● Busy'}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={s.meta}>
+                    {tc.gender === 'M' ? 'Male' : 'Female'} AT · {tc.total} courses ·{' '}
+                    {tc.regions.join(', ')}
+                  </Text>
+                  <View style={s.chipsRow}>
+                    {tc.langs.map((l) => (
+                      <View key={l} style={s.chipBl}>
+                        <Text style={s.chipBlText}>{l}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <Text style={s.types}>{tc.types}</Text>
+                </View>
+              </View>
+              <View style={s.actionsRow}>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => openProfile(tc.name)}
+                  style={[s.actionBtn, s.viewBtn, { flex: 1 }]}
+                >
+                  <Text numberOfLines={1} style={[s.actionBtnText, { color: Colors.tx }]}>
+                    View Profile
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => Alert.alert(t('common.coming_soon'))}
+                  style={{ flex: 1, minHeight: 32 }}
+                >
+                  <LinearGradient
+                    colors={Gradients.primaryCta}
+                    start={GradientDirection.button.start}
+                    end={GradientDirection.button.end}
+                    style={[s.actionBtn, { flex: 1 }]}
+                  >
+                    <Text numberOfLines={1} style={[s.actionBtnText, { color: Colors.white }]}>
+                      📨 Assign to Course
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))
+        )}
+
+        <View style={{ height: 20 }} />
+      </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  header: { paddingTop: 20 },
-  filterRow: {
-    paddingHorizontal: Layout.horizontalPad,
-    paddingVertical: 8,
-    gap: 6,
-    flexDirection: 'row',
+const s = StyleSheet.create({
+  flex: { flex: 1 },
+
+  // Header
+  header: {
+    backgroundColor: Colors.white,
+    paddingHorizontal: 18,
+    paddingBottom: 12,
   },
-  filterChip: {
+  headerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: Colors.tx,
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  subtitle: {
+    fontSize: 13.5,
+    color: Colors.tx2,
+    marginTop: 2,
+    fontFamily: FontFamily.sansRegular,
+  },
+  addBtn: {
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.white,
+    fontFamily: FontFamily.sansBold,
+  },
+
+  // Filter wrapper
+  filterWrap: {
+    backgroundColor: Colors.white,
+    paddingHorizontal: 18,
+    paddingBottom: 12,
+  },
+  sbar: {
+    backgroundColor: Colors.white,
+    borderWidth: 1.5,
+    borderColor: Colors.bd,
+    borderRadius: 13,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 13,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13.5,
+    color: Colors.tx,
+    padding: 0,
+    fontFamily: FontFamily.sansRegular,
+  },
+  frowContent: {
+    gap: 7,
+  },
+  fchip: {
+    flexShrink: 0,
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: Radius.full,
+    borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: Colors.bd2,
-    backgroundColor: Colors.white,
   },
-  filterChipText: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.semibold,
+  fchipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
   },
-  list: { paddingBottom: 110, paddingTop: 4 },
 
-  teacherCard: {
-    backgroundColor: Colors.white,
-    marginHorizontal: Layout.horizontalPad,
-    marginVertical: 5,
-    borderRadius: Radius.lg,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    ...Shadows.card,
-    gap: 10,
+  // Empty state
+  emptyState: {
+    fontSize: 13,
+    color: Colors.tx3,
+    textAlign: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+    fontFamily: FontFamily.sansRegular,
   },
-  cardHeader: {
+
+  // Card
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 11,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+  cardTopRow: {
     flexDirection: 'row',
+    gap: 11,
     alignItems: 'flex-start',
-    gap: Spacing.md,
   },
   avatar: {
     width: 44,
     height: 44,
-    borderRadius: 13,
+    borderRadius: 22,
+    backgroundColor: Colors.sfm,
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
   },
   avatarText: {
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
-    color: Colors.fo,
+    fontSize: 17,
+    fontWeight: '700',
+    color: Colors.sfd,
+    fontFamily: FontFamily.sansBold,
   },
-  teacherInfo: { flex: 1, gap: 2 },
-  teacherName: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
+  availDot: {
+    position: 'absolute',
+    bottom: 1,
+    right: 1,
+    width: 11,
+    height: 11,
+    borderRadius: 5.5,
+    backgroundColor: Colors.fo,
+    borderWidth: 2,
+    borderColor: Colors.white,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+  },
+  name: {
+    fontSize: 14.5,
+    fontWeight: '700',
     color: Colors.tx,
+    flexShrink: 1,
+    fontFamily: FontFamily.sansBold,
   },
-  teacherMeta: {
-    fontSize: FontSize.sm,
-    color: Colors.tx2,
-  },
-  teacherStats: {
-    fontSize: FontSize.xs,
-    color: Colors.tx3,
-  },
-  availBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
+  spill: {
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 20,
     flexShrink: 0,
   },
-  availText: {
-    fontSize: 10,
-    fontWeight: FontWeight.bold,
+  spillText: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
   },
-  authRow: {
+  meta: {
+    fontSize: 11.5,
+    color: Colors.tx2,
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
+  },
+  chipsRow: {
     flexDirection: 'row',
+    gap: 4,
     flexWrap: 'wrap',
-    gap: 5,
+    marginTop: 5,
   },
-  authChip: {},
-  cardActions: {
+  chipBl: {
+    backgroundColor: Colors.bll,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  chipBlText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.bl,
+    fontFamily: FontFamily.sansSemiBold,
+  },
+  types: {
+    fontSize: 10.5,
+    color: Colors.tx3,
+    marginTop: 4,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Action buttons
+  actionsRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: 8,
+    marginTop: 10,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: Colors.bd,
-    paddingTop: 10,
   },
-  profileBtn: {
-    flex: 1,
-    paddingVertical: 9,
-    backgroundColor: Colors.cr2,
-    borderRadius: Radius.md,
+  actionBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 10,
+    minHeight: 32,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  profileBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-    color: Colors.tx2,
+  actionBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
   },
-  assignBtn: {
-    flex: 1,
-    paddingVertical: 9,
-    backgroundColor: Colors.bll,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-  },
-  assignBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.bl,
-  },
-
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-  sheet: {
-    backgroundColor: Colors.white,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    padding: Layout.horizontalPad,
-    paddingBottom: 40,
-    maxHeight: '85%',
-  },
-  sheetHandle: {
-    width: 42,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: Colors.bd2,
-    alignSelf: 'center',
-    marginBottom: Spacing.lg,
-  },
-  sheetTitle: {
-    fontSize: FontSize.xl,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx,
-    marginBottom: Spacing.lg,
-  },
-  fieldLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-    color: Colors.tx2,
-    marginBottom: 6,
-    marginTop: 10,
-  },
-  sheetInput: {
-    backgroundColor: Colors.cr2,
-    borderWidth: 1.5,
-    borderColor: Colors.bd,
-    borderRadius: Radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: FontSize.md,
-    color: Colors.tx,
-  },
-  genderRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  genderBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: Radius.md,
-    borderWidth: 1.5,
+  viewBtn: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
     borderColor: Colors.bd2,
-    alignItems: 'center',
-  },
-  genderBtnText: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.semibold,
-  },
-  authToggleRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  authToggle: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: Radius.full,
-    borderWidth: 1.5,
-    borderColor: Colors.bd2,
-    backgroundColor: Colors.white,
-  },
-  authToggleText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-  },
-  sheetActions: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    marginTop: Spacing.xl,
-  },
-  cancelBtn: { flex: 1 },
-  inviteBtn: { flex: 2 },
-
-  inviteSuccess: {
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.lg,
-  },
-  successEmoji: { fontSize: 52 },
-  successTitle: {
-    fontSize: FontSize.xl,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx,
-  },
-  successName: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx2,
-  },
-  codeBox: {
-    backgroundColor: Colors.sfl,
-    borderRadius: Radius.lg,
-    padding: Layout.cardPad,
-    width: '100%',
-    alignItems: 'center',
-    gap: 4,
-    borderWidth: 1,
-    borderColor: Colors.sfm,
-  },
-  codeLabel: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-    fontWeight: FontWeight.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  codeValue: {
-    fontSize: FontSize.h2,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.sf,
-    letterSpacing: 2,
-  },
-  codeHint: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-  },
-  codeInstructions: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-    textAlign: 'center',
-    lineHeight: FontSize.sm * 1.5,
   },
 });
