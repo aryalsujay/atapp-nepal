@@ -607,14 +607,30 @@
       "cta_review": "फेरि प्रयास गर्नुहोस्",
       "cta_continue_anyway": "पछि गर्नुहोस्"
     },
+    "nav": {
+      "home": "गृह",
+      "serve": "सेवा",
+      "my_service": "मेरो सेवा",
+      "notifications": "सूचनाहरू",
+      "profile": "प्रोफाइल"
+    },
     "home": {
-      "greeting": "नमस्ते",
-      "subtitle": "धम्म सेवक",
-      "upcomingService": "मेरो आगामी सेवा",
-      "openOpportunities": "खुला अवसरहरू",
-      "seeAll": "सबै हेर्नुहोस्",
+      "dhamma_server": "धम्म सेवक",
+      "old_student": "पुरानो विद्यार्थी",
+      "stat_served": "सेवा गरेको",
+      "stat_centers": "नेपाल केन्द्रहरू",
+      "stat_upcoming": "आगामी",
+      "upcoming_service": "मेरो आगामी सेवा",
+      "open_opps": "खुला अवसरहरू",
+      "open_slots": "खुला सिटहरू",
+      "courses": "शिविरहरू",
+      "confirmed": "✓ पुष्टि",
+      "full_course_lbl": "पूरा शिविर",
+      "partial_lbl": "आंशिक",
       "eligible": "सेवा गर्न योग्य",
-      "eligibleBody": "तपाईंले आवश्यक पाठ्यक्रम र विश्राम अवधि पूरा गर्नुभएको छ।"
+      "eligible_sub": "१०-दिने शिविर पूरा · नियमित साधना",
+      "lang_toggle_en": "नेपाली",
+      "lang_toggle_ne": "English"
     },
     "opportunities": {
       "title": "पाठ्यक्रममा सेवा गर्नुहोस्",
