@@ -560,6 +560,27 @@
     }
   },
   "server": {
+    "onboarding": {
+      "title": "Welcome, Dhamma Server",
+      "sub": "Before you can serve, please confirm your readiness.",
+      "q1": "Have you completed at least one 10-day Vipassana course?",
+      "q2": "Are you sitting regularly at home?",
+      "q3": "Has it been at least 1 month since your last serving?",
+      "q4": "Are you currently free of any major health concerns?",
+      "q5": "Will you abide by the Code of Discipline for Dhamma Servers?",
+      "yes": "Yes",
+      "no": "No",
+      "continue": "Continue",
+      "see_result": "See result →",
+      "complete": "All Clear · Eligible to Serve 🙏",
+      "complete_sub": "Welcome to the path of selfless service. 🌿",
+      "blocked": "Eligibility Pending",
+      "blocked_sub": "Please review the Code of Discipline before applying. Contact the center coordinator if you have questions.",
+      "responses_title": "Your responses",
+      "cta_dashboard": "Enter Dashboard →",
+      "cta_review": "Review answers",
+      "cta_continue_anyway": "Continue anyway (limited access)"
+    },
     "home": {
       "greeting": "Namaste",
       "subtitle": "Dhamma Server",
