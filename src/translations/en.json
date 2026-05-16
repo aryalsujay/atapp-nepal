@@ -617,6 +617,26 @@
       "no_results": "No courses match this filter."
     },
     "detail": {
+      "days_suffix": "days",
+      "open_short": "open",
+      "intake": "Server intake",
+      "about": "About this course",
+      "about_body": "Serve this {{days}}-day course at {{center}}. Servers practice meditation alongside students while attending to their needs in selected areas.",
+      "daily_schedule": "Typical daily schedule",
+      "areas_open": "Service areas open",
+      "what_expect": "What to expect",
+      "expect_dorm": "Server accommodation provided · separate from students",
+      "expect_food": "3 meals + tea · same as students (vegetarian)",
+      "expect_rules": "Servers maintain Noble Silence except in service areas",
+      "schedule": {
+        "row_0": "Wake-up bell",
+        "row_1": "Meditation / service prep",
+        "row_2": "Breakfast service",
+        "row_3": "Main meal service",
+        "row_4": "Tea & fruit (servers eat)",
+        "row_5": "Evening discourse",
+        "row_6": "Rest"
+      },
       "selectAreas": "Select Service Areas",
       "selectAreasHint": "Tap to select the areas you want to serve in.",
       "partialAvailability": "Partial Availability",

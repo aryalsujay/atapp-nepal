@@ -1,619 +1,414 @@
-import React, { useState } from 'react';
+/**
+ * Server Course Detail — implements `specs/15-server-course-detail.md`.
+ *
+ * Prototype-faithful port of `app.html:3082–3170` (`ServerCourseDetail`).
+ */
+
+import React from 'react';
 import {
-  DimensionValue,
-  View,
-  Text,
   ScrollView,
-  TouchableOpacity,
+  StatusBar,
   StyleSheet,
-  Alert,
+  Text,
+  TouchableOpacity,
+  View,
+  type DimensionValue,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Routes, routeTo } from '@/routes';
-import { useToast } from '@/components/ui/Toast';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import Svg, { Path } from 'react-native-svg';
+
+import { routeTo } from '@/routes';
 import { Colors } from '@/theme/colors';
-import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
-import { Shadows } from '@/theme/shadows';
+import { FontFamily } from '@/theme/typography';
+import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
+import { DashedDivider } from '@/components/ui/DashedDivider';
 import { SERVICE_AREAS } from '@/data/serviceAreas';
-import { serverCourses as serverCoursesData } from '@/data';
+import { serverCourses } from '@/data';
 
-const SV_GRADIENT: [string, string, string] = ['#5A3800', '#8B5E14', '#C8900A'];
+const HERO_GRAD: [string, string] = ['#5A3800', '#9B6B14'];
+const APPLY_GRAD: [string, string] = ['#9B6B14', '#6B4610'];
+const SV_ACCENT = '#9B6B14';
 
-function ProgressBar({ filled, total }: { filled: number; total: number }) {
-  const pct = total > 0 ? Math.min(filled / total, 1) : 0;
-  return (
-    <View style={styles.progressTrack}>
-      <View style={[styles.progressFill, { width: `${pct * 100}%` as DimensionValue }]} />
-    </View>
-  );
-}
+const SCHEDULE: { hour: string; key: string }[] = [
+  { hour: '4:00 AM', key: 'row_0' },
+  { hour: '4:30 AM', key: 'row_1' },
+  { hour: '6:30 AM', key: 'row_2' },
+  { hour: '11:00 AM', key: 'row_3' },
+  { hour: '5:00 PM', key: 'row_4' },
+  { hour: '7:00 PM', key: 'row_5' },
+  { hour: '9:30 PM', key: 'row_6' },
+];
 
-export default function OpportunityDetailScreen() {
+const EXPECT_KEYS = ['expect_dorm', 'expect_food', 'expect_rules'] as const;
+
+export default function ServerCourseDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const toast = useToast();
-  const { id } = useLocalSearchParams<{ id: string }>();
 
-  const course = serverCoursesData.find((c) => String(c.id) === id);
-
-  const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
-  const [partial, setPartial] = useState(false);
-  const [fromDay, setFromDay] = useState(1);
-  const [toDay, setToDay] = useState(course?.days ?? 10);
-  const [submitted, setSubmitted] = useState(false);
-
-  if (!course) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: Colors.cr,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={{ color: Colors.tx3 }}>Course not found.</Text>
-      </View>
-    );
-  }
-
-  const toggleArea = (areaId: string) => {
-    setSelectedAreas((prev) =>
-      prev.includes(areaId) ? prev.filter((a) => a !== areaId) : [...prev, areaId],
-    );
-  };
-
-  const handleApply = () => {
-    if (selectedAreas.length === 0) {
-      toast.warning('Please select at least one service area to apply.', 'Select an area');
-      return;
-    }
-    setSubmitted(true);
-  };
-
-  const open = course.total - course.filled;
-
-  if (submitted) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: Colors.cr,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: Layout.horizontalPad,
-        }}
-      >
-        <Text style={styles.successIcon}>🙏</Text>
-        <Text style={styles.successTitle}>Application Submitted!</Text>
-        <Text style={styles.successBody}>
-          Your application to serve at {course.center} has been sent. The coordinator will review
-          and notify you. Sadhu!
-        </Text>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => router.replace(Routes.serverApplications)}
-        >
-          <Text style={styles.backBtnText}>View My Applications</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.backBtn, { backgroundColor: Colors.cr2, marginTop: 8 }]}
-          onPress={() => router.back()}
-        >
-          <Text style={[styles.backBtnText, { color: Colors.tx2 }]}>Back to Opportunities</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  const numericId = Number(id);
+  const c = serverCourses.find((x) => x.id === numericId) ?? serverCourses[0];
+  const open = c.total - c.filled;
+  const pct = c.total > 0 ? Math.round((c.filled / c.total) * 100) : 0;
+  const fillColor = pct > 80 ? Colors.ur : pct > 50 ? SV_ACCENT : Colors.fo;
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.cr }}>
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="light-content" />
       <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
       >
-        {/* Hero gradient header */}
+        {/* ─── Hero ──────────────────────────────────────────────────── */}
         <LinearGradient
-          colors={SV_GRADIENT}
+          colors={HERO_GRAD}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.hero, { paddingTop: insets.top + 12 }]}
+          end={{ x: 0.671, y: 0.97 }}
+          style={[s.hero, { paddingTop: Math.max(56, insets.top + 12) }]}
         >
-          {/* Back button */}
-          <TouchableOpacity onPress={() => router.back()} style={styles.backArrow}>
-            <Text style={styles.backArrowText}>← Back</Text>
+          <LotusHero color="white" opacity={0.08} size={180} />
+          <MountainSilhouette />
+
+          <TouchableOpacity
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+            style={s.backRow}
+            hitSlop={8}
+          >
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M15 18L9 12L15 6"
+                stroke="rgba(255,255,255,0.85)"
+                strokeWidth={2.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+            <Text style={s.backText}>{t('common.back')}</Text>
           </TouchableOpacity>
 
-          <Text style={styles.heroCenter}>
-            {course.center} {course.flag}
+          <Text style={s.kicker}>
+            {c.type} · {c.days} {t('server.detail.days_suffix')}
           </Text>
-          <Text style={styles.heroCity}>{course.city}</Text>
-          <Text style={styles.heroDates}>📅 {course.dates}</Text>
+          <Text style={s.title}>{c.center}</Text>
+          <Text style={s.city}>{c.city}</Text>
 
-          {/* Quick stat chips */}
-          <View style={styles.heroChips}>
-            <View style={styles.heroChip}>
-              <Text style={styles.heroChipText}>{course.type}</Text>
+          <View style={s.pillRow}>
+            <View style={s.pill}>
+              <Text style={s.pillText}>📅 {c.dates}</Text>
             </View>
-            <View style={styles.heroChip}>
-              <Text style={styles.heroChipText}>{course.days} days</Text>
-            </View>
-            <View style={styles.heroChip}>
-              <Text style={styles.heroChipText}>{course.altitude}m alt.</Text>
+            <View style={s.pill}>
+              <Text style={s.pillText}>
+                {open} {t('server.detail.open_short')}
+              </Text>
             </View>
           </View>
         </LinearGradient>
 
-        {/* Stats row */}
-        <View style={styles.statsRow}>
-          <StatBox label="Total Slots" value={String(course.total)} />
-          <StatBox label="Filled" value={String(course.filled)} />
-          <StatBox label="Open" value={String(open)} highlight={open > 0} />
-          <StatBox label="Days" value={String(course.days)} />
-        </View>
-
-        {/* Progress */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Slots Filled</Text>
-          <View style={styles.progressRow}>
-            <ProgressBar filled={course.filled} total={course.total} />
-            <Text style={styles.progressLabel}>
-              {course.filled}/{course.total}
+        {/* ─── Server intake card ───────────────────────────────────── */}
+        <View style={[s.card, { marginTop: 14 }]}>
+          <View style={s.intakeTopRow}>
+            <Text style={s.intakeLabel}>{t('server.detail.intake')}</Text>
+            <Text style={s.intakeMeta}>
+              {c.filled}/{c.total} · {c.mServers}M + {c.fServers}F
             </Text>
           </View>
-          <Text style={styles.genderSlotsText}>
-            {course.mServers} male · {course.fServers} female
+          <View style={s.intakeTrack}>
+            <View
+              style={[
+                s.intakeFill,
+                {
+                  width: `${pct}%` as DimensionValue,
+                  backgroundColor: fillColor,
+                },
+              ]}
+            />
+          </View>
+        </View>
+
+        {/* ─── About ─────────────────────────────────────────────────── */}
+        <Text style={s.sph}>📖 {t('server.detail.about')}</Text>
+        <View style={s.sectionCard}>
+          <Text style={s.aboutBody}>
+            {t('server.detail.about_body', { days: c.days, center: c.center })}
           </Text>
         </View>
 
-        {/* Arrive by */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Arrival</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Arrive by</Text>
-            <Text style={styles.infoValue}>{course.arriveBy}</Text>
-          </View>
-        </View>
-
-        {/* Area selection */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Service Areas</Text>
-          <Text style={styles.sectionHint}>Tap to select the areas you want to serve in.</Text>
-          <View style={styles.areaGrid}>
-            {course.areas.map((areaId) => {
-              const area = SERVICE_AREAS.find((a) => a.id === areaId);
-              if (!area) return null;
-              const isSelected = selectedAreas.includes(areaId);
-              return (
-                <TouchableOpacity
-                  key={areaId}
-                  onPress={() => toggleArea(areaId)}
-                  style={[styles.areaOption, isSelected && styles.areaOptionSelected]}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.areaOptionEmoji}>{area.emoji}</Text>
-                  <Text
-                    style={[styles.areaOptionLabel, isSelected && styles.areaOptionLabelSelected]}
-                  >
-                    {area.label}
-                  </Text>
-                  {isSelected && <Text style={styles.checkmark}>✓</Text>}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Partial availability toggle */}
-        <View style={styles.section}>
-          <View style={styles.partialRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.sectionTitle}>Partial Availability</Text>
-              <Text style={styles.sectionHint}>Serve only certain days of the course.</Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => setPartial((v) => !v)}
-              style={[styles.toggle, partial && styles.toggleActive]}
-            >
-              <View style={[styles.toggleThumb, partial && styles.toggleThumbActive]} />
-            </TouchableOpacity>
-          </View>
-
-          {partial && (
-            <View style={styles.dayRangeBox}>
-              <Text style={styles.dayRangeLabel}>Serve days:</Text>
-              <View style={styles.dayRangeRow}>
-                <View style={styles.dayInput}>
-                  <TouchableOpacity
-                    onPress={() => setFromDay((v) => Math.max(1, v - 1))}
-                    style={styles.dayBtn}
-                  >
-                    <Text style={styles.dayBtnText}>−</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.dayValue}>Day {fromDay}</Text>
-                  <TouchableOpacity
-                    onPress={() => setFromDay((v) => Math.min(toDay, v + 1))}
-                    style={styles.dayBtn}
-                  >
-                    <Text style={styles.dayBtnText}>+</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.toText}>to</Text>
-                <View style={styles.dayInput}>
-                  <TouchableOpacity
-                    onPress={() => setToDay((v) => Math.max(fromDay, v - 1))}
-                    style={styles.dayBtn}
-                  >
-                    <Text style={styles.dayBtnText}>−</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.dayValue}>Day {toDay}</Text>
-                  <TouchableOpacity
-                    onPress={() => setToDay((v) => Math.min(course.days, v + 1))}
-                    style={styles.dayBtn}
-                  >
-                    <Text style={styles.dayBtnText}>+</Text>
-                  </TouchableOpacity>
-                </View>
+        {/* ─── Daily schedule ────────────────────────────────────────── */}
+        <Text style={s.sph}>⏰ {t('server.detail.daily_schedule')}</Text>
+        <View style={s.sectionCard}>
+          {SCHEDULE.map((row) => (
+            <React.Fragment key={row.hour}>
+              <View style={s.schedRow}>
+                <Text style={s.schedHour}>{row.hour}</Text>
+                <Text style={s.schedActivity}>{t(`server.detail.schedule.${row.key}`)}</Text>
               </View>
-              <Text style={styles.dayRangeSummary}>
-                Serving {toDay - fromDay + 1} of {course.days} days (Day {fromDay}–{toDay})
-              </Text>
-            </View>
-          )}
+              <DashedDivider marginVertical={0} />
+            </React.Fragment>
+          ))}
         </View>
+
+        {/* ─── Service areas open ────────────────────────────────────── */}
+        <Text style={s.sph}>🌟 {t('server.detail.areas_open')}</Text>
+        <View style={s.areasRow}>
+          {c.areas.map((aid) => {
+            const sa = SERVICE_AREAS.find((x) => x.id === aid);
+            if (!sa) return null;
+            return (
+              <View key={aid} style={s.areaChip}>
+                <Text style={s.areaChipText}>
+                  {sa.emoji} {sa.label}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* ─── What to expect ────────────────────────────────────────── */}
+        <Text style={s.sph}>💡 {t('server.detail.what_expect')}</Text>
+        <View style={s.sectionCard}>
+          {EXPECT_KEYS.map((k) => (
+            <View key={k} style={s.bulletRow}>
+              <Text style={s.bulletDot}>•</Text>
+              <Text style={s.bulletText}>{t(`server.detail.${k}`)}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* ─── Apply CTA ─────────────────────────────────────────────── */}
+        <View style={s.ctaWrap}>
+          <TouchableOpacity
+            onPress={() => router.push(routeTo.serverApply(c.id))}
+            activeOpacity={0.85}
+          >
+            <LinearGradient
+              colors={APPLY_GRAD}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={s.ctaBtn}
+            >
+              <Text style={s.ctaText}>{t('server.opportunities.apply_serve')}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ height: 20 }} />
       </ScrollView>
-
-      {/* Apply button (floating) */}
-      <View style={[styles.applyFooter, { paddingBottom: insets.bottom + 16 }]}>
-        <TouchableOpacity
-          style={[styles.applyBtn, selectedAreas.length === 0 && styles.applyBtnDisabled]}
-          onPress={handleApply}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.applyBtnText}>
-            {selectedAreas.length === 0
-              ? 'Select an area to apply'
-              : `Apply to Serve (${selectedAreas.length} area${selectedAreas.length > 1 ? 's' : ''})`}
-          </Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
 
-function StatBox({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <View style={[styles.statBox, highlight && { backgroundColor: Colors.svl }]}>
-      <Text style={[styles.statBoxValue, highlight && { color: Colors.sv }]}>{value}</Text>
-      <Text style={styles.statBoxLabel}>{label}</Text>
-    </View>
-  );
-}
+const s = StyleSheet.create({
+  flex: { flex: 1 },
 
-const styles = StyleSheet.create({
+  // Hero
   hero: {
-    paddingHorizontal: Layout.horizontalPad,
-    paddingBottom: Spacing.xxl,
+    paddingHorizontal: 18,
+    paddingBottom: 22,
+    overflow: 'hidden',
+    position: 'relative',
   },
-  backArrow: {
-    marginBottom: Spacing.lg,
-  },
-  backArrowText: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.semibold,
-  },
-  heroCenter: {
-    fontSize: FontSize.h2,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.white,
-    marginBottom: 4,
-  },
-  heroCity: {
-    fontSize: FontSize.smPlus,
-    color: 'rgba(255,255,255,0.75)',
-    fontWeight: FontWeight.medium,
-  },
-  heroDates: {
-    fontSize: FontSize.smPlus,
-    color: 'rgba(255,255,255,0.85)',
-    fontWeight: FontWeight.semibold,
-    marginTop: 6,
-  },
-  heroChips: {
+  backRow: {
     flexDirection: 'row',
-    gap: 7,
-    marginTop: Spacing.md,
-  },
-  heroChip: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: Radius.full,
-  },
-  heroChipText: {
-    fontSize: FontSize.sm,
-    color: Colors.white,
-    fontWeight: FontWeight.semibold,
-  },
-
-  statsRow: {
-    flexDirection: 'row',
-    marginHorizontal: Layout.horizontalPad,
-    marginTop: -20,
-    gap: 7,
-  },
-  statBox: {
-    flex: 1,
-    backgroundColor: Colors.white,
-    borderRadius: Radius.md,
-    padding: 10,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    ...Shadows.card,
+    gap: 4,
+    marginBottom: 12,
   },
-  statBoxValue: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx,
+  backText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
+    fontFamily: FontFamily.sansRegular,
   },
-  statBoxLabel: {
-    fontSize: 9,
-    fontWeight: FontWeight.semibold,
-    color: Colors.tx3,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
+  kicker: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
+    fontFamily: FontFamily.sansRegular,
+  },
+  title: {
+    fontSize: 23,
+    fontWeight: '800',
+    color: Colors.white,
     marginTop: 2,
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  city: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.78)',
+    fontFamily: FontFamily.sansRegular,
+  },
+  pillRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 14,
+  },
+  pill: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 11,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  pillText: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
   },
 
-  section: {
-    marginHorizontal: Layout.horizontalPad,
-    marginTop: Spacing.lg,
+  // Card (.card base)
+  card: {
     backgroundColor: Colors.white,
-    borderRadius: Radius.lg,
-    padding: Layout.cardPad,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    ...Shadows.card,
-    gap: Spacing.sm,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 11,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
   },
-  sectionTitle: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx,
+  sectionCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 0,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
   },
-  sectionHint: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-  },
-  progressRow: {
+
+  // Intake card internals
+  intakeTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  progressTrack: {
-    flex: 1,
-    height: 8,
+  intakeLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.tx,
+    fontFamily: FontFamily.sansBold,
+  },
+  intakeMeta: {
+    fontSize: 11,
+    color: Colors.tx3,
+    fontFamily: FontFamily.sansRegular,
+  },
+  intakeTrack: {
+    height: 7,
     backgroundColor: Colors.cr3,
     borderRadius: 4,
     overflow: 'hidden',
   },
-  progressFill: {
-    height: '100%',
-    backgroundColor: Colors.sv,
-    borderRadius: 4,
-  },
-  progressLabel: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-    fontWeight: FontWeight.semibold,
-    minWidth: 44,
-    textAlign: 'right',
-  },
-  genderSlotsText: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-    fontWeight: FontWeight.medium,
+  intakeFill: { height: '100%' },
+
+  // Section header (.sph)
+  sph: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.tx2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.84,
+    marginHorizontal: 18,
+    marginTop: 18,
+    marginBottom: 9,
+    fontFamily: FontFamily.sansBold,
   },
 
-  infoRow: {
+  // About body
+  aboutBody: {
+    fontSize: 13,
+    color: Colors.tx2,
+    lineHeight: 20.15,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Schedule
+  schedRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 7,
   },
-  infoLabel: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
-    fontWeight: FontWeight.semibold,
+  schedHour: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: SV_ACCENT,
+    width: 72,
+    flexShrink: 0,
+    fontFamily: FontFamily.sansBold,
   },
-  infoValue: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx,
-    fontWeight: FontWeight.bold,
+  schedActivity: {
+    fontSize: 12,
+    color: Colors.tx2,
+    flex: 1,
+    fontFamily: FontFamily.sansRegular,
   },
 
-  areaGrid: {
+  // Service areas chips (bigger than card chips)
+  areasRow: {
+    paddingHorizontal: 18,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 4,
+    gap: 6,
+    marginBottom: 6,
   },
-  areaOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: Radius.md,
-    borderWidth: 1.5,
-    borderColor: Colors.bd2,
-    backgroundColor: Colors.cr,
-  },
-  areaOptionSelected: {
+  areaChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
     backgroundColor: Colors.svl,
-    borderColor: Colors.sv,
   },
-  areaOptionEmoji: { fontSize: 14 },
-  areaOptionLabel: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.semibold,
-    color: Colors.tx2,
-  },
-  areaOptionLabelSelected: {
-    color: Colors.sv,
-  },
-  checkmark: {
-    fontSize: 12,
-    color: Colors.sv,
-    fontWeight: FontWeight.bold,
-    marginLeft: 2,
+  areaChipText: {
+    fontSize: 11,
+    color: SV_ACCENT,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
   },
 
-  partialRow: {
+  // What-to-expect bullets
+  bulletRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingVertical: 7,
   },
-  toggle: {
-    width: 44,
-    height: 26,
+  bulletDot: {
+    fontSize: 14,
+    color: SV_ACCENT,
+    fontFamily: FontFamily.sansBold,
+  },
+  bulletText: {
+    fontSize: 12.5,
+    color: Colors.tx2,
+    lineHeight: 18.1,
+    flex: 1,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // CTA
+  ctaWrap: {
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 8,
+  },
+  ctaBtn: {
+    paddingVertical: 15,
     borderRadius: 13,
-    backgroundColor: Colors.cr3,
-    padding: 2,
-    justifyContent: 'center',
-  },
-  toggleActive: { backgroundColor: Colors.sv },
-  toggleThumb: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: Colors.white,
-    alignSelf: 'flex-start',
-  },
-  toggleThumbActive: { alignSelf: 'flex-end' },
-
-  dayRangeBox: {
-    backgroundColor: Colors.svl,
-    borderRadius: Radius.md,
-    padding: 12,
-    gap: 8,
-  },
-  dayRangeLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.sv,
-  },
-  dayRangeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  dayInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: Colors.white,
-    borderRadius: Radius.md,
-    padding: 6,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-  },
-  dayBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 7,
-    backgroundColor: Colors.cr2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayBtnText: {
-    fontSize: 16,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx2,
-  },
-  dayValue: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx,
-    minWidth: 46,
-    textAlign: 'center',
-  },
-  toText: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx3,
-    fontWeight: FontWeight.medium,
-  },
-  dayRangeSummary: {
-    fontSize: FontSize.sm,
-    color: Colors.sv,
-    fontWeight: FontWeight.semibold,
-  },
-
-  applyFooter: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: Colors.white,
-    borderTopWidth: 1,
-    borderTopColor: Colors.bd,
-    paddingHorizontal: Layout.horizontalPad,
-    paddingTop: 12,
-  },
-  applyBtn: {
-    backgroundColor: Colors.sv,
-    borderRadius: Radius.lg,
-    paddingVertical: Layout.buttonPadV,
-    alignItems: 'center',
-    ...Shadows.elevated,
-  },
-  applyBtnDisabled: {
-    backgroundColor: Colors.cr3,
-  },
-  applyBtnText: {
+  ctaText: {
+    fontSize: 15,
+    fontWeight: '700',
     color: Colors.white,
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
-  },
-
-  successIcon: { fontSize: 64, marginBottom: Spacing.lg },
-  successTitle: {
-    fontSize: FontSize.h2,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.tx,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
-  },
-  successBody: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx2,
-    textAlign: 'center',
-    lineHeight: FontSize.smPlus * 1.6,
-    marginBottom: Spacing.xxl,
-  },
-  backBtn: {
-    backgroundColor: Colors.sv,
-    borderRadius: Radius.lg,
-    paddingVertical: Layout.buttonPadV,
-    paddingHorizontal: Spacing.xxl,
-    alignItems: 'center',
-    ...Shadows.card,
-  },
-  backBtnText: {
-    color: Colors.white,
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.sansBold,
   },
 });
