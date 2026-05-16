@@ -450,3 +450,11 @@ Add (if missing):
 - [ ] No TS errors
 - [ ] All new routes exist (or stubs created)
 - [ ] Acharya-correct NE strings (आचार्य not शिक्षक)
+
+---
+
+## Implementation notes (post-build corrections)
+
+- **Urgent course dates include year** (e.g. `Jul 15–26, 2026`) — extends prototype's `Jul 15–26` for clarity.
+- **Notification bell tile added** to the hero top-right: 42×42 r13 white-glass tile with red unread dot (8×8 r4, 1.5px white border). Tap → `Routes.adminNotifications`. Bell SVG strokeWidth 1.8 in white. The dashboard's existing "Notification Center" card stays as a secondary path.
+- Hero identity block now wrapped in `heroTopRow` (flex row, `align-items: flex-start`, gap 12) to support the bell column on the right.

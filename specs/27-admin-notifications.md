@@ -239,3 +239,12 @@ Reuse: `common.coming_soon`.
 - [ ] Tab bar hidden
 - [ ] Copy actually writes to clipboard
 - [ ] No TS errors
+
+---
+
+## Implementation notes (post-build corrections)
+
+- **Tab bar is visible on this route** (removed the `tabBarStyle: { display: 'none' }` override from `(admin)/_layout.tsx`). User needs global nav back to other admin tabs. Spec §14's "Tab bar hidden" line is stale.
+- **Admin dashboard now has a quick bell shortcut** in the hero top-right — see spec 21 notes. The Notification Center card on the dashboard stays as the primary path.
+- **Copy button** shows an informational Alert noting `expo-clipboard` is required for real clipboard wiring. To enable, install `expo-clipboard` and replace the Alert handler with `Clipboard.setStringAsync(body)`.
+- **Resend** and **Compose** are v1 `coming_soon` Alerts.

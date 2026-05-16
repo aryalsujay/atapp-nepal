@@ -270,3 +270,12 @@ Reuse:
 ### Cross-cutting
 - [ ] Tab bar visible
 - [ ] No TS errors
+
+---
+
+## Implementation notes (post-build corrections)
+
+- **Stat chips** changed from prototype's `Pending / Urgent / Month` to `Pending / Rejected / Approved` — wired to live counts (`useAdminApplicationsStore`). Colours: Pending = `gd/gdl`, Rejected = `ur/url`, Approved = `fo/fol`.
+- **Cards on Approved/Rejected tabs** show a non-tappable status pill (`✓ Approved` or `✗ Rejected`) in place of the Approve/Reject buttons, alongside the Review → button. Pill bg matches stat-chip palette; same `minHeight: 34` as the buttons it replaces.
+- **Action button heights aligned** via `minHeight: 34` on the outer wrapper because gradient buttons render shorter than bordered ones by default.
+- `Approve`/`Reject` actions are wired to `useAdminApplicationsStore` — tapping moves a card to its corresponding tab.

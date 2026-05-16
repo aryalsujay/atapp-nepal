@@ -317,3 +317,10 @@ Reuse: `common.coming_soon`.
 ### Cross-cutting
 - [ ] Tab bar visible
 - [ ] No TS errors
+
+---
+
+## Implementation notes (post-build corrections)
+
+- **Add Teacher button label** is `"+ Add Teacher"` (with leading `+`), Acharya NE: `"+ आचार्य थप्नुहोस्"`. Matches prototype's `ad_add` string.
+- Add Teacher modal flow still deferred to a follow-up spec — tap currently shows `common.coming_soon` Alert.

@@ -75,6 +75,6 @@ Legend: `📝 draft` · `👀 review` · `✅ approved` · `🔨 in progress` ·
 | 25 | [Admin Auto-Schedule](./25-admin-auto-schedule.md) | `/(admin)/schedule` | `app.html:2291` | ✓ done |
 | 26 | [Admin Calendar](./26-admin-calendar.md) | `/(admin)/calendar` | `app.html:2430` | ✓ done |
 | 27 | [Admin Notifications](./27-admin-notifications.md) | `/(admin)/notifications` | `app.html:2487` | ✓ done |
-| 28 | Admin Centres | `/(admin)/centres` | (new — not in prototype) | — |
+| 28 | [Admin Centres](./28-admin-centres.md) | `/(admin)/centres` | (new — not in prototype) | ⏸ blocked |
 | 29 | [Admin Server Inbox](./29-admin-server-inbox.md) | `/(admin)/server/inbox` | `app.html:3492` | ✓ done |
-| 30 | Admin Server Board | `/(admin)/server/board` | `app.html:3649` | ✓ done |
+| 30 | [Admin Server Board](./30-admin-server-board.md) | `/(admin)/server/board` | `app.html:3649` | ✓ done |
