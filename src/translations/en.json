@@ -609,13 +609,12 @@
     "opportunities": {
       "title": "Serve a Course",
       "subtitle": "Nepal Vipassana Centers",
-      "openSlots": "open slots",
-      "viewDetails": "View Details →",
-      "filled": "filled",
-      "open": "open",
-      "full": "Full",
-      "days": "days",
-      "slots": "slots"
+      "open_slots_short": "open slots",
+      "search_placeholder": "Search center or area…",
+      "filter_all": "All",
+      "view_details": "View Details →",
+      "apply_serve": "Apply to Serve →",
+      "no_results": "No courses match this filter."
     },
     "detail": {
       "selectAreas": "Select Service Areas",

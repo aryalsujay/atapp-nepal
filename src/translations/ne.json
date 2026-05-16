@@ -633,15 +633,14 @@
       "lang_toggle_ne": "English"
     },
     "opportunities": {
-      "title": "पाठ्यक्रममा सेवा गर्नुहोस्",
+      "title": "शिविरमा सेवा गर्नुहोस्",
       "subtitle": "नेपाल विपस्सना केन्द्रहरू",
-      "openSlots": "खुला स्थानहरू",
-      "viewDetails": "विवरण हेर्नुहोस् →",
-      "filled": "भरिएको",
-      "open": "खुला",
-      "full": "पूर्ण",
-      "days": "दिन",
-      "slots": "स्थान"
+      "open_slots_short": "खुला सिटहरू",
+      "search_placeholder": "केन्द्र वा क्षेत्र खोज्नुहोस्…",
+      "filter_all": "सबै",
+      "view_details": "विवरण हेर्नुहोस् →",
+      "apply_serve": "सेवाका लागि आवेदन →",
+      "no_results": "यो फिल्टरमा कुनै शिविर मिलेन।"
     },
     "applications": {
       "title": "मेरा आवेदनहरू",
