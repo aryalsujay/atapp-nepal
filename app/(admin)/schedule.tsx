@@ -1,485 +1,958 @@
+/**
+ * Admin Auto-Schedule — implements `specs/25-admin-auto-schedule.md`.
+ *
+ * Prototype-faithful port of `app.html:2291–2427` (`AdminAuto`).
+ */
+
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import {
+  Alert,
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Colors, Gradients } from '@/theme/colors';
-import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
-import { Shadows } from '@/theme/shadows';
-import { SectionHeader } from '@/components/layout/SectionHeader';
-import { MatchBadge, Chip } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { useConfirm } from '@/components/ui/ConfirmDialog';
-import { useCoursesStore } from '@/store/coursesStore';
-import { useApplicationsStore } from '@/store/applicationsStore';
-import { useNotificationsStore } from '@/store/notificationsStore';
-import { teachers as teachersData } from '@/data';
-import { calculateMatch } from '@/utils/matching';
-import type { Course, TeacherProfile } from '@/types';
+import Svg, { Path } from 'react-native-svg';
+
+import { Colors, Gradients, GradientDirection } from '@/theme/colors';
+import { FontFamily } from '@/theme/typography';
+import { LotusHero } from '@/components/ui/HeroDecorations';
 
 type Confidence = 'high' | 'review' | 'none';
 
-interface AssignmentDraft {
-  courseId: number;
-  teacherId: string | null;
+interface DraftRow {
+  center: string;
+  dates: string;
+  type: string;
+  teacher: string | null;
   score: number;
-  confidence: Confidence;
+  conf: Confidence;
+  note: string;
 }
 
-function buildDrafts(allCourses: Course[]): AssignmentDraft[] {
-  const openCourses = allCourses
-    .filter((c) => c.status === 'open' || c.status === 'not_yet_open')
-    .slice(0, 6);
+const AVAILABLE_TEACHERS = [
+  { name: 'Bhikkhu Ananda', match: 97, langs: 'English, Hindi, Nepali' },
+  { name: 'Kamala Gurung', match: 91, langs: 'Nepali, English' },
+  { name: 'Asha Mehta', match: 94, langs: 'English, Nepali' },
+  { name: 'Ram Prasad Sharma', match: 87, langs: 'Nepali, Hindi' },
+  { name: 'Gopal Thapa', match: 76, langs: 'Nepali, English' },
+  { name: 'Priya Nair', match: 88, langs: 'Hindi, Kannada' },
+  { name: 'Hans Weber', match: 82, langs: 'German, English' },
+];
 
-  return openCourses.map((course) => {
-    const matches = teachersData
-      .map((t) => ({ teacher: t, result: calculateMatch(t as unknown as TeacherProfile, course) }))
-      .sort((a, b) => b.result.score - a.result.score);
+const DRAFT: DraftRow[] = [
+  {
+    center: 'Dhamma Shringa, Kathmandu 🇳🇵',
+    dates: 'Jul 7–18',
+    type: '10-Day',
+    teacher: 'Bhikkhu Ananda',
+    score: 97,
+    conf: 'high',
+    note: '',
+  },
+  {
+    center: 'Dhamma Pokhara 🇳🇵',
+    dates: 'Jul 15–26',
+    type: '10-Day',
+    teacher: 'Kamala Gurung',
+    score: 91,
+    conf: 'high',
+    note: '',
+  },
+  {
+    center: 'Dhamma Adhara, Kathmandu 🇳🇵',
+    dates: 'Aug 2–13',
+    type: '10-Day',
+    teacher: 'Asha Mehta',
+    score: 89,
+    conf: 'high',
+    note: '',
+  },
+  {
+    center: 'Dhamma Janani, Lumbini 🇳🇵',
+    dates: 'Aug 20–31',
+    type: '10-Day',
+    teacher: 'Ram Prasad Sharma',
+    score: 87,
+    conf: 'review',
+    note: 'First time at Dhamma Janani',
+  },
+  {
+    center: 'Dhamma Shringa, Kathmandu 🇳🇵',
+    dates: 'Nov 1–21',
+    type: '20-Day',
+    teacher: 'Gopal Thapa',
+    score: 76,
+    conf: 'review',
+    note: '20-Day needs senior oversight',
+  },
+  {
+    center: 'Dhamma Shringa, Kathmandu 🇳🇵',
+    dates: 'Dec 1–30',
+    type: '30-Day',
+    teacher: null,
+    score: 0,
+    conf: 'none',
+    note: 'No authorized 30-Day AT yet',
+  },
+];
 
-    const best = matches[0];
-    if (!best || best.result.score < 40) {
-      return { courseId: course.id, teacherId: null, score: 0, confidence: 'none' };
-    }
-    return {
-      courseId: course.id,
-      teacherId: best.teacher.id,
-      score: best.result.score,
-      confidence: best.result.score >= 80 ? 'high' : 'review',
-    };
-  });
+const CONF_BORDER: Record<Confidence, string> = {
+  high: Colors.fo,
+  review: Colors.sf,
+  none: Colors.ur,
+};
+const CONF_BG: Record<Confidence, string> = {
+  high: Colors.fol,
+  review: Colors.sfl,
+  none: Colors.url,
+};
+const CONF_LABEL: Record<Confidence, string> = {
+  high: '✓ High',
+  review: '⚠ Review',
+  none: '✗ None',
+};
+
+const CRITERIA = [
+  'Language',
+  'Location',
+  'Availability',
+  'Festival blocks',
+  'Rest gap',
+  'Course type',
+  'Gender',
+  'Travel distance',
+];
+
+const REASONS = [
+  'Better language/location match',
+  'Rest gap concern',
+  'Teacher request',
+  'Experience at center',
+  'Other',
+];
+
+function mbadgeStyle(score: number) {
+  if (score >= 90) return { bg: Colors.fol, color: Colors.fo };
+  if (score >= 70) return { bg: Colors.bll, color: Colors.bl };
+  return { bg: Colors.cr2, color: Colors.tx3 };
 }
 
-export default function AdminSchedule() {
+export default function AdminScheduleScreen() {
   const { t } = useTranslation();
-  const confirm = useConfirm();
-  const courses = useCoursesStore((s) => s.courses) as Course[];
-  const { addAssignment } = useApplicationsStore();
-  const { addNotification } = useNotificationsStore();
-  const [drafts, setDrafts] = useState<AssignmentDraft[]>(() => buildDrafts(courses));
-  const [selectedDraft, setSelectedDraft] = useState<AssignmentDraft | null>(null);
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [finalized, setFinalized] = useState(false);
+  const [overrideCourse, setOverrideCourse] = useState<DraftRow | null>(null);
+  const [selectedTeacher, setSelectedTeacher] = useState('');
+  const [reason, setReason] = useState('');
+  const [expandedField, setExpandedField] = useState<'teacher' | 'reason' | null>(null);
 
-  const teachers = teachersData;
-
-  const getTeacher = (id: string | null) => (id ? teachers.find((t) => t.id === id) : null);
-
-  const getCourse = (id: number) => courses.find((c) => c.id === id);
-
-  const handleChangeTeacher = (draft: AssignmentDraft, newTeacherId: string) => {
-    const teacher = teachers.find((t) => t.id === newTeacherId);
-    const course = getCourse(draft.courseId);
-    const score =
-      teacher && course ? calculateMatch(teacher as unknown as TeacherProfile, course).score : 0;
-    setDrafts((prev) =>
-      prev.map((d) =>
-        d.courseId === draft.courseId
-          ? { ...d, teacherId: newTeacherId, score, confidence: score >= 80 ? 'high' : 'review' }
-          : d,
-      ),
-    );
-    setSelectedDraft(null);
+  const openOverride = (row: DraftRow) => {
+    setOverrideCourse(row);
+    setSelectedTeacher(row.teacher ?? '');
+    setReason('');
+    setExpandedField(null);
   };
 
-  const handleFinalize = () => {
-    const highConfidence = drafts.filter((d) => d.confidence === 'high' && d.teacherId);
-    confirm({
-      title: 'Finalize & Notify',
-      message: `This will confirm ${highConfidence.length} high-confidence assignment(s) and notify teachers. Continue?`,
-      confirmText: 'Finalize',
-      onConfirm: async () => {
-        for (const draft of highConfidence) {
-          const teacher = teachers.find((t) => t.id === draft.teacherId);
-          const course = courses.find((c) => c.id === draft.courseId);
-          if (!teacher || !course) continue;
-          await addAssignment(draft.courseId, draft.teacherId!);
-          await addNotification({
-            targetUserId: draft.teacherId!,
-            type: 'assignment',
-            center: course.center,
-            course: `${course.center} — ${course.type}`,
-            courseId: course.id,
-            subjectEn: 'You have been assigned to teach',
-            bodyEn: `Dear ${teacher.name},\n\nWith great joy we confirm your assignment to teach the ${course.type} course at ${course.center}.\n\nDates: ${course.dates}\n\nSadhu! 🙏`,
-            bodyNe: `प्रिय ${teacher.name},\n\n${course.center}मा ${course.type} पाठ्यक्रम पढाउन तपाईंको नियुक्ति पुष्टि गर्दा हामी हर्षित छौं।`,
-          });
-        }
-        setFinalized(true);
-      },
-    });
+  const closeOverride = () => {
+    setOverrideCourse(null);
+    setExpandedField(null);
   };
 
-  const confidenceColor: Record<Confidence, string> = {
-    high: Colors.fo,
-    review: Colors.gd,
-    none: Colors.tx3,
-  };
+  const teacherLabel = selectedTeacher === '' ? 'Choose a teacher…' : selectedTeacher;
+  const reasonLabel = reason === '' ? 'Select reason…' : reason;
 
-  const confidenceLabel: Record<Confidence, string> = {
-    high: t('admin.schedule.confidence.high'),
-    review: t('admin.schedule.confidence.review'),
-    none: t('admin.schedule.confidence.none'),
+  const confirmOverride = () => {
+    if (!selectedTeacher || !overrideCourse) return;
+    const action = overrideCourse.teacher ? 'Changed' : 'Assigned';
+    Alert.alert(`${action} ${selectedTeacher} for ${overrideCourse.center}`);
+    closeOverride();
   };
-
-  if (finalized) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: Colors.cr,
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 32,
-        }}
-      >
-        <Text style={{ fontSize: 52, marginBottom: 16 }}>✅</Text>
-        <Text
-          style={{
-            fontSize: FontSize.xl,
-            fontWeight: FontWeight.bold,
-            color: Colors.tx,
-            textAlign: 'center',
-            marginBottom: 8,
-          }}
-        >
-          Assignments Finalized
-        </Text>
-        <Text
-          style={{
-            fontSize: FontSize.smPlus,
-            color: Colors.tx3,
-            textAlign: 'center',
-            marginBottom: 32,
-            lineHeight: FontSize.smPlus * 1.5,
-          }}
-        >
-          {drafts.filter((d) => d.confidence === 'high').length} teachers have been notified of
-          their assignments.
-        </Text>
-        <Button label="Back to Dashboard" variant="primary" onPress={() => setFinalized(false)} />
-      </View>
-    );
-  }
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.cr }}>
-      <SectionHeader title={t('admin.schedule.title')} style={styles.header} />
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ─── Hero ─────────────────────────────────────────────── */}
+        <LinearGradient
+          colors={Gradients.autoSchedule}
+          start={GradientDirection.hero.start}
+          end={GradientDirection.hero.end}
+          style={[s.hero, { paddingTop: Math.max(56, insets.top + 12) }]}
+        >
+          <LotusHero color="white" opacity={0.08} size={210} />
 
-      {/* Criteria card */}
-      <View style={styles.criteriaCard}>
-        <Text style={styles.criteriaTitle}>⚡ {t('admin.schedule.criteria')}</Text>
-        <View style={styles.criteriaRow}>
-          <CriteriaItem label="Language" value="35pts" />
-          <CriteriaItem label="Region" value="25pts" />
-          <CriteriaItem label="Availability" value="20pts" />
-          <CriteriaItem label="Authorization" value="15pts" />
-          <CriteriaItem label="Rest Gap" value="5pts" />
+          <TouchableOpacity
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+            style={s.backRow}
+            hitSlop={8}
+          >
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M15 18L9 12L15 6"
+                stroke="rgba(255,255,255,0.72)"
+                strokeWidth={2.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+            <Text style={s.backText}>Dashboard</Text>
+          </TouchableOpacity>
+
+          <Text style={s.title}>{t('admin.schedule.title')}</Text>
+          <Text style={s.subline}>Q3 2026 · Jul – Sep · Apr 24</Text>
+
+          <View style={s.statsRow}>
+            <View style={s.statChip}>
+              <Text style={[s.statNumber, { color: Colors.white }]}>5/6</Text>
+              <Text style={s.statLabel}>Assigned</Text>
+            </View>
+            <View style={s.statChip}>
+              <Text style={[s.statNumber, { color: '#FFD580' }]}>3</Text>
+              <Text style={s.statLabel}>Review</Text>
+            </View>
+            <View style={s.statChip}>
+              <Text style={[s.statNumber, { color: '#FFB3AE' }]}>1</Text>
+              <Text style={s.statLabel}>Unscheduled</Text>
+            </View>
+          </View>
+        </LinearGradient>
+
+        {/* ─── Matching criteria ─────────────────────────────────── */}
+        <View style={s.criteriaWrap}>
+          <Text style={s.criteriaLabel}>{t('admin.schedule.criteria')}</Text>
+          <View style={s.criteriaChips}>
+            {CRITERIA.map((c) => (
+              <View key={c} style={s.chipFo}>
+                <Text numberOfLines={1} style={s.chipFoText}>
+                  {c}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
-      </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
-        {drafts.map((draft) => {
-          const course = getCourse(draft.courseId);
-          const teacher = getTeacher(draft.teacherId);
-          const color = confidenceColor[draft.confidence];
-
-          if (!course) return null;
-
+        {/* ─── Draft assignments ────────────────────────────────── */}
+        <Text style={s.sph}>{t('admin.schedule.draft_assignments')}</Text>
+        {DRAFT.map((r, i) => {
+          const badge = mbadgeStyle(r.score);
           return (
-            <View key={draft.courseId} style={[styles.draftCard, { borderLeftColor: color }]}>
-              {/* Course */}
-              <View style={styles.courseRow}>
-                <View style={styles.courseInfo}>
-                  <Text style={styles.courseType}>{course.type}</Text>
-                  <Text style={styles.courseCenter}>{course.center}</Text>
-                  <Text style={styles.courseDates}>📅 {course.dates}</Text>
+            <View
+              key={i}
+              style={[s.card, { borderLeftWidth: 4, borderLeftColor: CONF_BORDER[r.conf] }]}
+            >
+              <View style={s.cardTopRow}>
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <Text style={s.cardType}>{r.type}</Text>
+                  <Text style={s.cardCenter}>{r.center}</Text>
+                  <Text style={s.cardDates}>📅 {r.dates}</Text>
                 </View>
-                <View style={[styles.confidenceBadge, { backgroundColor: color + '20' }]}>
-                  <Text style={[styles.confidenceText, { color }]}>
-                    {confidenceLabel[draft.confidence]}
+                <View style={[s.confPill, { backgroundColor: CONF_BG[r.conf] }]}>
+                  <Text style={[s.confPillText, { color: CONF_BORDER[r.conf] }]}>
+                    {CONF_LABEL[r.conf]}
                   </Text>
                 </View>
               </View>
 
-              {/* Assigned teacher */}
-              {teacher ? (
-                <View style={styles.teacherRow}>
-                  <View style={styles.teacherAvatar}>
-                    <Text style={styles.teacherAvatarText}>{teacher.name.charAt(0)}</Text>
+              {r.teacher ? (
+                <View style={s.assignedRow}>
+                  <View style={s.miniAvatar}>
+                    <Text style={s.miniAvatarText}>{r.teacher[0]}</Text>
                   </View>
-                  <View style={styles.teacherInfo}>
-                    <Text style={styles.teacherName}>{teacher.name}</Text>
-                    <Text style={styles.teacherMeta}>
-                      {teacher.gender === 'F' ? '👩' : '👨'} ·{' '}
-                      {Object.entries(teacher.languages as Record<string, string>)
-                        .filter(([, v]) => v === 'primary')
-                        .map(([k]) => k)
-                        .join(', ')}
-                    </Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.assignedName}>{r.teacher}</Text>
+                    {r.conf === 'review' && <Text style={s.assignedNote}>⚠ {r.note}</Text>}
                   </View>
-                  <MatchBadge score={draft.score} />
+                  <View style={[s.miniMbadge, { backgroundColor: badge.bg }]}>
+                    <Text style={[s.miniMbadgeText, { color: badge.color }]}>{r.score}% match</Text>
+                  </View>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => openOverride(r)}
+                    style={s.changeBtn}
+                  >
+                    <Text style={s.changeBtnText}>Change</Text>
+                  </TouchableOpacity>
                 </View>
               ) : (
-                <View style={styles.unassigned}>
-                  <Text style={styles.unassignedText}>🔍 No suitable AT found</Text>
+                <View style={s.unassignedBanner}>
+                  <Text style={s.unassignedText}>⚠ Unassigned — {r.note}</Text>
+                  <TouchableOpacity activeOpacity={0.85} onPress={() => openOverride(r)}>
+                    <LinearGradient
+                      colors={Gradients.primaryCta}
+                      start={GradientDirection.button.start}
+                      end={GradientDirection.button.end}
+                      style={s.assignManuallyBtn}
+                    >
+                      <Text style={s.assignManuallyBtnText}>Assign Manually</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
                 </View>
               )}
-
-              {/* Change button */}
-              <TouchableOpacity
-                onPress={() => setSelectedDraft(draft)}
-                style={styles.changeBtn}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.changeBtnText}>{t('admin.schedule.changeTeacher')}</Text>
-              </TouchableOpacity>
             </View>
           );
         })}
+
+        {/* ─── Footer actions ───────────────────────────────────── */}
+        <View style={s.actionsRow}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => Alert.alert(t('common.coming_soon'))}
+            style={[s.footerBtn, s.footerBtnOu]}
+          >
+            <Text style={[s.footerBtnText, { color: Colors.tx }]}>⚡ Re-generate</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => setFinalized(true)}
+            style={{ flex: 1 }}
+          >
+            <LinearGradient
+              colors={Gradients.forestCta}
+              start={GradientDirection.button.start}
+              end={GradientDirection.button.end}
+              style={s.footerBtn}
+            >
+              <Text style={[s.footerBtnText, { color: Colors.white }]}>
+                {finalized ? '✅ Notified!' : '✓ Finalize & Notify'}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+
+        {finalized && (
+          <View style={s.finalizedBanner}>
+            <Text style={s.finalizedEmoji}>✅</Text>
+            <Text style={s.finalizedTitle}>Schedule Finalized!</Text>
+            <Text style={s.finalizedBody}>All teachers notified. Sadhu! 🙏</Text>
+          </View>
+        )}
+
+        <View style={{ height: 20 }} />
       </ScrollView>
 
-      {/* Finalize button */}
-      <View style={styles.finalizeWrap}>
-        <Button
-          label={`⚡ ${t('admin.schedule.finalizeAll')}`}
-          variant="forest"
-          fullWidth
-          onPress={handleFinalize}
-        />
-      </View>
-
-      {/* Change teacher modal */}
+      {/* ─── Override modal ─────────────────────────────────────── */}
       <Modal
-        visible={!!selectedDraft}
         transparent
-        animationType="slide"
-        onRequestClose={() => setSelectedDraft(null)}
+        visible={overrideCourse !== null}
+        animationType="fade"
+        onRequestClose={closeOverride}
       >
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPress={() => setSelectedDraft(null)}
-        />
-        <View style={styles.sheet}>
-          <View style={styles.sheetHandle} />
-          <Text style={styles.sheetTitle}>{t('admin.schedule.changeTeacher')}</Text>
-          <Text style={styles.sheetSub}>
-            {selectedDraft
-              ? getCourse(selectedDraft.courseId)?.type +
-                ' — ' +
-                getCourse(selectedDraft.courseId)?.dates
-              : ''}
-          </Text>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {teachers.map((teacher) => {
-              const course = selectedDraft ? getCourse(selectedDraft.courseId) : null;
-              const score = course
-                ? calculateMatch(teacher as unknown as TeacherProfile, course).score
-                : 0;
-              return (
+        <View style={s.modalOverlay}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={closeOverride}
+            style={StyleSheet.absoluteFillObject}
+          />
+          {overrideCourse && (
+            <View style={s.modalCard}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 4 }}
+              >
+                <Text style={s.modalTitle}>
+                  {overrideCourse.teacher ? 'Change Teacher' : 'Assign Teacher'}
+                </Text>
+
+                <View style={s.modalSummary}>
+                  <Text style={s.modalSummaryType}>{overrideCourse.type}</Text>
+                  <Text style={s.modalSummaryCenter}>{overrideCourse.center}</Text>
+                  <Text style={s.modalSummaryDates}>📅 {overrideCourse.dates}</Text>
+                  {overrideCourse.teacher && (
+                    <Text style={s.modalCurrent}>
+                      Current:{' '}
+                      <Text style={{ fontWeight: '700', color: Colors.tx }}>
+                        {overrideCourse.teacher}
+                      </Text>{' '}
+                      ({overrideCourse.score}%)
+                    </Text>
+                  )}
+                </View>
+
+                <Text style={s.modalFieldLabel}>Select Teacher:</Text>
                 <TouchableOpacity
-                  key={teacher.id}
-                  onPress={() => selectedDraft && handleChangeTeacher(selectedDraft, teacher.id)}
-                  style={styles.teacherOption}
-                  activeOpacity={0.8}
+                  activeOpacity={0.85}
+                  onPress={() => setExpandedField(expandedField === 'teacher' ? null : 'teacher')}
+                  style={s.selectBtn}
                 >
-                  <View style={styles.teacherAvatar}>
-                    <Text style={styles.teacherAvatarText}>{teacher.name.charAt(0)}</Text>
-                  </View>
-                  <View style={styles.teacherInfo}>
-                    <Text style={styles.teacherName}>{teacher.name}</Text>
-                    <Text style={styles.teacherMeta}>{teacher.totalCourses} courses</Text>
-                  </View>
-                  <MatchBadge score={score} />
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      s.selectBtnText,
+                      {
+                        color: selectedTeacher === '' ? Colors.tx3 : Colors.tx,
+                      },
+                    ]}
+                  >
+                    {teacherLabel}
+                  </Text>
+                  <Text
+                    style={[
+                      s.selectChevron,
+                      expandedField === 'teacher' && {
+                        transform: [{ rotate: '180deg' }],
+                      },
+                    ]}
+                  >
+                    ▾
+                  </Text>
                 </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                {expandedField === 'teacher' && (
+                  <View style={s.selectDropdown}>
+                    {AVAILABLE_TEACHERS.map((teach) => {
+                      const on = selectedTeacher === teach.name;
+                      return (
+                        <TouchableOpacity
+                          key={teach.name}
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            setSelectedTeacher(teach.name);
+                            setExpandedField(null);
+                          }}
+                          style={[s.dropdownOption, on && { backgroundColor: Colors.sfl }]}
+                        >
+                          <Text
+                            style={[
+                              s.dropdownOptionTitle,
+                              on && { color: Colors.sf, fontWeight: '700' },
+                            ]}
+                          >
+                            {teach.name}
+                          </Text>
+                          <Text style={s.dropdownOptionSub}>
+                            {teach.match}% · {teach.langs}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+
+                <Text style={[s.modalFieldLabel, { marginTop: 12 }]}>Reason (optional):</Text>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => setExpandedField(expandedField === 'reason' ? null : 'reason')}
+                  style={s.selectBtn}
+                >
+                  <Text
+                    numberOfLines={1}
+                    style={[s.selectBtnText, { color: reason === '' ? Colors.tx3 : Colors.tx }]}
+                  >
+                    {reasonLabel}
+                  </Text>
+                  <Text
+                    style={[
+                      s.selectChevron,
+                      expandedField === 'reason' && {
+                        transform: [{ rotate: '180deg' }],
+                      },
+                    ]}
+                  >
+                    ▾
+                  </Text>
+                </TouchableOpacity>
+                {expandedField === 'reason' && (
+                  <View style={s.selectDropdown}>
+                    {REASONS.map((r) => {
+                      const on = reason === r;
+                      return (
+                        <TouchableOpacity
+                          key={r}
+                          activeOpacity={0.7}
+                          onPress={() => {
+                            setReason(on ? '' : r);
+                            setExpandedField(null);
+                          }}
+                          style={[s.dropdownOption, on && { backgroundColor: Colors.sfl }]}
+                        >
+                          <Text
+                            style={[
+                              s.dropdownOptionTitle,
+                              on && { color: Colors.sf, fontWeight: '700' },
+                            ]}
+                          >
+                            {r}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+
+                <View style={s.modalButtonRow}>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={closeOverride}
+                    style={[s.modalBtn, s.modalBtnOu]}
+                  >
+                    <Text style={[s.modalBtnText, { color: Colors.tx }]}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={confirmOverride}
+                    disabled={!selectedTeacher}
+                    style={{ flex: 1, opacity: selectedTeacher ? 1 : 0.5 }}
+                  >
+                    <LinearGradient
+                      colors={Gradients.primaryCta}
+                      start={GradientDirection.button.start}
+                      end={GradientDirection.button.end}
+                      style={s.modalBtn}
+                    >
+                      <Text style={[s.modalBtnText, { color: Colors.white }]}>Confirm</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          )}
         </View>
       </Modal>
     </View>
   );
 }
 
-const CriteriaItem = ({ label, value }: { label: string; value: string }) => (
-  <View style={criteriaStyles.item}>
-    <Text style={criteriaStyles.value}>{value}</Text>
-    <Text style={criteriaStyles.label}>{label}</Text>
-  </View>
-);
-const criteriaStyles = StyleSheet.create({
-  item: { alignItems: 'center', flex: 1 },
-  value: { fontSize: FontSize.smPlus, fontWeight: FontWeight.bold, color: Colors.bl },
-  label: { fontSize: 9, color: Colors.tx3, fontWeight: FontWeight.medium },
-});
+const s = StyleSheet.create({
+  flex: { flex: 1 },
 
-const styles = StyleSheet.create({
-  header: { paddingTop: 20 },
-  criteriaCard: {
-    backgroundColor: Colors.bll,
-    marginHorizontal: Layout.horizontalPad,
-    marginVertical: Spacing.sm,
-    borderRadius: Radius.lg,
-    padding: 14,
-    gap: 10,
-    borderWidth: 1,
-    borderColor: Colors.bl + '33',
+  // Hero
+  hero: {
+    paddingHorizontal: 18,
+    paddingBottom: 22,
+    overflow: 'hidden',
+    position: 'relative',
   },
-  criteriaTitle: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
-    color: Colors.bl,
-  },
-  criteriaRow: {
+  backRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 13,
   },
-  list: { paddingBottom: 140, paddingTop: 4 },
-  draftCard: {
+  backText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.72)',
+    fontFamily: FontFamily.sansRegular,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: Colors.white,
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  subline: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
+    fontFamily: FontFamily.sansRegular,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 14,
+  },
+  statChip: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderRadius: 13,
+    paddingHorizontal: 6,
+    paddingVertical: 9,
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 17,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
+  },
+  statLabel: {
+    fontSize: 9.5,
+    color: 'rgba(255,255,255,0.65)',
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Criteria
+  criteriaWrap: {
+    paddingHorizontal: 18,
+    paddingTop: 12,
+  },
+  criteriaLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.tx2,
+    marginBottom: 5,
+    textTransform: 'uppercase',
+    letterSpacing: 0.55,
+    fontFamily: FontFamily.sansBold,
+  },
+  criteriaChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+  },
+  chipFo: {
+    backgroundColor: Colors.fol,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 20,
+    // ≈ (100% - 3 gaps × 5) / 4 = 22.6%, but accounting for RN's
+    // gap-as-flex-spacing quirks we use a slightly tighter value.
+    width: '22.7%',
+    alignItems: 'center',
+  },
+  chipFoText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: Colors.fo,
+    fontFamily: FontFamily.sansSemiBold,
+  },
+
+  // sph
+  sph: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.tx2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.84,
+    marginHorizontal: 18,
+    marginTop: 18,
+    marginBottom: 9,
+    fontFamily: FontFamily.sansBold,
+  },
+
+  // Card
+  card: {
     backgroundColor: Colors.white,
-    marginHorizontal: Layout.horizontalPad,
-    marginVertical: 5,
-    borderRadius: Radius.lg,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    borderLeftWidth: 4,
-    ...Shadows.card,
-    gap: 10,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 11,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
   },
-  courseRow: {
+  cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: 8,
+    marginBottom: 7,
   },
-  courseInfo: { flex: 1, gap: 2 },
-  courseType: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    color: Colors.sf,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  courseCenter: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
+  cardType: {
+    fontSize: 14,
+    fontWeight: '700',
     color: Colors.tx,
+    fontFamily: FontFamily.sansBold,
   },
-  courseDates: {
-    fontSize: FontSize.sm,
+  cardCenter: {
+    fontSize: 12.5,
+    color: Colors.tx2,
+    fontFamily: FontFamily.sansRegular,
+  },
+  cardDates: {
+    fontSize: 11,
     color: Colors.tx3,
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
   },
-  confidenceBadge: {
+  confPill: {
     paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: Radius.full,
+    paddingVertical: 3,
+    borderRadius: 20,
     flexShrink: 0,
   },
-  confidenceText: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
+  confPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
   },
-  teacherRow: {
+
+  // Assigned teacher row (inside card)
+  assignedRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: 8,
     backgroundColor: Colors.cr,
-    borderRadius: Radius.md,
-    padding: 10,
-  },
-  teacherAvatar: {
-    width: 36,
-    height: 36,
     borderRadius: 10,
-    backgroundColor: Colors.sfl,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  miniAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: Colors.sfm,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  teacherAvatarText: {
-    fontSize: 14,
-    fontWeight: FontWeight.bold,
-    color: Colors.sf,
+  miniAvatarText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.sfd,
+    fontFamily: FontFamily.sansBold,
   },
-  teacherInfo: { flex: 1, gap: 2 },
-  teacherName: {
-    fontSize: FontSize.smPlus,
-    fontWeight: FontWeight.bold,
+  assignedName: {
+    fontSize: 13,
+    fontWeight: '600',
     color: Colors.tx,
+    fontFamily: FontFamily.sansSemiBold,
   },
-  teacherMeta: {
-    fontSize: FontSize.sm,
-    color: Colors.tx3,
+  assignedNote: {
+    fontSize: 10.5,
+    color: Colors.sf,
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
   },
-  unassigned: {
-    backgroundColor: Colors.cr2,
-    borderRadius: Radius.md,
-    padding: 12,
-    alignItems: 'center',
+  miniMbadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 16,
+    flexShrink: 0,
   },
-  unassignedText: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx3,
+  miniMbadgeText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
   },
   changeBtn: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    backgroundColor: Colors.bll,
-    borderRadius: Radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: Colors.bd2,
+    backgroundColor: 'transparent',
+    flexShrink: 0,
   },
   changeBtnText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
-    color: Colors.bl,
-  },
-  finalizeWrap: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: Layout.horizontalPad,
-    paddingBottom: 24,
-    backgroundColor: Colors.white,
-    borderTopWidth: 1,
-    borderTopColor: Colors.bd,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-  sheet: {
-    backgroundColor: Colors.white,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius.xl,
-    padding: Layout.horizontalPad,
-    paddingBottom: 40,
-    maxHeight: '60%',
-    gap: Spacing.sm,
-  },
-  sheetHandle: {
-    width: 42,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: Colors.bd2,
-    alignSelf: 'center',
-    marginBottom: Spacing.sm,
-  },
-  sheetTitle: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+    fontSize: 11,
+    fontWeight: '700',
     color: Colors.tx,
+    fontFamily: FontFamily.sansBold,
   },
-  sheetSub: {
-    fontSize: FontSize.sm,
+
+  // Unassigned banner
+  unassignedBanner: {
+    backgroundColor: Colors.url,
+    borderRadius: 10,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+  },
+  unassignedText: {
+    fontSize: 12,
+    color: Colors.ur,
+    fontWeight: '600',
+    marginBottom: 5,
+    fontFamily: FontFamily.sansSemiBold,
+  },
+  assignManuallyBtn: {
+    width: '100%',
+    paddingVertical: 7,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  assignManuallyBtnText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: Colors.white,
+    fontFamily: FontFamily.sansBold,
+  },
+
+  // Footer actions
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 9,
+    paddingHorizontal: 18,
+    paddingTop: 8,
+  },
+  footerBtn: {
+    flex: 1,
+    paddingVertical: 13,
+    paddingHorizontal: 22,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerBtnOu: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: Colors.bd2,
+  },
+  footerBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
+  },
+
+  // Finalized banner
+  finalizedBanner: {
+    marginHorizontal: 18,
+    marginTop: 10,
+    backgroundColor: Colors.fol,
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+  },
+  finalizedEmoji: { fontSize: 24, marginBottom: 5 },
+  finalizedTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.fo,
+    fontFamily: FontFamily.sansBold,
+  },
+  finalizedBody: {
+    fontSize: 12.5,
+    color: Colors.tx2,
+    marginTop: 3,
+    textAlign: 'center',
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 360,
+    maxHeight: '90%',
+    backgroundColor: Colors.white,
+    borderRadius: 18,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.tx,
+    marginBottom: 12,
+    fontFamily: FontFamily.sansBold,
+  },
+  modalSummary: {
+    backgroundColor: Colors.cr,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 14,
+  },
+  modalSummaryType: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.tx,
+    fontFamily: FontFamily.sansSemiBold,
+  },
+  modalSummaryCenter: {
+    fontSize: 12,
+    color: Colors.tx2,
+    fontFamily: FontFamily.sansRegular,
+  },
+  modalSummaryDates: {
+    fontSize: 11,
     color: Colors.tx3,
-    marginBottom: Spacing.sm,
+    fontFamily: FontFamily.sansRegular,
   },
-  teacherOption: {
+  modalCurrent: {
+    fontSize: 11,
+    color: Colors.tx3,
+    marginTop: 4,
+    fontFamily: FontFamily.sansRegular,
+  },
+  modalFieldLabel: {
+    fontSize: 11,
+    color: Colors.tx2,
+    marginBottom: 5,
+    fontFamily: FontFamily.sansRegular,
+  },
+  // Select-style dropdown
+  selectBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: 12,
+    justifyContent: 'space-between',
+    backgroundColor: Colors.white,
+    borderWidth: 1.5,
+    borderColor: Colors.bd,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  selectBtnText: {
+    fontSize: 12,
+    flex: 1,
+    paddingRight: 8,
+    fontFamily: FontFamily.sansRegular,
+  },
+  selectChevron: {
+    fontSize: 14,
+    color: Colors.tx3,
+    fontFamily: FontFamily.sansBold,
+  },
+  selectDropdown: {
+    backgroundColor: Colors.white,
+    borderWidth: 1.5,
+    borderColor: Colors.bd,
+    borderRadius: 10,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  dropdownOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     borderBottomWidth: 1,
     borderBottomColor: Colors.bd,
+  },
+  dropdownOptionTitle: {
+    fontSize: 12,
+    color: Colors.tx,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
+  },
+  dropdownOptionSub: {
+    fontSize: 10.5,
+    color: Colors.tx3,
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBtnOu: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: Colors.bd2,
+  },
+  modalBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
   },
 });
