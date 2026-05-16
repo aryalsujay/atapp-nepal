@@ -736,6 +736,13 @@
         "rejected": "Not Selected"
       }
     },
+    "notifications": {
+      "title": "Notifications",
+      "new_lbl": "new",
+      "total_lbl": "total",
+      "empty_state": "No notifications yet.",
+      "view_apps": "View My Applications"
+    },
     "profile": {
       "courses_lbl": "courses",
       "last_served": "Last served",

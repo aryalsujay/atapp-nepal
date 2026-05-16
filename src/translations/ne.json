@@ -754,6 +754,13 @@
         "rejected": "छनोट भएन"
       }
     },
+    "notifications": {
+      "title": "सूचनाहरू",
+      "new_lbl": "नयाँ",
+      "total_lbl": "कुल",
+      "empty_state": "अहिलेसम्म कुनै सूचना छैन।",
+      "view_apps": "मेरा आवेदनहरू हेर्नुहोस्"
+    },
     "profile": {
       "courses_lbl": "शिविर",
       "last_served": "अघिल्लो सेवा",

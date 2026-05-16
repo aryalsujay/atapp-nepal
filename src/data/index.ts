@@ -14,6 +14,7 @@ import coursesJson from './courses.json';
 import hallsJson from './halls.json';
 import serverApplicationsJson from './serverApplications.json';
 import serverCoursesJson from './serverCourses.json';
+import serverNotificationsJson from './serverNotifications.json';
 import teachersJson from './teachers.json';
 
 import type { Application, Centre, Course, Hall } from '@/types';
@@ -74,3 +75,17 @@ export const courses = coursesJson as unknown as Course[];
 export const applications = applicationsJson as unknown as Application[];
 export const serverCourses = serverCoursesJson as ServerCourse[];
 export const serverApplications = serverApplicationsJson as unknown as ServerApplication[];
+
+export interface ServerNotification {
+  id: number;
+  type: 'approval' | 'rejection' | 'reminder';
+  time: string;
+  read: boolean;
+  center: string;
+  course: string;
+  subj: string;
+  en: string;
+  np: string;
+}
+
+export const serverNotifications = serverNotificationsJson as ServerNotification[];
