@@ -531,17 +531,9 @@
       "copyCode": "Copy Code"
     },
     "schedule": {
-      "title": "Auto-Schedule",
-      "criteria": "Matching Criteria",
-      "confidence": {
-        "high": "High",
-        "review": "Review",
-        "none": "Unassigned"
-      },
-      "finalizeAll": "Finalize & Notify All",
-      "changeTeacher": "Change Teacher",
-      "changeReason": "Reason for change",
-      "reassignConfirm": "Reassign"
+      "title": "Auto-Schedule Draft",
+      "criteria": "Matching criteria",
+      "draft_assignments": "Draft Assignments"
     },
     "calendar": {
       "title": "Course Calendar"
