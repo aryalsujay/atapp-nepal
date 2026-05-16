@@ -13,6 +13,8 @@ import centersJson from './centers.json';
 import coursesJson from './courses.json';
 import hallsJson from './halls.json';
 import adminApplicationsJson from './adminApplications.json';
+import availableTeachersJson from './admin/availableTeachers.json';
+import scheduleDraftJson from './admin/scheduleDraft.json';
 import serverApplicantsJson from './serverApplicants.json';
 import serverApplicationsJson from './serverApplications.json';
 import serverCoursesJson from './serverCourses.json';
@@ -124,3 +126,24 @@ export interface ServerApplicant {
 }
 
 export const serverApplicants = serverApplicantsJson as ServerApplicant[];
+
+export interface AvailableTeacher {
+  name: string;
+  match: number;
+  langs: string;
+}
+
+export type ScheduleConfidence = 'high' | 'review' | 'none';
+
+export interface ScheduleDraftRow {
+  center: string;
+  dates: string;
+  type: string;
+  teacher: string | null;
+  score: number;
+  conf: ScheduleConfidence;
+  note: string;
+}
+
+export const availableTeachers = availableTeachersJson as AvailableTeacher[];
+export const scheduleDraft = scheduleDraftJson as ScheduleDraftRow[];

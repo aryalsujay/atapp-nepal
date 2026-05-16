@@ -1,0 +1,56 @@
+[
+  {
+    "center": "Dhamma Shringa, Kathmandu 🇳🇵",
+    "dates": "Jul 7–18",
+    "type": "10-Day",
+    "teacher": "Bhikkhu Ananda",
+    "score": 97,
+    "conf": "high",
+    "note": ""
+  },
+  {
+    "center": "Dhamma Pokhara 🇳🇵",
+    "dates": "Jul 15–26",
+    "type": "10-Day",
+    "teacher": "Kamala Gurung",
+    "score": 91,
+    "conf": "high",
+    "note": ""
+  },
+  {
+    "center": "Dhamma Adhara, Kathmandu 🇳🇵",
+    "dates": "Aug 2–13",
+    "type": "10-Day",
+    "teacher": "Asha Mehta",
+    "score": 89,
+    "conf": "high",
+    "note": ""
+  },
+  {
+    "center": "Dhamma Janani, Lumbini 🇳🇵",
+    "dates": "Aug 20–31",
+    "type": "10-Day",
+    "teacher": "Ram Prasad Sharma",
+    "score": 87,
+    "conf": "review",
+    "note": "First time at Dhamma Janani"
+  },
+  {
+    "center": "Dhamma Shringa, Kathmandu 🇳🇵",
+    "dates": "Nov 1–21",
+    "type": "20-Day",
+    "teacher": "Gopal Thapa",
+    "score": 76,
+    "conf": "review",
+    "note": "20-Day needs senior oversight"
+  },
+  {
+    "center": "Dhamma Shringa, Kathmandu 🇳🇵",
+    "dates": "Dec 1–30",
+    "type": "30-Day",
+    "teacher": null,
+    "score": 0,
+    "conf": "none",
+    "note": "No authorized 30-Day AT yet"
+  }
+]
