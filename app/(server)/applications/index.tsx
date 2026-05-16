@@ -1,364 +1,310 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+/**
+ * Server Applications (My Service) — implements `specs/17-server-applications.md`.
+ *
+ * Prototype-faithful port of `app.html:2823–2862` (`ServerApps`).
+ */
+
+import React from 'react';
+import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Routes, routeTo } from '@/routes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+
+import { Routes, routeTo } from '@/routes';
 import { Colors, StatusColors } from '@/theme/colors';
-import { FontSize, FontWeight } from '@/theme/typography';
-import { Radius, Layout, Spacing } from '@/theme/spacing';
-import { Shadows } from '@/theme/shadows';
-import { FadeInView } from '@/components/ui/FadeInView';
+import { FontFamily } from '@/theme/typography';
 import { SERVICE_AREAS } from '@/data/serviceAreas';
-import { serverApplications as serverApplicationsData } from '@/data';
+import { serverApplications, type ServerApplication } from '@/data';
 
-type AppStatus = 'approved' | 'pending' | 'rejected';
-type TabFilter = 'all' | AppStatus;
+const SV_ACCENT = '#9B6B14';
 
-const STATUS_LABELS: Record<AppStatus, string> = {
-  approved: 'Approved',
-  pending: 'Pending',
-  rejected: 'Rejected',
-};
-
-const STATUS_EMOJI: Record<AppStatus, string> = {
-  approved: '✓',
-  pending: '⏳',
-  rejected: '✗',
-};
-
-function AreaChip({ areaId }: { areaId: string }) {
-  const area = SERVICE_AREAS.find((a) => a.id === areaId);
-  if (!area) return null;
-  return (
-    <View style={[styles.areaChip, { backgroundColor: Colors.svl }]}>
-      <Text style={styles.areaChipText}>
-        {area.emoji} {area.label}
-      </Text>
-    </View>
-  );
+function statusBorderColor(status: ServerApplication['status']) {
+  switch (status) {
+    case 'approved':
+      return Colors.fo;
+    case 'pending':
+      return SV_ACCENT;
+    case 'rejected':
+      return Colors.bd2;
+    default:
+      return Colors.bd2;
+  }
 }
 
-export default function ApplicationsScreen() {
+function statusPillStyle(status: ServerApplication['status']) {
+  switch (status) {
+    case 'approved':
+      return { bg: StatusColors.approved.bg, color: StatusColors.approved.text };
+    case 'pending':
+      return { bg: StatusColors.pending.bg, color: StatusColors.pending.text };
+    case 'rejected':
+      return { bg: StatusColors.rejected.bg, color: StatusColors.rejected.text };
+    default:
+      return { bg: Colors.cr2, color: Colors.tx2 };
+  }
+}
+
+export default function ServerApplicationsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [filter, setFilter] = useState<TabFilter>('all');
 
-  const filtered =
-    filter === 'all'
-      ? serverApplicationsData
-      : serverApplicationsData.filter((a) => a.status === filter);
-
-  const counts = {
-    all: serverApplicationsData.length,
-    approved: serverApplicationsData.filter((a) => a.status === 'approved').length,
-    pending: serverApplicationsData.filter((a) => a.status === 'pending').length,
-    rejected: serverApplicationsData.filter((a) => a.status === 'rejected').length,
-  };
+  const total = serverApplications.length;
+  const confirmed = serverApplications.filter((a) => a.status === 'approved').length;
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.cr }}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <Text style={styles.headerTitle}>My Applications</Text>
-        <Text style={styles.headerSubtitle}>{serverApplicationsData.length} total</Text>
-      </View>
-
-      {/* Tabs */}
-      <View style={styles.tabs}>
-        {(['all', 'approved', 'pending', 'rejected'] as TabFilter[]).map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, filter === tab && styles.tabActive]}
-            onPress={() => setFilter(tab)}
-          >
-            <Text style={[styles.tabText, filter === tab && styles.tabTextActive]}>
-              {tab === 'all' ? 'All' : STATUS_LABELS[tab as AppStatus]}
-            </Text>
-            {counts[tab] > 0 && (
-              <View style={[styles.tabBadge, filter === tab && styles.tabBadgeActive]}>
-                <Text style={[styles.tabBadgeText, filter === tab && styles.tabBadgeTextActive]}>
-                  {counts[tab]}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        ))}
-      </View>
-
+    <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+      <StatusBar barStyle="dark-content" />
       <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + 8 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 110, paddingTop: 8 }}
       >
-        {filtered.length === 0 && (
-          <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>📋</Text>
-            <Text style={styles.emptyText}>No applications in this category.</Text>
-          </View>
+        {/* ─── Header (white) ──────────────────────────────────────────── */}
+        <View style={[s.header, { paddingTop: Math.max(56, insets.top + 14) }]}>
+          <Text style={s.title}>{t('server.applications.title')}</Text>
+          <Text style={s.subtitle}>
+            {total} {t('server.applications.applications_lbl')} · {confirmed}{' '}
+            {t('server.applications.confirmed_lbl')}
+          </Text>
+        </View>
+
+        {/* ─── Cream gap ───────────────────────────────────────────────── */}
+        <View style={{ height: 8, backgroundColor: Colors.cr }} />
+
+        {/* ─── Cards / empty state ─────────────────────────────────────── */}
+        {serverApplications.length === 0 ? (
+          <Text style={s.emptyState}>{t('server.applications.empty_state')}</Text>
+        ) : (
+          serverApplications.map((a) => {
+            const pill = statusPillStyle(a.status);
+            const durationLabel = a.partial
+              ? `${t('server.applications.partial_lbl')}: ${a.days ?? ''}`
+              : t('server.applications.full_course');
+            const isRejected = a.status === 'rejected';
+            const hasReason = isRejected && Boolean(a.reason);
+
+            return (
+              <TouchableOpacity
+                key={a.id}
+                activeOpacity={0.85}
+                onPress={() => router.push(routeTo.serverApplicationDetail(a.id))}
+                style={[
+                  s.card,
+                  {
+                    borderLeftWidth: 4,
+                    borderLeftColor: statusBorderColor(a.status),
+                  },
+                ]}
+              >
+                <View style={s.topRow}>
+                  <View style={{ flex: 1, paddingRight: 8 }}>
+                    <Text style={s.center}>{a.center}</Text>
+                    <Text style={s.typeDates}>
+                      {a.type} · {a.dates}
+                    </Text>
+                    <Text style={s.appliedLine}>
+                      {t('server.applications.applied_lbl')} {a.applied} · {durationLabel}
+                    </Text>
+                  </View>
+                  <View style={[s.spill, { backgroundColor: pill.bg }]}>
+                    <Text style={[s.spillText, { color: pill.color }]}>
+                      {t(`server.applications.status.${a.status}`)}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={[s.chipsRow, { marginBottom: hasReason ? 8 : 0 }]}>
+                  {a.areas.map((aid) => {
+                    const sa = SERVICE_AREAS.find((x) => x.id === aid);
+                    if (!sa) return null;
+                    return (
+                      <View key={aid} style={s.areaChip}>
+                        <Text style={s.areaChipText}>
+                          {sa.emoji} {sa.label}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+
+                {hasReason && (
+                  <View style={s.reasonBox}>
+                    <Text style={s.reasonHeader}>{t('server.applications.reason_lbl')}</Text>
+                    <Text style={s.reasonBody}>{a.reason}</Text>
+                  </View>
+                )}
+
+                <Text style={s.viewDetails}>{t('server.applications.view_details')}</Text>
+              </TouchableOpacity>
+            );
+          })
         )}
 
-        {filtered.map((app, i) => {
-          const status = app.status as AppStatus;
-          const sc = StatusColors[status];
+        {/* ─── Browse More CTA ─────────────────────────────────────────── */}
+        <View style={s.browseWrap}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push(Routes.serverOpportunities)}
+            style={s.browseBtn}
+          >
+            <Text style={s.browseText}>{t('server.applications.browse_more')}</Text>
+          </TouchableOpacity>
+        </View>
 
-          return (
-            <FadeInView key={app.id} delay={60 + i * 50}>
-              <TouchableOpacity
-                style={styles.card}
-                activeOpacity={0.88}
-                onPress={() => router.push(routeTo.serverApplicationDetail(app.id))}
-              >
-                {/* Status bar */}
-                <View style={[styles.statusBar, { backgroundColor: sc.bg }]}>
-                  <Text style={[styles.statusBarText, { color: sc.text }]}>
-                    {STATUS_EMOJI[status]} {STATUS_LABELS[status]}
-                  </Text>
-                  <Text style={[styles.appliedText, { color: sc.text }]}>
-                    Applied {app.applied}
-                  </Text>
-                </View>
-
-                <View style={styles.cardBody}>
-                  {/* Center + type */}
-                  <View style={styles.cardHeader}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.centerName}>{app.center}</Text>
-                      <Text style={styles.courseMeta}>
-                        {app.type} · {app.dates}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Partial */}
-                  {app.partial && app.days && (
-                    <View style={styles.partialBadge}>
-                      <Text style={styles.partialText}>Partial · {app.days}</Text>
-                    </View>
-                  )}
-
-                  {/* Areas */}
-                  <View style={styles.chipRow}>
-                    {app.areas.map((a) => (
-                      <AreaChip key={a} areaId={a} />
-                    ))}
-                  </View>
-
-                  {/* Approved: coordinator + arrive info */}
-                  {status === 'approved' && (
-                    <View style={styles.approvedInfo}>
-                      <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Arrive by</Text>
-                        <Text style={styles.infoValue}>{app.arriveBy}</Text>
-                      </View>
-                      <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Coordinator</Text>
-                        <Text style={styles.infoValue}>{app.coordinator}</Text>
-                      </View>
-                      <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Phone</Text>
-                        <Text style={styles.infoValue}>{app.coordPhone}</Text>
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Rejected: reason */}
-                  {'reason' in app && app.reason && (
-                    <View style={styles.rejectionBox}>
-                      <Text style={styles.rejectionLabel}>Reason</Text>
-                      <Text style={styles.rejectionText}>{app.reason}</Text>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            </FadeInView>
-          );
-        })}
+        <View style={{ height: 20 }} />
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
+  flex: { flex: 1 },
+
+  // Header
   header: {
-    paddingHorizontal: Layout.horizontalPad,
-    paddingBottom: Spacing.md,
-    backgroundColor: Colors.cr,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.bd,
+    backgroundColor: Colors.white,
+    paddingHorizontal: 18,
+    paddingBottom: 14,
   },
-  headerTitle: {
-    fontSize: FontSize.h3,
-    fontWeight: FontWeight.extrabold,
+  title: {
+    fontSize: 26,
+    fontWeight: '800',
     color: Colors.tx,
+    fontFamily: FontFamily.sansExtraBold,
   },
-  headerSubtitle: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx3,
+  subtitle: {
+    fontSize: 13.5,
+    color: Colors.tx2,
     marginTop: 2,
+    fontFamily: FontFamily.sansRegular,
   },
 
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: Colors.cr,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.bd,
-    paddingHorizontal: Layout.horizontalPad,
-    paddingBottom: 0,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabActive: {
-    borderBottomColor: Colors.sv,
-  },
-  tabText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.semibold,
+  // Empty state
+  emptyState: {
+    fontSize: 13,
     color: Colors.tx3,
+    textAlign: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+    fontFamily: FontFamily.sansRegular,
   },
-  tabTextActive: {
-    color: Colors.sv,
-    fontWeight: FontWeight.bold,
-  },
-  tabBadge: {
-    backgroundColor: Colors.cr3,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: Radius.full,
-    minWidth: 18,
-    alignItems: 'center',
-  },
-  tabBadgeActive: { backgroundColor: Colors.svl },
-  tabBadgeText: {
-    fontSize: 10,
-    fontWeight: FontWeight.bold,
-    color: Colors.tx3,
-  },
-  tabBadgeTextActive: { color: Colors.sv },
 
-  empty: {
-    alignItems: 'center',
-    padding: 48,
-    gap: Spacing.md,
-  },
-  emptyEmoji: { fontSize: 40 },
-  emptyText: { fontSize: FontSize.md, color: Colors.tx3 },
-
+  // Card
   card: {
     backgroundColor: Colors.white,
-    marginHorizontal: Layout.horizontalPad,
-    marginVertical: 5,
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.bd,
-    ...Shadows.card,
+    borderRadius: 16,
+    padding: 15,
+    marginHorizontal: 18,
+    marginBottom: 11,
+    shadowColor: Colors.shadowBase,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
   },
-  statusBar: {
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  statusBarText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-  },
-  appliedText: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.medium,
-  },
-  cardBody: {
-    padding: Layout.cardPad,
-    gap: Spacing.sm,
-  },
-  cardHeader: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    marginBottom: 8,
   },
-  centerName: {
-    fontSize: FontSize.md,
-    fontWeight: FontWeight.bold,
+  center: {
+    fontSize: 15,
+    fontWeight: '700',
     color: Colors.tx,
+    fontFamily: FontFamily.sansBold,
   },
-  courseMeta: {
-    fontSize: FontSize.sm,
+  typeDates: {
+    fontSize: 12.5,
+    color: Colors.tx2,
+    fontFamily: FontFamily.sansRegular,
+  },
+  appliedLine: {
+    fontSize: 11,
     color: Colors.tx3,
-    marginTop: 2,
+    marginTop: 1,
+    fontFamily: FontFamily.sansRegular,
   },
-  partialBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.gdl,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
+
+  // Status pill (.spill base — fontSize 11.5)
+  spill: {
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 20,
+    flexShrink: 0,
   },
-  partialText: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    color: Colors.gd,
+  spillText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    fontFamily: FontFamily.sansBold,
   },
-  chipRow: {
+
+  // Area chips
+  chipsRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 5,
+    flexWrap: 'wrap',
   },
   areaChip: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 20,
+    backgroundColor: Colors.svl,
   },
   areaChipText: {
-    fontSize: FontSize.xs,
-    color: Colors.sv,
-    fontWeight: FontWeight.semibold,
+    fontSize: 10,
+    color: SV_ACCENT,
+    fontWeight: '600',
+    fontFamily: FontFamily.sansSemiBold,
   },
-  approvedInfo: {
-    backgroundColor: Colors.fol,
-    borderRadius: Radius.md,
-    padding: 10,
-    gap: 6,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  infoLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.fo,
-    fontWeight: FontWeight.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-  },
-  infoValue: {
-    fontSize: FontSize.smPlus,
-    color: Colors.tx,
-    fontWeight: FontWeight.bold,
-  },
-  rejectionBox: {
+
+  // Reason box
+  reasonBox: {
     backgroundColor: Colors.url,
-    borderRadius: Radius.md,
-    padding: 10,
-    gap: 3,
+    borderRadius: 10,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
   },
-  rejectionLabel: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
+  reasonHeader: {
+    fontSize: 11,
+    fontWeight: '700',
     color: Colors.ur,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    marginBottom: 2,
+    fontFamily: FontFamily.sansBold,
   },
-  rejectionText: {
-    fontSize: FontSize.smPlus,
+  reasonBody: {
+    fontSize: 12,
     color: Colors.ur,
-    lineHeight: FontSize.smPlus * 1.5,
+    fontFamily: FontFamily.sansRegular,
+  },
+
+  // View Details link (visual only)
+  viewDetails: {
+    textAlign: 'right',
+    fontSize: 11,
+    color: SV_ACCENT,
+    fontWeight: '600',
+    marginTop: 6,
+    fontFamily: FontFamily.sansSemiBold,
+  },
+
+  // Browse More CTA
+  browseWrap: {
+    paddingHorizontal: 18,
+    paddingVertical: 6,
+  },
+  browseBtn: {
+    width: '100%',
+    paddingVertical: 13,
+    borderRadius: 13,
+    backgroundColor: Colors.svl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  browseText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: SV_ACCENT,
+    fontFamily: FontFamily.sansBold,
   },
 });
