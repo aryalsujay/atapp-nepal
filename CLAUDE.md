@@ -80,6 +80,27 @@ Mark spec status in `specs/_INDEX.md`: `📝 draft → 👀 review → ✓ done 
 - Multi-slot AT requirements: `course.openSlots?: SlotGender[]` with `resolveOpenSlots()` fallback.
 - Idempotent backfills gated by `settings.backfill.*` flags.
 
+## Screen organisation rules
+
+- **300-line cap.** No screen file in `app/**` should exceed ~300 LOC. If a screen grows past that, extract sub-components.
+- **Where extracted components live:**
+  - Screen-specific sub-components → `src/components/<role>/<feature>/` (e.g. `src/components/admin/schedule/`, `src/components/teacher/profile/`).
+  - Generic primitives reusable across many screens → `src/components/ui/`.
+- **Each sub-component owns its own StyleSheet** (duplicate `card` chrome across files is the accepted trade-off vs a shared `Card` wrapper).
+- **Static rows / lookup tables** belong in `src/data/<role>/<name>.json` with types exported from `src/data/index.ts`.
+- **Screen file orchestrates** stores + handlers + memos; children are pure presentation.
+- Pattern reference: see `specs/25-admin-auto-schedule.md` § Phase 3 refactor.
+
+## Update specs as you go
+
+Every time you change a screen, **update its spec in the same commit** (or block of commits):
+
+- Visual/copy changes → patch the spec body, not just an Implementation notes block.
+- Refactors that move code around → add a dated entry to the spec's `Implementation notes` or `Changelog` section so the spec still reflects what's in the repo.
+- Status in `specs/_INDEX.md` → bump `✓ done → 🎯 verified` when the user has manually smoke-tested.
+
+If you find drift (spec says X, code does Y), don't silently fix one to match the other — surface it to the user and ask which is correct.
+
 ## Quick reference
 
 | Task                   | Where                                     |
@@ -90,3 +111,5 @@ Mark spec status in `specs/_INDEX.md`: `📝 draft → 👀 review → ✓ done 
 | Add a migration        | `src/db/migrations/NNNN_<name>.ts`        |
 | Add a repository       | `src/db/repositories/`                    |
 | Reusable UI primitives | `src/components/ui/`                      |
+| Screen sub-components  | `src/components/<role>/<feature>/`        |
+| Static data rows       | `src/data/<role>/<name>.json`             |
