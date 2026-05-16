@@ -57,7 +57,7 @@ Legend: `📝 draft` · `👀 review` · `✅ approved` · `🔨 in progress` ·
 | 12 | [Server Onboarding](./12-server-onboarding.md) | `/(server)/onboarding` | `app.html:2973` | ✓ done |
 | 13 | [Server Dashboard](./13-server-dashboard.md) | `/(server)/home` | `app.html:2529` | ✓ done |
 | 14 | [Server Opportunities](./14-server-opportunities.md) | `/(server)/opportunities` | `app.html:2618` | ✓ done |
-| 15 | Server Course Detail | `/(server)/opportunities/[id]` | `app.html:3082` | — |
+| 15 | [Server Course Detail](./15-server-course-detail.md) | `/(server)/opportunities/[id]` | `app.html:3082` | ✓ done |
 | 16 | Server Apply | `/(server)/apply/[id]` | `app.html:2679` | — |
 | 17 | Server Applications | `/(server)/applications` | `app.html:2823` | — |
 | 18 | Server Application Detail | `/(server)/applications/[id]` | `app.html:3173` | — |
