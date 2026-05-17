@@ -1,9 +1,9 @@
 /**
  * Saffron-tinted card showing the teacher's free-text personal note.
  *
- * The "last updated" line is hard-coded to match the prototype; once the
- * profile model tracks the actual mutation timestamp, the parent screen
- * can pass it in as a prop.
+ * The "last updated" line is derived from `profile.personalNoteUpdatedAt`
+ * (epoch ms). Falls back to "Apr 2026" for legacy rows without a timestamp
+ * so the layout doesn't shift when older profiles render.
  */
 
 import React from 'react';
@@ -16,17 +16,27 @@ import { Shadows } from '@/theme/shadows';
 
 interface Props {
   note: string;
-  updatedLabel?: string;
+  updatedAt: number | null;
 }
 
-export function PersonalNoteCard({ note, updatedLabel = 'Apr 2026' }: Props) {
+const FALLBACK_LABEL = 'Apr 2026';
+
+function formatUpdated(updatedAt: number | null): string {
+  if (!updatedAt) return FALLBACK_LABEL;
+  const d = new Date(updatedAt);
+  return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+}
+
+export function PersonalNoteCard({ note, updatedAt }: Props) {
   const { t } = useTranslation();
   return (
     <>
       <Text style={s.sph}>💬 {t('profile.personal_note')}</Text>
       <View style={[s.card, s.noteCard]}>
         <Text style={s.noteBody}>&ldquo;{note}&rdquo;</Text>
-        <Text style={s.noteUpdated}>{t('profile.last_updated', { date: updatedLabel })}</Text>
+        <Text style={s.noteUpdated}>
+          {t('profile.last_updated', { date: formatUpdated(updatedAt) })}
+        </Text>
       </View>
     </>
   );

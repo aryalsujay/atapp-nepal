@@ -209,7 +209,7 @@ export default function TeacherProfile() {
           onToggleShowAll={() => setShowAllHistory((v) => !v)}
         />
 
-        <PersonalNoteCard note={profile.personalNote} />
+        <PersonalNoteCard note={profile.personalNote} updatedAt={profile.personalNoteUpdatedAt} />
 
         <SignOutButton onPress={onSignOut} />
       </ScrollView>

@@ -35,6 +35,7 @@ export interface TeacherRow {
   courses_this_year: number;
   is_onboarded: 0 | 1;
   personal_note: string | null;
+  personal_note_updated_at: number | null;
   authorizations_json: string | null;
   languages_json: string | null;
   preferred_regions_json: string | null;

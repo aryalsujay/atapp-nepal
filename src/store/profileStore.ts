@@ -42,6 +42,7 @@ function domainToProfile(t: ReturnType<typeof teachersRepo.findById>): TeacherPr
     availableMonths: t.availableMonths,
     festivalMonths: t.festivalMonths,
     personalNote: t.personalNote ?? '',
+    personalNoteUpdatedAt: t.personalNoteUpdatedAt,
     teachingHistory: t.teachingHistory as HistoryEntry[],
     inviteCode: t.inviteCode ?? undefined,
     isOnboarded: t.isOnboarded,
@@ -56,33 +57,43 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
   setProfile: async (profile) => {
     try {
+      // Stamp `personalNoteUpdatedAt` when the note text actually changes vs
+      // what's already in store. Lets edit screens just write `personalNote`
+      // without thinking about the timestamp.
+      const prevNote = get().profile?.personalNote ?? null;
+      const nextNote = profile.personalNote || null;
+      const noteChanged = nextNote !== prevNote;
+      const stampedAt = noteChanged ? Date.now() : profile.personalNoteUpdatedAt;
+      const finalProfile: TeacherProfile = { ...profile, personalNoteUpdatedAt: stampedAt };
+
       teachersRepo.upsert(getDb(), {
-        id: profile.id,
+        id: finalProfile.id,
         role: 'teacher',
-        name: profile.name,
-        gender: profile.gender,
-        email: profile.email || null,
-        phone: profile.phone || null,
-        inviteCode: profile.inviteCode || null,
-        region: profile.region || null,
-        flag: profile.flag || null,
-        authorizedSince: profile.authorizedSince || null,
-        totalCourses: profile.totalCourses,
-        centersServed: profile.centersServed,
-        coursesThisYear: profile.coursesThisYear,
-        isOnboarded: profile.isOnboarded,
-        personalNote: profile.personalNote || null,
-        authorizations: profile.authorizations,
-        languages: profile.languages as Record<string, string>,
-        preferredRegions: profile.preferredRegions,
-        availableMonths: profile.availableMonths,
-        festivalMonths: profile.festivalMonths,
-        teachingHistory: profile.teachingHistory,
-        homeCity: profile.homeCity ?? null,
-        homeLat: profile.homeLat ?? null,
-        homeLng: profile.homeLng ?? null,
+        name: finalProfile.name,
+        gender: finalProfile.gender,
+        email: finalProfile.email || null,
+        phone: finalProfile.phone || null,
+        inviteCode: finalProfile.inviteCode || null,
+        region: finalProfile.region || null,
+        flag: finalProfile.flag || null,
+        authorizedSince: finalProfile.authorizedSince || null,
+        totalCourses: finalProfile.totalCourses,
+        centersServed: finalProfile.centersServed,
+        coursesThisYear: finalProfile.coursesThisYear,
+        isOnboarded: finalProfile.isOnboarded,
+        personalNote: finalProfile.personalNote || null,
+        personalNoteUpdatedAt: finalProfile.personalNoteUpdatedAt,
+        authorizations: finalProfile.authorizations,
+        languages: finalProfile.languages as Record<string, string>,
+        preferredRegions: finalProfile.preferredRegions,
+        availableMonths: finalProfile.availableMonths,
+        festivalMonths: finalProfile.festivalMonths,
+        teachingHistory: finalProfile.teachingHistory,
+        homeCity: finalProfile.homeCity ?? null,
+        homeLat: finalProfile.homeLat ?? null,
+        homeLng: finalProfile.homeLng ?? null,
       });
-      set({ profile });
+      set({ profile: finalProfile });
     } catch (err) {
       logger.warn('[profileStore] setProfile failed', err);
     }

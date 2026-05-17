@@ -233,12 +233,12 @@ The current `app/(teacher)/profile/index.tsx` is ~428 lines and uses generic `Se
 - [ ] Month grid renders 6×2 with the right colour per state, ✓/🎑/✗ glyphs
 - [ ] Tap-cycling a month persists to DB and the `{N} months available` count updates immediately
 - [ ] Buddha / Dashain / Tihar chips set the right months to festival
-- [ ] Reset chip wipes via confirm dialog
+- [ ] Reset chip wipes every month to unavailable in one tap (no confirm — matches §3.3 prose)
 - [ ] Languages list shows ★ Primary / Secondary chips with correct colours
 - [ ] Authorizations list shows ✓ green circle per authorized course type
 - [ ] Preferred centres ranks 1/2/3 with regional colour key
 - [ ] Recent teaching shows top 3 + "View all {N} courses →" footer
-- [ ] Personal note in orange-tint card with last-updated line
+- [ ] Personal note in orange-tint card with last-updated line (derived from `profile.personalNoteUpdatedAt`; stamped automatically on every save in `profileStore.setProfile`)
 - [ ] Sign Out red-outline button at bottom triggers confirm + signOut + login redirect
 - [ ] All copy through i18n (en + ne, Acharya-correct Nepali)
 - [ ] Typecheck clean, tests pass
