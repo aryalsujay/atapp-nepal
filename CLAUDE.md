@@ -115,6 +115,16 @@ Every time you change a screen, **update its spec in the same commit** (or block
 
 If you find drift (spec says X, code does Y), don't silently fix one to match the other — surface it to the user and ask which is correct.
 
+## Where each markdown file lives in the branch model
+
+| Bucket           | Files                                                                                                   | Edit on which branch                                                           |
+| ---------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Per-screen specs | `specs/NN-<slug>.md`                                                                                    | The matching `screen/NN-<slug>` branch, same commit as the code.               |
+| Shared, additive | `specs/_INDEX.md`, `specs/_design-tokens.md`, `specs/_i18n.md`                                          | Fine on the screen branch when adding only your row / token / i18n key.        |
+| Project-wide     | `CLAUDE.md`, `README.md`, `AUDIT.md`, `SMOKE_TESTS.md`, `specs/_refactor-plan.md`, `specs/_TEMPLATE.md` | Always a dedicated `chore/docs-<topic>` branch. Never bundle with screen work. |
+
+Rule of thumb: **screen-scoped docs ride with the screen; project-wide docs get their own branch.** That keeps the conflict surface tiny when multiple branches are in flight.
+
 ## Quick reference
 
 | Task                   | Where                                     |
