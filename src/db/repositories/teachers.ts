@@ -29,6 +29,8 @@ export interface TeacherDomain {
   coursesThisYear: number;
   isOnboarded: boolean;
   personalNote: string | null;
+  /** Epoch ms of the last time `personalNote` was edited (null if never). */
+  personalNoteUpdatedAt: number | null;
   authorizations: string[];
   languages: Record<string, string>;
   preferredRegions: string[];
@@ -67,6 +69,7 @@ function rowToDomain(r: TeacherRow): TeacherDomain {
     coursesThisYear: r.courses_this_year,
     isOnboarded: r.is_onboarded === 1,
     personalNote: r.personal_note,
+    personalNoteUpdatedAt: r.personal_note_updated_at ?? null,
     authorizations: jsonParse<string[]>(r.authorizations_json, []),
     languages: jsonParse<Record<string, string>>(r.languages_json, {}),
     preferredRegions: jsonParse<string[]>(r.preferred_regions_json, []),
@@ -114,6 +117,19 @@ export function findByIdentifier(db: DB, identifier: string): TeacherDomain | nu
 export function upsert(db: DB, teacher: Partial<TeacherDomain> & { id: string }): void {
   const now = new Date().toISOString();
   const existing = findById(db, teacher.id);
+
+  // Stamp `personalNoteUpdatedAt` when the note content actually changes —
+  // not on every upsert. Lets callers ignore the field; we'll derive it.
+  const incomingNote = teacher.personalNote ?? existing?.personalNote ?? null;
+  const noteChanged =
+    teacher.personalNote !== undefined && teacher.personalNote !== existing?.personalNote;
+  const personalNoteUpdatedAt =
+    teacher.personalNoteUpdatedAt !== undefined
+      ? teacher.personalNoteUpdatedAt
+      : noteChanged
+        ? Date.now()
+        : (existing?.personalNoteUpdatedAt ?? null);
+
   const merged: TeacherDomain = {
     id: teacher.id,
     role: teacher.role ?? existing?.role ?? 'teacher',
@@ -130,7 +146,8 @@ export function upsert(db: DB, teacher: Partial<TeacherDomain> & { id: string })
     centersServed: teacher.centersServed ?? existing?.centersServed ?? 0,
     coursesThisYear: teacher.coursesThisYear ?? existing?.coursesThisYear ?? 0,
     isOnboarded: teacher.isOnboarded ?? existing?.isOnboarded ?? false,
-    personalNote: teacher.personalNote ?? existing?.personalNote ?? null,
+    personalNote: incomingNote,
+    personalNoteUpdatedAt,
     authorizations: teacher.authorizations ?? existing?.authorizations ?? [],
     languages: teacher.languages ?? existing?.languages ?? {},
     preferredRegions: teacher.preferredRegions ?? existing?.preferredRegions ?? [],
@@ -146,38 +163,39 @@ export function upsert(db: DB, teacher: Partial<TeacherDomain> & { id: string })
     `INSERT INTO teachers (
        id, role, name, gender, email, phone, invite_code, password_hash,
        region, flag, authorized_since, total_courses, centers_served,
-       courses_this_year, is_onboarded, personal_note,
+       courses_this_year, is_onboarded, personal_note, personal_note_updated_at,
        authorizations_json, languages_json, preferred_regions_json,
        available_months_json, festival_months_json, teaching_history_json,
        home_city, home_lat, home_lng,
        created_at, updated_at
-     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
      ON CONFLICT(id) DO UPDATE SET
-       role                    = excluded.role,
-       name                    = excluded.name,
-       gender                  = excluded.gender,
-       email                   = excluded.email,
-       phone                   = excluded.phone,
-       invite_code             = excluded.invite_code,
-       password_hash           = excluded.password_hash,
-       region                  = excluded.region,
-       flag                    = excluded.flag,
-       authorized_since        = excluded.authorized_since,
-       total_courses           = excluded.total_courses,
-       centers_served          = excluded.centers_served,
-       courses_this_year       = excluded.courses_this_year,
-       is_onboarded            = excluded.is_onboarded,
-       personal_note           = excluded.personal_note,
-       authorizations_json     = excluded.authorizations_json,
-       languages_json          = excluded.languages_json,
-       preferred_regions_json  = excluded.preferred_regions_json,
-       available_months_json   = excluded.available_months_json,
-       festival_months_json    = excluded.festival_months_json,
-       teaching_history_json   = excluded.teaching_history_json,
-       home_city               = excluded.home_city,
-       home_lat                = excluded.home_lat,
-       home_lng                = excluded.home_lng,
-       updated_at              = excluded.updated_at`,
+       role                       = excluded.role,
+       name                       = excluded.name,
+       gender                     = excluded.gender,
+       email                      = excluded.email,
+       phone                      = excluded.phone,
+       invite_code                = excluded.invite_code,
+       password_hash              = excluded.password_hash,
+       region                     = excluded.region,
+       flag                       = excluded.flag,
+       authorized_since           = excluded.authorized_since,
+       total_courses              = excluded.total_courses,
+       centers_served             = excluded.centers_served,
+       courses_this_year          = excluded.courses_this_year,
+       is_onboarded               = excluded.is_onboarded,
+       personal_note              = excluded.personal_note,
+       personal_note_updated_at   = excluded.personal_note_updated_at,
+       authorizations_json        = excluded.authorizations_json,
+       languages_json             = excluded.languages_json,
+       preferred_regions_json     = excluded.preferred_regions_json,
+       available_months_json      = excluded.available_months_json,
+       festival_months_json       = excluded.festival_months_json,
+       teaching_history_json      = excluded.teaching_history_json,
+       home_city                  = excluded.home_city,
+       home_lat                   = excluded.home_lat,
+       home_lng                   = excluded.home_lng,
+       updated_at                 = excluded.updated_at`,
     [
       merged.id,
       merged.role,
@@ -195,6 +213,7 @@ export function upsert(db: DB, teacher: Partial<TeacherDomain> & { id: string })
       merged.coursesThisYear,
       merged.isOnboarded ? 1 : 0,
       merged.personalNote,
+      merged.personalNoteUpdatedAt,
       JSON.stringify(merged.authorizations),
       JSON.stringify(merged.languages),
       JSON.stringify(merged.preferredRegions),

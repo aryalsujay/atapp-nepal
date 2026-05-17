@@ -28,6 +28,8 @@ export interface TeacherProfile {
   /** Months 0-11 the teacher has festival / personal retreat blocks. */
   festivalMonths: number[];
   personalNote: string;
+  /** Epoch ms of the last `personalNote` edit. Null until first edit. */
+  personalNoteUpdatedAt: number | null;
   teachingHistory: HistoryEntry[];
   inviteCode?: string;
   isOnboarded: boolean;

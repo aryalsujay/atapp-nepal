@@ -24,6 +24,7 @@ const baseProfile = (): TeacherProfile => ({
   availableMonths: [7, 8], // Aug, Sep
   festivalMonths: [5, 9], // Jun, Oct
   personalNote: '',
+  personalNoteUpdatedAt: null,
   teachingHistory: [],
   isOnboarded: true,
 });

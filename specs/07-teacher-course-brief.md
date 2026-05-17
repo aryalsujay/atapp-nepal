@@ -78,7 +78,7 @@ Card (standard `.card` chrome).
   - Top row (`flex row align-center gap 12`):
     - **Avatar** — 48 × 48, radius 14. Color theme depends on gender:
       - Female: bg `#FBE8F0`, border `1.5 px #F0C8D8`, glyph `🙏🏻`.
-      - Male / Any: bg `Colors.fol`, border `1.5 px Colors.fom`, glyph = LotusGlyph SVG at 28 px in `Colors.fo`.
+      - Male / Any: bg `Colors.fol`, border `1.5 px Colors.fom`, glyph = dhamma-wheel GIF (`@/assets/logo-dhamma.gif`) at 30 × 30 (the original LotusGlyph SVG was replaced with the dhamma-wheel asset — more thematically resonant for AT context).
     - **Identity** (`flex: 1`):
       - Name — 14.5 px, weight 800.
       - Sub — 11.5 px, `Colors.tx2`. `${gender label} · ${langs.join(', ')}` where gender label = "Female AT" / "Male AT" / "AT".
@@ -173,7 +173,7 @@ Both buttons open a `useConfirm()` dialog with a required note (the teacher must
 | Sublabels (`.sph`) | text | inline (same style as home) |
 | Cards | View | inline (same `.card` shape as home) |
 | Status pill | View | inline |
-| Co-teacher avatar | View | inline; uses `LotusGlyph` for male |
+| Co-teacher avatar | View | inline; dhamma-wheel GIF for male, 🙏🏻 emoji for female |
 | Phone row "Call →" | TouchableOpacity | inline; `Linking.openURL('tel:...')` |
 | Students split bar | View | inline |
 | Travel stat tile | View | inline (same shape as home stat tiles, but `Colors.cr` bg) |
@@ -302,7 +302,7 @@ If `course` (resolved from URL `id` against `coursesStore`) is null → render a
 - [ ] Hero matches prototype at 390 × 844 (forest gradient, Back, kicker, title, type · dates, city, status pill row).
 - [ ] Status pill shows the right variant based on `application.source` (`assigned` → blue; `applied` → light translucent).
 - [ ] Arrival card: forest tint, big date+time, italic context note.
-- [ ] Co-teacher card: gendered avatar tile (pink Female / forest Male with `LotusGlyph`), Call → row works on iOS + Android (web shows tel: link target).
+- [ ] Co-teacher card: gendered avatar tile (pink Female with 🙏🏻 / forest Male with dhamma-wheel GIF), Call → row works on iOS + Android (web shows tel: link target).
 - [ ] Coordinator card: saffron avatar, Call → works.
 - [ ] Students card: big count, gender-split bar with male blue + female pink, sized by counts.
 - [ ] Travel: 3 stat tiles + transport prose. Renders cleanly when `altitude` / `distanceKm` are 0 or missing.
