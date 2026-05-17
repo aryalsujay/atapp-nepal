@@ -35,12 +35,26 @@ without re-reading the prototype.
    `specs/12-server-onboarding.md`. Include i18n table, design tokens,
    acceptance checklist.
 2. **Pause for review.** User signs off before any implementation.
-3. **Branch** `screen/NN-<slug>` off main.
+3. **Branch.** Before creating `screen/NN-<slug>`, **delete any existing
+   branch of that same name** (local + origin) so the new branch starts
+   from the latest `main`, not a stale snapshot:
+   ```
+   git checkout main && git pull
+   git branch -D screen/NN-<slug>                 # local (ignore if absent)
+   git push origin --delete screen/NN-<slug>      # remote (ignore if absent)
+   git checkout -b screen/NN-<slug>
+   ```
 4. **Implement** the screen to match the spec exactly.
 5. **Audit** against prototype — list any drift, fix it.
 6. **Commit** on the branch.
 7. **Merge** into main with `--no-ff` only after user says "complete".
-8. **Push** only when user explicitly says "push".
+8. **Push** only when user explicitly says "push". Push both `main` and
+   the screen branch so the per-screen history stays on GitHub:
+   `git push origin main screen/NN-<slug>`.
+
+Stale `screen/*` branches on origin are historical bookmarks for screens
+nobody is currently working on. **Do not** check them out for new work —
+always recreate fresh off `main` per step 3.
 
 Mark spec status in `specs/_INDEX.md`: `📝 draft → 👀 review → ✓ done → 🎯 verified`.
 
