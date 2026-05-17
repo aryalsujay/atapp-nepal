@@ -18,9 +18,6 @@ export const Routes = {
   // Index router
   root: '/',
 
-  // Onboarding
-  onboarding: '/onboarding',
-
   // Teacher
   teacherHome: '/(teacher)/home',
   teacherCourses: '/(teacher)/courses',

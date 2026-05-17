@@ -1,13 +1,14 @@
 /**
- * WhatToBringCard — vertical list of checklist items (icon + text). Items
- * are sourced from i18n by the parent screen so this component stays
- * presentational. Rows render a dashed underline between siblings.
+ * WhatToBringCard — vertical list of checklist items (icon + text).
+ * Rows are separated by `<DashedDivider />` because RN's
+ * `borderStyle: 'dashed'` renders as a solid line on web + iOS.
  */
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Colors } from '@/theme/colors';
 import { Shadows } from '@/theme/shadows';
+import { DashedDivider } from '@/components/ui/DashedDivider';
 
 export interface ChecklistItem {
   icon: string;
@@ -21,13 +22,13 @@ interface Props {
 export const WhatToBringCard: React.FC<Props> = ({ items }) => (
   <View style={styles.card}>
     {items.map((item, idx) => (
-      <View
-        key={idx}
-        style={[styles.checklistRow, idx < items.length - 1 && styles.checklistRowBorder]}
-      >
-        <Text style={styles.checklistIcon}>{item.icon}</Text>
-        <Text style={styles.checklistText}>{item.text}</Text>
-      </View>
+      <React.Fragment key={idx}>
+        <View style={styles.checklistRow}>
+          <Text style={styles.checklistIcon}>{item.icon}</Text>
+          <Text style={styles.checklistText}>{item.text}</Text>
+        </View>
+        {idx < items.length - 1 && <DashedDivider marginVertical={0} />}
+      </React.Fragment>
     ))}
   </View>
 );
@@ -46,11 +47,6 @@ const styles = StyleSheet.create({
     gap: 11,
     paddingVertical: 7,
     alignItems: 'flex-start',
-  },
-  checklistRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.bd,
-    borderStyle: 'dashed',
   },
   checklistIcon: {
     fontSize: 18,

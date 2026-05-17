@@ -381,12 +381,6 @@
       "update": "Update",
       "approval": "Approved",
       "rejection": "Rejected"
-    },
-    "timeAgo": {
-      "now": "Just now",
-      "minutes": "{{count}} min ago",
-      "hours": "{{count}} hr ago",
-      "days": "{{count}} days ago"
     }
   },
   "onboarding": {
@@ -425,7 +419,10 @@
       "step4": {
         "title": "Anything the admin should know? (optional)",
         "subtitle": "Travel preferences, dietary needs, festival blocks beyond defaults",
-        "placeholder": "Notes for the admin (e.g. travel preferences, dietary)"
+        "placeholder": "Notes for the admin (e.g. travel preferences, dietary)",
+        "available": "Available",
+        "festival": "Festival",
+        "unavailable": "Unavailable"
       },
       "step3": {
         "title": "Mark your available months for 2026",
@@ -699,15 +696,7 @@
         "row_4": "Tea & fruit (servers eat)",
         "row_5": "Evening discourse",
         "row_6": "Rest"
-      },
-      "selectAreas": "Select Service Areas",
-      "selectAreasHint": "Tap to select the areas you want to serve in.",
-      "partialAvailability": "Partial Availability",
-      "partialHint": "Serve only certain days of the course.",
-      "applyToServe": "Apply to Serve",
-      "selectAreaFirst": "Select an area to apply",
-      "successTitle": "Application Submitted!",
-      "successBody": "Your application has been sent. The coordinator will review and notify you. Sadhu!"
+      }
     },
     "applicationDetail": {
       "applied_lbl": "Applied",
@@ -783,16 +772,6 @@
       "service_history": "Service History",
       "view_all_courses": "View all courses →",
       "edit_avail": "Edit Profile & Availability"
-    }
-  },
-  "matching": {
-    "score": "{{score}}% Match",
-    "reasons": {
-      "language": "Language match",
-      "region": "Location preference",
-      "availability": "Available for dates",
-      "authorization": "Course authorization",
-      "restGap": "Rest gap sufficient"
     }
   },
   "months": {
