@@ -29,3 +29,4 @@ export * as serverCoursesRepo from './server_courses';
 export * as serverApplicationsRepo from './server_applications';
 export * as notificationsRepo from './notifications';
 export * as settingsRepo from './settings';
+export * as translationsRepo from './translations';
