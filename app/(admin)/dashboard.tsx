@@ -218,6 +218,22 @@ export default function AdminDashboardScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* ─── Translations card ──────────────────────────────────── */}
+        <View style={s.notifWrap}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push(Routes.adminTranslations)}
+            style={s.notifCard}
+          >
+            <Text style={{ fontSize: 22 }}>🌐</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={s.notifTitle}>{t('admin.dashboard.translations_title')}</Text>
+              <Text style={s.notifSub}>{t('admin.dashboard.translations_sub')}</Text>
+            </View>
+            <Text style={s.notifChevron}>›</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* ─── Feature Visibility ─────────────────────────────────── */}
         <Text style={s.sph}>⚙️ {t('admin.dashboard.feature_visibility')}</Text>
         <View style={s.sectionCard}>

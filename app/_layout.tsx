@@ -1,4 +1,5 @@
-import '@/i18n';
+import { applyOverrides, SUPPORTED_LANGS } from '@/i18n';
+import { translationsRepo } from '@/db/repositories';
 import React, { useEffect, useState } from 'react';
 import { AppState, View, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
@@ -82,6 +83,9 @@ export default function RootLayout() {
       try {
         const db = getDb();
         runMigrations(db);
+        for (const lang of SUPPORTED_LANGS) {
+          applyOverrides(lang, translationsRepo.getOverridesForLang(db, lang));
+        }
         seedDatabase(db);
         backfillTeacherPhone(db);
         backfillTeacherHomeLocation(db);

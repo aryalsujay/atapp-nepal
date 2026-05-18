@@ -44,6 +44,9 @@ export const Routes = {
   adminCentres: '/(admin)/centres',
   adminServerInbox: '/(admin)/server/inbox',
   adminServerBoard: '/(admin)/server/board',
+  adminTranslations: '/(admin)/translations',
+  adminTranslationsImport: '/(admin)/translations/import',
+  adminTranslationsReview: '/(admin)/translations/review',
 } as const;
 
 export type RouteKey = keyof typeof Routes;
