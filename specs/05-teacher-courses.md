@@ -67,6 +67,13 @@ Tapping a card or its CTA opens the course-detail screen, which is where applica
   - `.sm` chips: 11 px / padding `5 × 11` (smaller variant).
   - Centre labels are shortened by stripping the leading "Dhamma " / "Dharma " prefix so "Dhamma Pokhara" → "Pokhara". (Prototype helper `shortCenterName(n) => n.replace(/^Dhamma /, '')`. We extend to handle "Dharma " too.)
 
+- **View toggle** (`§3.2a`, right-aligned, padding `0 18 8`, sits below centre-filter row):
+  - Segmented control (`<ViewToggle>` from `src/components/ui/ViewToggle.tsx`), 34 px tall, pill radius 20, bg `Colors.cr2`, padding 3.
+  - Two icon segments: ▦ Cards (left), ☰ Table (right).
+  - Active segment: bg `Colors.white`, soft shadow (`Shadows.card`), icon `Colors.tx`.
+  - Inactive segment: transparent, icon `Colors.tx3`.
+  - State source: `settingsStore.coursesViewMode` (`'cards' | 'table'`, default `'cards'`). Toggling calls `settingsStore.setCoursesViewMode`.
+
 - **Divider strip** — 8 px tall, `Colors.cr` bg (the cream backdrop), purely visual separator between the white filter zone and the card list.
 
 ### 3.3 Course cards
@@ -97,6 +104,40 @@ Per card:
   - `View & Apply →` button — `.btn.pr.sm`: saffron gradient, padding `7 × 15`, radius 10, 12.5 px / weight 700, white text. **Stops propagation** so tapping the button vs the card body both route to the same place (course detail).
 
 - **Card tap target** — entire card surface routes to `routeTo.teacherCourseDetail(course.id)`.
+
+### 3.3b Table view (mutually exclusive with §3.3)
+
+Rendered when `viewMode === 'table'`. **Proper tabular layout** with a header strip, vertical column dividers, and a **sticky Status column** on the right that stays visible regardless of horizontal scroll position.
+
+- Outer container: `marginHorizontal: 18`, `borderRadius: 14`, `Shadows.card`, white bg, `overflow: hidden`.
+- Layout: outer `flexDirection: row` with two siblings:
+  - **Left pane** (`flex: 1`): horizontal `ScrollView` containing a header row and one body row per course. Inner width = sum of scroll-column widths so all columns render at full size.
+  - **Right pane** (sticky): fixed-width column containing the Status header cell and one Status cell per course. Separated from the left pane by a 1 px `Colors.bd` left border.
+- Header row: 32 px tall, bg `Colors.cr2`, bottom border 1 px `Colors.bd`. Each header cell: 10.5 px / weight 700 / `tx2`, uppercase, `letterSpacing: 0.66`.
+- Body row: `minHeight: 72` so the Status pill has room to wrap to 3 lines without misaligning across panes. Bottom border 1 px `Colors.bd` (dropped on the last row).
+- Vertical column dividers: each non-last cell has `borderRightWidth: 1, borderRightColor: Colors.bd`.
+
+Scroll-pane columns:
+
+| # | Column key | Width | Source |
+|---|---|---|---|
+| 1 | `col_match` | 58 | tiered `MatchBadge` compact. |
+| 2 | `col_type` | 92 | type emoji + small `.chip.sf` pill (10.5 px). |
+| 3 | `col_centre` | 130 | short centre name (12.5 / weight 600) + `city + flag` below (10.5 / `tx3`). |
+| 4 | `col_dates` | 100 | `course.dates`, max 2 lines (11 / `tx2`). |
+| 5 | `col_langs` | 76 | `langLabel(code)` comma list, max 2 lines (11 / `tx2`); `'—'` when empty. |
+| 6 | `col_dist` | 88 | `${distanceKm} km` line 1 + `${travelLabel} · ${altitude}m` line 2; `'—'` when no travel. |
+| 7 | `col_need` | 50 | `${needCount}` (13 / weight 700 / `sfd`) + tiny `'AT'` (9 / `tx3`), right-aligned. |
+
+Sticky right pane:
+
+| Column | Width | Source |
+|---|---|---|
+| `col_status` | 108 | When the teacher already has an application → status pill: tone from `applicationStatusTone(status)`, **full status text capped at 3 lines** (10 / weight 700 / centred, padding `8 × 5`, radius 10). Otherwise → saffron `Apply →` pill: `Gradients.primaryCta`, padding `10 × 7`, radius 10, label `t('courses.view_and_apply')` 11 / weight 700 / white. |
+
+- Row tap (either pane) → `routeTo.teacherCourseDetail(course.id)`.
+- Sort order: same as §3.3 cards — match desc, then `startDate` asc.
+- Empty state and "Clear filters" link: same component as §3.4 (not duplicated).
 
 ### 3.4 Empty state
 
@@ -166,6 +207,16 @@ Most keys exist under `courses.*` already. Reuse + add the few missing ones.
 | `courses.needAt` | `{{count}} AT needed` | `{{count}} AT चाहिएको` |
 | `courses.filterLocation` | (icon only — no label needed) | — |
 | `courses.subtitleFallback` | `Nepal Vipassana Centers` | `नेपाल विपस्सना केन्द्रहरू` |
+| `courses.view_cards` | `Cards` | `कार्ड` |
+| `courses.view_table` | `Table` | `तालिका` |
+| `courses.col_match` | `Match` | `मिलान` |
+| `courses.col_type` | `Type` | `प्रकार` |
+| `courses.col_centre` | `Centre` | `केन्द्र` |
+| `courses.col_dates` | `Dates` | `मितिहरू` |
+| `courses.col_langs` | `Langs` | `भाषा` |
+| `courses.col_dist` | `Dist` | `दूरी` |
+| `courses.col_need` | `Need` | `चाहिएको` |
+| `courses.col_status` | `Status` | `स्थिति` |
 
 Type-filter chips (`All`, `1-Day`, `10-Day`, `Satipatthana`, `20-Day`, `30-Day`) match course types exactly; no translation needed for those (proper nouns).
 
@@ -178,6 +229,7 @@ Type-filter chips (`All`, `1-Day`, `10-Day`, `Satipatthana`, `20-Day`, `30-Day`)
 | `q` | `string` | `''` | search query |
 | `typeFilter` | `string` | `'All'` | active type chip |
 | `centerFilter` | `string` | `'All'` | active centre chip |
+| `viewMode` | `'cards' \| 'table'` | from `settingsStore.coursesViewMode` (default `'cards'`) | render mode |
 
 Filtered list + sort is a `useMemo` over `(courses, profile, q, typeFilter, centerFilter)`.
 
@@ -220,7 +272,7 @@ Sort: by `match` descending; tie-broken by `startDate` ascending. (Prototype is 
 | `coursesStore` | `courses` (already enriched with match via home's pre-pass, or re-run here) |
 | `profileStore` | `profile` — input for `enrichCoursesWithMatch` if home hasn't run yet |
 | `applicationsStore` | (future) read `applications` to mark already-applied courses with a different CTA state |
-| `settingsStore` | `language` — drives the chip / search localization |
+| `settingsStore` | `language` — drives the chip / search localization; `coursesViewMode` — cards vs table |
 
 ---
 
@@ -274,3 +326,6 @@ Sort: by `match` descending; tie-broken by `startDate` ascending. (Prototype is 
 | Date | Author | Change |
 |---|---|---|
 | 2026-05-14 | Sujay + Claude | Initial draft from prototype `app.html:1007–1068` |
+| 2026-05-18 | Sujay + Claude | Added §3.2a view toggle and §3.3b table view (segmented cards/table control persisted in `settingsStore.coursesViewMode`). |
+| 2026-05-18 | Sujay + Claude | Reworked §3.3b from horizontal-scroll columns to dense list rows (full status text wraps in 104 px right column; saffron Apply CTA when unapplied). No horizontal scroll. |
+| 2026-05-18 | Sujay + Claude | Replaced dense list with proper tabular layout: header strip, 7 scrollable left columns + sticky Status column on the right (always visible). |

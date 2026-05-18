@@ -87,6 +87,8 @@
     "browse_all": "Browse All Courses",
     "best_matches": "Best Matches for You",
     "see_all": "See all →",
+    "view_cards": "Cards",
+    "view_table": "Table",
     "match_basis": "Based on profile & availability",
     "need_at": "{{count}} AT",
     "rest_title": "Rest & Practice Reminder",
@@ -109,7 +111,17 @@
     "status_pending": "✓ Applied · Pending review",
     "status_confirmed": "✓ Confirmed — Tap for brief",
     "status_rejected": "✗ Not selected",
-    "status_withdrawing": "↩︎ Withdrawal requested"
+    "status_withdrawing": "↩︎ Withdrawal requested",
+    "view_cards": "Cards",
+    "view_table": "Table",
+    "col_match": "Match",
+    "col_type": "Type",
+    "col_centre": "Centre",
+    "col_dates": "Dates",
+    "col_langs": "Langs",
+    "col_dist": "Dist",
+    "col_need": "Need",
+    "col_status": "Status"
   },
   "courseDetail": {
     "back": "Back",

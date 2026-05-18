@@ -13,7 +13,15 @@ import { Colors } from '@/theme/colors';
 import { MatchTiers } from '@/config/match';
 
 /** Pill displayed in the top-right of a course card. */
-export function MatchBadge({ score, label = 'match' }: { score: number; label?: string }) {
+export function MatchBadge({
+  score,
+  label = 'match',
+  compact = false,
+}: {
+  score: number;
+  label?: string;
+  compact?: boolean;
+}) {
   const n = Math.round(score);
   const tier =
     n >= MatchTiers.high
@@ -22,9 +30,9 @@ export function MatchBadge({ score, label = 'match' }: { score: number; label?: 
         ? { bg: Colors.bll, fg: Colors.bl }
         : { bg: Colors.cr2, fg: Colors.tx2 };
   return (
-    <View style={[styles.badge, { backgroundColor: tier.bg }]}>
-      <Text style={[styles.badgeText, { color: tier.fg }]}>
-        {n}% {label}
+    <View style={[styles.badge, compact && styles.badgeCompact, { backgroundColor: tier.bg }]}>
+      <Text style={[styles.badgeText, compact && styles.badgeTextCompact, { color: tier.fg }]}>
+        {compact ? `${n}%` : `${n}% ${label}`}
       </Text>
     </View>
   );
@@ -51,6 +59,15 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  badgeCompact: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 12,
+    alignSelf: 'center',
+  },
+  badgeTextCompact: {
+    fontSize: 11,
   },
   meter: {
     height: 5,
