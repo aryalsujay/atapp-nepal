@@ -62,7 +62,7 @@ export default function AdminTranslationsReview() {
       </View>
 
       <View style={s.filterRow}>
-        {(['all', 'en', 'ne', 'hi'] as LangFilter[]).map((f) => (
+        {(['all', 'en', 'ne'] as LangFilter[]).map((f) => (
           <TouchableOpacity
             key={f}
             onPress={() => setFilter(f)}

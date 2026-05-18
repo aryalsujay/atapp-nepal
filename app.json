@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "DhammaATApp",
-    "slug": "dhamma-at-app",
-    "scheme": "dhamma-at",
+    "name": "Dhamma Nepal",
+    "slug": "dhamma-nepal",
+    "scheme": "dhamma-nepal",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

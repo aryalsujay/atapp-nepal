@@ -721,7 +721,7 @@ function StepPlaceholder({
         <NavRow
           onBack={onBack}
           onContinue={isLast ? handleFinish : onContinue}
-          continueLabel={isLast ? '✓ Enter Dhamma AT' : undefined}
+          continueLabel={isLast ? '✓ Enter Dhamma Nepal' : undefined}
         />
       </ScrollView>
     </View>

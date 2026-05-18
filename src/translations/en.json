@@ -45,7 +45,7 @@
     "syncFailedBody": "Could not refresh courses. Try again later."
   },
   "login": {
-    "title": "Dhamma AT",
+    "title": "Dhamma Nepal",
     "subtitle_ne": "विपस्सना शिक्षक/सेवक अनुसूचक",
     "subtitle_en": "Teacher · Server · Admin · Nepal",
     "tab_teacher": "🧘 Teacher",
@@ -426,7 +426,7 @@
         "summary_avail_template": "{{months}} months · {{festivals}} festival blocks",
         "summary_avail_no_festival": "{{months}} months",
         "summary_note_empty": "(none)",
-        "enter_app": "Enter Dhamma AT →"
+        "enter_app": "Enter Dhamma Nepal →"
       },
       "step4": {
         "title": "Anything the admin should know? (optional)",
@@ -499,19 +499,19 @@
       "coteacher_title": "Co-Teacher Section",
       "coteacher_sub": "Show co-teacher info to teachers on course detail",
       "translations_title": "Translations",
-      "translations_sub": "Export · suggest · approve EN · NE · HI"
+      "translations_sub": "Export to Excel, edit, and import back to update app text in EN and NE"
     },
     "translations": {
       "title": "Translations",
-      "subtitle": "Edit EN · NE · HI",
+      "subtitle": "Manage app translations across English and Nepali",
       "tile_export_xlsx": "Export to Excel",
-      "tile_export_xlsx_sub": "Download {{n}} keys × 3 languages",
+      "tile_export_xlsx_sub": "Download {{n}} keys × 2 languages",
       "tile_import": "Import from Excel",
       "tile_import_sub": "Upload reviewed sheet",
       "tile_review": "Review suggestions",
       "tile_review_sub": "Pending review · {{n}} rows",
       "tile_export_json": "Export current JSON",
-      "tile_export_json_sub": "Download EN · NE · HI as .json bundle",
+      "tile_export_json_sub": "Download EN · NE as .json bundle",
       "last_imported": "Last imported · {{date}} by {{name}}",
       "import_title": "Import translations",
       "choose_file": "Choose .xlsx file",
@@ -523,7 +523,6 @@
       "filter_all": "All",
       "filter_en": "EN",
       "filter_ne": "NE",
-      "filter_hi": "HI",
       "approve": "Approve",
       "reject": "Reject",
       "empty_pending": "No pending suggestions. Run an import or wait for reviewer edits.",

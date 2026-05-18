@@ -15,10 +15,8 @@ const REQUIRED_COLUMNS = [
   'key',
   'EN (live)',
   'NE (live)',
-  'HI (live)',
   'EN suggestion',
   'NE suggestion',
-  'HI suggestion',
   'notes',
 ] as const;
 
@@ -50,7 +48,6 @@ export interface ImportPreview {
 const LANG_COLUMN: Record<Lang, string> = {
   en: 'EN suggestion',
   ne: 'NE suggestion',
-  hi: 'HI suggestion',
 };
 
 export function parseXlsx(buffer: ArrayBuffer | Uint8Array, db: DB): ImportPreview {
@@ -77,11 +74,7 @@ export function parseXlsx(buffer: ArrayBuffer | Uint8Array, db: DB): ImportPrevi
   }
 
   const live = readLive(db);
-  const knownKeys = new Set([
-    ...Object.keys(live.en),
-    ...Object.keys(live.ne),
-    ...Object.keys(live.hi),
-  ]);
+  const knownKeys = new Set([...Object.keys(live.en), ...Object.keys(live.ne)]);
 
   const suggestions: PreviewSuggestion[] = [];
   const unknownKeys: string[] = [];
@@ -96,7 +89,7 @@ export function parseXlsx(buffer: ArrayBuffer | Uint8Array, db: DB): ImportPrevi
     const isUnknown = !knownKeys.has(key);
     if (isUnknown) unknownKeys.push(key);
 
-    for (const lang of ['en', 'ne', 'hi'] as Lang[]) {
+    for (const lang of ['en', 'ne'] as Lang[]) {
       const suggestionValue = String(row[LANG_COLUMN[lang]] ?? '').trim();
       if (!suggestionValue) continue;
       const liveValue = live[lang][key] ?? '';
@@ -110,17 +103,12 @@ export function parseXlsx(buffer: ArrayBuffer | Uint8Array, db: DB): ImportPrevi
         note,
         unknownKey: isUnknown,
       });
-      if (isUnknown) {
-        // unknown keys are tallied as errors (not silently added)
-        continue;
-      }
+      if (isUnknown) continue;
       if (liveValue) changed++;
       else added++;
     }
   }
 
-  // Strip unknown-key suggestions from the writable list — they appear in
-  // the error count instead so the admin can fix the sheet.
   const writable = suggestions.filter((s) => !s.unknownKey);
 
   return {

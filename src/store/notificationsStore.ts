@@ -90,7 +90,7 @@ const SEED_NOTIFICATIONS: Notification[] = [
     course: 'All Nepal ATs',
     subjectEn: 'Open course — AT needed urgently',
     bodyEn:
-      'Dear Teachers,\n\nDharma Shringa has an open 10-Day course (Aug 15–26) still needing a Nepali-speaking AT.\n\nPlease apply via the Dhamma AT app.\n\nSadhu 🙏',
+      'Dear Teachers,\n\nDharma Shringa has an open 10-Day course (Aug 15–26) still needing a Nepali-speaking AT.\n\nPlease apply via the Dhamma Nepal app.\n\nSadhu 🙏',
     bodyNe:
       'प्रिय शिक्षकहरू,\n\nधम्म श्रृंगमा अगस्ट १५–२६ को खुला पाठ्यक्रमलाई नेपाली भाषी सहायक शिक्षक चाहिन्छ।',
   },
