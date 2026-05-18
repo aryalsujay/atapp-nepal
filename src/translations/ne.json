@@ -87,6 +87,8 @@
     "browse_all": "सबै शिविर हेर्नुहोस्",
     "best_matches": "तपाईंका लागि उत्तम मिलान",
     "see_all": "सबै हेर्नुहोस् →",
+    "view_cards": "कार्ड",
+    "view_table": "तालिका",
     "match_basis": "तपाईंको प्रोफाइल र उपलब्धतामा आधारित",
     "need_at": "{{count}} AT",
     "rest_title": "विश्राम र साधना स्मरण",
@@ -109,7 +111,17 @@
     "status_pending": "✓ आवेदन पेश गरियो · समीक्षा बाँकी",
     "status_confirmed": "✓ पुष्टि भयो — विवरणका लागि थिच्नुहोस्",
     "status_rejected": "✗ छनोट भएन",
-    "status_withdrawing": "↩︎ फिर्ता अनुरोध गरिएको"
+    "status_withdrawing": "↩︎ फिर्ता अनुरोध गरिएको",
+    "view_cards": "कार्ड",
+    "view_table": "तालिका",
+    "col_match": "मिलान",
+    "col_type": "प्रकार",
+    "col_centre": "केन्द्र",
+    "col_dates": "मितिहरू",
+    "col_langs": "भाषा",
+    "col_dist": "दूरी",
+    "col_need": "चाहिएको",
+    "col_status": "स्थिति"
   },
   "courseDetail": {
     "back": "पछाडि",

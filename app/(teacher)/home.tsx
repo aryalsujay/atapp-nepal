@@ -43,6 +43,8 @@ import { Shadows } from '@/theme/shadows';
 import { FontFamily } from '@/theme/typography';
 import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
 import { LotusGlyph } from '@/components/ui/LotusGlyph';
+import { ViewToggle } from '@/components/ui/ViewToggle';
+import { BestMatchesTable } from '@/components/teacher/home/BestMatchesTable';
 import { langLabel } from '@/utils/eligibility';
 import { enrichCoursesWithMatch } from '@/utils/matching';
 import {
@@ -127,6 +129,8 @@ export default function TeacherHome() {
 
   const language = useSettingsStore((s) => s.language);
   const setLanguage = useSettingsStore((s) => s.setLanguage);
+  const homeViewMode = useSettingsStore((s) => s.homeMatchesViewMode);
+  const setHomeViewMode = useSettingsStore((s) => s.setHomeMatchesViewMode);
   const altLangLabel = language === 'en' ? 'नेपाली' : 'English';
 
   const { profile, loadProfile } = useProfileStore();
@@ -324,23 +328,47 @@ export default function TeacherHome() {
 
         <View style={s.sectionHeaderRow}>
           <Text style={[s.sectionHeader, s.sectionHeaderInline]}>⭐ {t('home.best_matches')}</Text>
-          <TouchableOpacity
-            onPress={() => router.push(Routes.teacherCourses)}
-            hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
-          >
-            <Text style={s.seeAllText}>{t('home.see_all')}</Text>
-          </TouchableOpacity>
+          <View style={s.headerControls}>
+            <ViewToggle
+              value={homeViewMode}
+              onChange={setHomeViewMode}
+              cardsLabel={t('home.view_cards')}
+              tableLabel={t('home.view_table')}
+              compact
+            />
+            <TouchableOpacity
+              onPress={() => router.push(Routes.teacherCourses)}
+              hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
+            >
+              <Text style={s.seeAllText}>{t('home.see_all')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         <Text style={s.matchBasis}>{t('home.match_basis')}</Text>
 
-        {topMatches.map((c) => (
-          <MatchCard
-            key={c.id}
-            course={c}
-            onPress={() => router.push(routeTo.teacherCourseDetail(c.id))}
-            needAtLabel={t('home.need_at', { count: c.needCount ?? 1 })}
+        {homeViewMode === 'table' ? (
+          <BestMatchesTable
+            courses={topMatches}
+            onRowPress={(c) => router.push(routeTo.teacherCourseDetail(c.id))}
+            labels={{
+              headerMatch: t('courses.col_match'),
+              headerType: t('courses.col_type'),
+              headerCentre: t('courses.col_centre'),
+              headerDates: t('courses.col_dates'),
+              headerLangs: t('courses.col_langs'),
+              headerNeed: t('courses.col_need'),
+            }}
           />
-        ))}
+        ) : (
+          topMatches.map((c) => (
+            <MatchCard
+              key={c.id}
+              course={c}
+              onPress={() => router.push(routeTo.teacherCourseDetail(c.id))}
+              needAtLabel={t('home.need_at', { count: c.needCount ?? 1 })}
+            />
+          ))
+        )}
 
         {/* ─── Rest & Practice Reminder ────────────────────────────────── */}
 
@@ -590,7 +618,7 @@ const s = StyleSheet.create({
   sectionHeaderInline: {
     marginTop: 0,
     marginBottom: 0,
-    flex: 1,
+    flexShrink: 1,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -604,6 +632,11 @@ const s = StyleSheet.create({
     fontSize: 13,
     color: Colors.sf,
     fontWeight: '600',
+  },
+  headerControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   matchBasis: {
     fontSize: 12,

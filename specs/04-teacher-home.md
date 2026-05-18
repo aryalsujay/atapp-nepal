@@ -122,8 +122,9 @@ Tap → `router.push(routeTo.teacherApplicationBrief(course.id))`. Stops propaga
 
 ### 3.4 Section header — Best Matches for You
 
-A **two-element row** (`flex justify-between align-center padding 4 18 7`):
+A **three-element row** (`flex row align-center padding 4 18 7`, `justifyContent: 'space-between'`):
 - Left: `⭐ {t('home.best_matches')}` styled as `.sph` (but `margin: 0` so it sits in the row).
+- Middle: `<ViewToggle>` segmented control (▦ Cards / ☰ Table), 30 px tall, compact pill — same component used on the Courses screen. State source: `settingsStore.homeMatchesViewMode` (`'cards' | 'table'`, default `'cards'`).
 - Right: `t('home.see_all')` link — fontSize `13`, color `Colors.sf`, weight `600`. Tap → `Routes.teacherCourses`.
 
 Then a single line of hint text (`padding 0 18 9`):
@@ -156,6 +157,23 @@ Inside:
 - **Meter** — see component inventory. 5 px tall horizontal bar showing match %.
 
 Tap → `router.push(routeTo.teacherCourseDetail(course.id))`. Card animation: `cardUp .35s ease-out`.
+
+---
+
+### 3.5b Match table view (mutually exclusive with §3.5)
+
+Rendered when `homeMatchesViewMode === 'table'`. Mirrors `CoursesTable` from spec 05 §3.3b: proper tabular layout with header row, vertical column dividers, scrollable left columns and a sticky right column. Same 5-row cap and sort as the cards (`match desc`, `startDate asc`, threshold 83).
+
+- Outer container: `marginHorizontal: 18`, `marginBottom: 11`, `borderRadius: 14`, `Shadows.card`, white bg, `overflow: hidden`.
+- Layout: outer `flexDirection: row` with two siblings — horizontal `ScrollView` left pane + fixed-width sticky right pane separated by a 1 px `Colors.bd` left border.
+- Header row: 32 px / `Colors.cr2` / 10.5 px / weight 700 / `tx2` / uppercase / `letterSpacing: 0.66`.
+- Body row: `minHeight: 64`, 1 px bottom border `Colors.bd` (dropped on the last row).
+
+Scroll-pane columns: Match (58) · Type (92) · Centre+city (130) · Dates (100, 2 lines max) · Langs (76, 2 lines max) · Need (50, right-aligned `${needCount}` + tiny `AT`).
+
+Sticky right pane: 44 px wide column containing only a `→` chevron (18 / `tx3`) per row. No status column because home is discovery-mode (no applied state yet).
+
+Distance is omitted on home (most Nepal-local rows lack `travel`). Row tap (either pane) → `routeTo.teacherCourseDetail(course.id)`.
 
 ---
 
@@ -244,6 +262,8 @@ Namespace `home.*`. Strings come from the **prototype** verbatim (EN line 599 / 
 | `home.browse_all` | `Browse All Courses` | `सबै शिविर हेर्नुहोस्` |
 | `home.best_matches` | `Best Matches for You` | `तपाईंका लागि उत्तम मिलान` |
 | `home.see_all` | `See all →` | `सबै हेर्नुहोस् →` |
+| `home.view_cards` | (a11y) `Cards` | `कार्ड` |
+| `home.view_table` | (a11y) `Table` | `तालिका` |
 | `home.match_basis` | `Based on profile & availability` | `तपाईंको प्रोफाइल र उपलब्धतामा आधारित` |
 | `home.need_at` | `{{count}} AT` | `{{count}} AT` |
 | `home.rest_title` | `Rest & Practice Reminder` | `विश्राम र साधना स्मरण` |
@@ -254,7 +274,7 @@ Namespace `home.*`. Strings come from the **prototype** verbatim (EN line 599 / 
 
 ## 7. Local State
 
-None significant. The screen renders entirely from store-derived data.
+`homeMatchesViewMode` is read from / written to `settingsStore`, not local state. No screen-local state otherwise.
 
 ---
 
@@ -281,7 +301,7 @@ None significant. The screen renders entirely from store-derived data.
 | `profileStore` | `profile` (used by `enrichCoursesWithMatch`) |
 | `applicationsStore` | `applications` — derives `appliedCount` (non-rejected), and approved future-dated → upcoming |
 | `coursesStore` | `courses` — base list for match enrichment. **Source:** synced from `https://www.dhamma.org/en/schedules/{schId}` for each centre in `NEPAL_CENTERS` (`src/utils/scraper.ts`). Sync runs from `coursesStore.syncCourses()`; the screen uses whatever is currently cached. Home does not trigger a sync on its own — it just renders what's there. |
-| `settingsStore` | `language` (for the toggle pill) |
+| `settingsStore` | `language` (for the toggle pill); `homeMatchesViewMode` (cards vs table) |
 
 Helpers used (existing):
 - `enrichCoursesWithMatch(courses, profile)` → adds `match` and `tier` to courses.
@@ -327,6 +347,7 @@ Helpers used (existing):
 | Hardcoded rest copy | "Last course: Mar 2026 …" hardcoded in prototype | Derive `last` / `next` / `eligible` from `teacher.teachingHistory` + 60-day gap | Real data, not stub |
 | Card animations | CSS `@keyframes cardUp` | Use existing `FadeInView` (RN Animated) for the same effect | Native equivalent |
 | Premium design module | n/a | Earlier attempt added `src/theme/premium.ts` with off-white cards, 28-radius, pastel chips — **rolled back** in this work | User decision (2026-05-14): home is a prototype-faithful port |
+| Best Matches view toggle | Prototype shows cards only | Segmented ▦/☰ control in the section header; table mode renders a 7-column dense list | UX request (2026-05-18): scanning many courses at once is faster in tabular form |
 
 ---
 
@@ -343,3 +364,6 @@ Helpers used (existing):
 | Date | Author | Change |
 |---|---|---|
 | 2026-05-14 | Sujay + Claude | Complete rewrite. Earlier draft with a premium design system was rejected; this draft anchors to the prototype only. |
+| 2026-05-18 | Sujay + Claude | Added §3.4 toggle and §3.5b table view (persisted in `settingsStore.homeMatchesViewMode`). |
+| 2026-05-18 | Sujay + Claude | Reworked §3.5b from horizontal-scroll columns to dense list rows that fit 390 px without horizontal drag. |
+| 2026-05-18 | Sujay + Claude | Replaced dense list with proper tabular layout (header strip + column dividers + scrollable columns + sticky `→` column on the right). |

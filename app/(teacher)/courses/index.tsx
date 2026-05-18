@@ -29,7 +29,10 @@ import { useAuthStore } from '@/store/authStore';
 import { useApplicationsStore } from '@/store/applicationsStore';
 import { useCoursesStore } from '@/store/coursesStore';
 import { useProfileStore } from '@/store/profileStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { useTeachersStore } from '@/store/teachersStore';
+import { ViewToggle } from '@/components/ui/ViewToggle';
+import { CoursesTable } from '@/components/teacher/courses/CoursesTable';
 import { Colors, Gradients, GradientDirection } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { Shadows } from '@/theme/shadows';
@@ -74,6 +77,8 @@ export default function TeacherCourses() {
   const applications = useApplicationsStore((s) => s.applications);
   const loadApplications = useApplicationsStore((s) => s.loadApplications);
   const applicationsLoadedForUserId = useApplicationsStore((s) => s.loadedForUserId);
+  const viewMode = useSettingsStore((s) => s.coursesViewMode);
+  const setViewMode = useSettingsStore((s) => s.setCoursesViewMode);
 
   useEffect(() => {
     if (courses.length === 0) loadCourses();
@@ -283,10 +288,21 @@ export default function TeacherCourses() {
                 })}
               </ScrollView>
             </View>
+
+            {/* View toggle */}
+            <View style={s.viewToggleRow}>
+              <ViewToggle
+                value={viewMode}
+                onChange={setViewMode}
+                cardsLabel={t('courses.view_cards')}
+                tableLabel={t('courses.view_table')}
+                compact
+              />
+            </View>
           </View>
         </View>
 
-        {/* Card list */}
+        {/* Card or table list */}
         <View style={s.dividerStrip} />
         {filtered.length === 0 ? (
           <View style={[s.card, s.emptyCard]}>
@@ -295,6 +311,28 @@ export default function TeacherCourses() {
               <Text style={s.clearFiltersLink}>{t('courses.clear_filters')}</Text>
             </TouchableOpacity>
           </View>
+        ) : viewMode === 'table' ? (
+          <CoursesTable
+            courses={filtered}
+            applicationByCourse={applicationByCourse}
+            onRowPress={(c) => router.push(routeTo.teacherCourseDetail(c.id))}
+            labels={{
+              headerMatch: t('courses.col_match'),
+              headerType: t('courses.col_type'),
+              headerCentre: t('courses.col_centre'),
+              headerDates: t('courses.col_dates'),
+              headerLangs: t('courses.col_langs'),
+              headerDist: t('courses.col_dist'),
+              headerNeed: t('courses.col_need'),
+              headerStatus: t('courses.col_status'),
+              applyCta: t('courses.view_and_apply'),
+              needAt: (count) => t('courses.need_at', { count }),
+              statusPending: t('courses.status_pending'),
+              statusConfirmed: t('courses.status_confirmed'),
+              statusRejected: t('courses.status_rejected'),
+              statusWithdrawing: t('courses.status_withdrawing'),
+            }}
+          />
         ) : (
           filtered.map((c) => (
             <CourseCard
@@ -566,6 +604,13 @@ const s = StyleSheet.create({
     fontSize: 13,
     color: Colors.tx3,
     paddingLeft: 18,
+  },
+  viewToggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    paddingBottom: 2,
   },
 
   // Divider between filter zone and cards
