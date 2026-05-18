@@ -2,18 +2,16 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from '@/translations/en.json';
 import ne from '@/translations/ne.json';
-import hi from '@/translations/hi.json';
 import { logger } from '@/utils/logger';
 
-export type SupportedLang = 'en' | 'ne' | 'hi';
-export const SUPPORTED_LANGS: SupportedLang[] = ['en', 'ne', 'hi'];
+export type SupportedLang = 'en' | 'ne';
+export const SUPPORTED_LANGS: SupportedLang[] = ['en', 'ne'];
 
 // eslint-disable-next-line import/no-named-as-default-member
 i18n.use(initReactI18next).init({
   resources: {
     en: { translation: en },
     ne: { translation: ne },
-    hi: { translation: hi },
   },
   lng: 'en',
   fallbackLng: 'en',
@@ -36,7 +34,6 @@ export function applyOverrides(lang: SupportedLang, overrides: Record<string, st
     for (const [dotted, value] of Object.entries(overrides)) {
       setNested(nested, dotted.split('.'), value);
     }
-
     i18n.addResourceBundle(lang, 'translation', nested, true, true);
   } catch (err) {
     logger.warn('[i18n] applyOverrides failed', err);

@@ -23,7 +23,6 @@ describe('buildWorkbookRows', () => {
   const live = {
     en: { 'foo.a': 'A-en', 'foo.b': 'B-en' },
     ne: { 'foo.a': 'A-ne', 'foo.b': 'B-ne' },
-    hi: { 'foo.a': 'A-hi', 'foo.b': '' },
   };
 
   it('emits one row per key in sorted order', () => {
@@ -33,24 +32,24 @@ describe('buildWorkbookRows', () => {
     expect(rows[1][0]).toBe('foo.b');
   });
 
-  it('fills live values across EN/NE/HI columns', () => {
+  it('fills live values across EN/NE columns', () => {
     const rows = buildWorkbookRows(live, []);
     const row = rows[0];
-    expect(row).toEqual(['foo.a', 'A-en', 'A-ne', 'A-hi', '', '', '', '']);
+    expect(row).toEqual(['foo.a', 'A-en', 'A-ne', '', '', '']);
   });
 
   it('attaches per-language suggestions to the matching key', () => {
     const rows = buildWorkbookRows(live, [
       { key: 'foo.a', lang: 'ne', value: 'A-ne-suggested', note: 'simpler verb' },
-      { key: 'foo.b', lang: 'hi', value: 'B-hi-new', note: null },
+      { key: 'foo.b', lang: 'en', value: 'B-en-new', note: null },
     ]);
     const a = rows[0];
     const b = rows[1];
-    // EN-sug · NE-sug · HI-sug · notes are columns 4..7
-    expect(a[5]).toBe('A-ne-suggested');
-    expect(a[7]).toBe('simpler verb');
-    expect(b[6]).toBe('B-hi-new');
-    expect(b[7]).toBe('');
+    // EN-sug · NE-sug · notes are columns 3..5
+    expect(a[4]).toBe('A-ne-suggested');
+    expect(a[5]).toBe('simpler verb');
+    expect(b[3]).toBe('B-en-new');
+    expect(b[5]).toBe('');
   });
 
   it('headers match the spec column order', () => {
@@ -58,10 +57,8 @@ describe('buildWorkbookRows', () => {
       'key',
       'EN (live)',
       'NE (live)',
-      'HI (live)',
       'EN suggestion',
       'NE suggestion',
-      'HI suggestion',
       'notes',
     ]);
   });

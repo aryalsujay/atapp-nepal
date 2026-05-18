@@ -45,7 +45,7 @@
     "syncFailedBody": "पाठ्यक्रमहरू रिफ्रेस गर्न सकिएन। पछि पुन: प्रयास गर्नुहोस्।"
   },
   "login": {
-    "title": "Dhamma AT",
+    "title": "Dhamma Nepal",
     "subtitle_ne": "विपस्सना आचार्य/सेवक अनुसूचक",
     "subtitle_en": "आचार्य · सेवक · व्यवस्थापक · नेपाल",
     "tab_teacher": "🧘 आचार्य",
@@ -426,7 +426,7 @@
         "summary_avail_template": "{{months}} महिना · {{festivals}} पर्व रोक",
         "summary_avail_no_festival": "{{months}} महिना",
         "summary_note_empty": "(छैन)",
-        "enter_app": "धम्म AT मा प्रवेश →"
+        "enter_app": "Dhamma Nepal मा प्रवेश →"
       },
       "step4": {
         "title": "व्यवस्थापकले जान्नु पर्ने केही छ? (वैकल्पिक)",
@@ -499,19 +499,19 @@
       "coteacher_title": "सह-आचार्य खण्ड",
       "coteacher_sub": "शिविर विवरणमा सह-आचार्य जानकारी देखाउनुहोस्",
       "translations_title": "अनुवादहरू",
-      "translations_sub": "निर्यात · सुझाव · स्वीकृति EN · NE · HI"
+      "translations_sub": "एक्सेलमा निर्यात गर्नुहोस्, सम्पादन गर्नुहोस्, र फेरि आयात गरेर EN र NE मा एपको पाठ अपडेट गर्नुहोस्"
     },
     "translations": {
       "title": "अनुवादहरू",
-      "subtitle": "EN · NE · HI सम्पादन",
+      "subtitle": "अंग्रेजी र नेपालीमा एपका अनुवाद व्यवस्थापन",
       "tile_export_xlsx": "एक्सेलमा निर्यात",
-      "tile_export_xlsx_sub": "{{n}} कुञ्जी × ३ भाषा डाउनलोड",
+      "tile_export_xlsx_sub": "{{n}} कुञ्जी × २ भाषा डाउनलोड",
       "tile_import": "एक्सेलबाट आयात",
       "tile_import_sub": "समीक्षा गरिएको शीट अपलोड",
       "tile_review": "सुझावहरू समीक्षा",
       "tile_review_sub": "समीक्षा बाँकी · {{n}} पंक्ति",
       "tile_export_json": "हालको JSON निर्यात",
-      "tile_export_json_sub": "EN · NE · HI .json बन्डल डाउनलोड",
+      "tile_export_json_sub": "EN · NE .json बन्डल डाउनलोड",
       "last_imported": "अन्तिम आयात · {{date}} {{name}} द्वारा",
       "import_title": "अनुवाद आयात",
       "choose_file": ".xlsx फाइल छान्नुहोस्",
@@ -523,7 +523,6 @@
       "filter_all": "सबै",
       "filter_en": "EN",
       "filter_ne": "NE",
-      "filter_hi": "HI",
       "approve": "स्वीकृत",
       "reject": "अस्वीकृत",
       "empty_pending": "कुनै बाँकी सुझाव छैन। आयात चलाउनुहोस् वा समीक्षकको सम्पादनको प्रतीक्षा गर्नुहोस्।",

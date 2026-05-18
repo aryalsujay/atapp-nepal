@@ -1,9 +1,9 @@
 /**
  * i18n export utilities — spec 31 §4 + §8.
  *
- * Flattens the three translation bundles (en · ne · hi) plus any
- * pending suggestions into a single workbook so reviewers can edit
- * offline in Excel.
+ * Flattens the two translation bundles (en · ne) plus any pending
+ * suggestions into a single workbook so reviewers can edit offline in
+ * Excel.
  */
 
 import * as XLSX from 'xlsx';
@@ -13,7 +13,6 @@ import * as Sharing from 'expo-sharing';
 
 import enJson from '@/translations/en.json';
 import neJson from '@/translations/ne.json';
-import hiJson from '@/translations/hi.json';
 import type { DB } from '@/db';
 import { translationsRepo } from '@/db/repositories';
 
@@ -21,14 +20,12 @@ export const SHEET_HEADERS = [
   'key',
   'EN (live)',
   'NE (live)',
-  'HI (live)',
   'EN suggestion',
   'NE suggestion',
-  'HI suggestion',
   'notes',
 ] as const;
 
-export type Lang = 'en' | 'ne' | 'hi';
+export type Lang = 'en' | 'ne';
 
 /** Flatten nested JSON to dotted keys (`a.b.c`). */
 export function flatten(obj: Record<string, unknown>, prefix = ''): Record<string, string> {
@@ -64,11 +61,9 @@ export function unflatten(flat: Record<string, string>): Record<string, unknown>
 export function readLive(db: DB): Record<Lang, Record<string, string>> {
   const en = flatten(enJson as Record<string, unknown>);
   const ne = flatten(neJson as Record<string, unknown>);
-  const hi = flatten(hiJson as Record<string, unknown>);
   Object.assign(en, translationsRepo.getOverridesForLang(db, 'en'));
   Object.assign(ne, translationsRepo.getOverridesForLang(db, 'ne'));
-  Object.assign(hi, translationsRepo.getOverridesForLang(db, 'hi'));
-  return { en, ne, hi };
+  return { en, ne };
 }
 
 /** Build the workbook rows. Exported for unit tests. */
@@ -76,13 +71,11 @@ export function buildWorkbookRows(
   live: Record<Lang, Record<string, string>>,
   suggestions: { key: string; lang: Lang; value: string; note: string | null }[],
 ): (string | null)[][] {
-  // Union of keys across all three live bundles, sorted for stable output.
-  const keys = Array.from(
-    new Set([...Object.keys(live.en), ...Object.keys(live.ne), ...Object.keys(live.hi)]),
-  ).sort();
+  // Union of keys across both live bundles, sorted for stable output.
+  const keys = Array.from(new Set([...Object.keys(live.en), ...Object.keys(live.ne)])).sort();
 
   // Index suggestions by key for O(1) lookup per row.
-  const sugByKey = new Map<string, { en?: string; ne?: string; hi?: string; note?: string }>();
+  const sugByKey = new Map<string, { en?: string; ne?: string; note?: string }>();
   for (const s of suggestions) {
     const slot = sugByKey.get(s.key) ?? {};
     slot[s.lang] = s.value;
@@ -96,10 +89,8 @@ export function buildWorkbookRows(
       key,
       live.en[key] ?? '',
       live.ne[key] ?? '',
-      live.hi[key] ?? '',
       sug.en ?? '',
       sug.ne ?? '',
-      sug.hi ?? '',
       sug.note ?? '',
     ];
   });
@@ -115,7 +106,7 @@ export async function exportXlsx(db: DB): Promise<{ uri: string; fileName: strin
   const live = readLive(db);
   const suggestions = translationsRepo.listSuggestions(db).map((s) => ({
     key: s.key,
-    lang: s.lang,
+    lang: s.lang as Lang,
     value: s.value,
     note: s.note,
   }));
@@ -125,19 +116,17 @@ export async function exportXlsx(db: DB): Promise<{ uri: string; fileName: strin
   // Set sensible column widths so the file opens readably in Excel.
   sheet['!cols'] = [
     { wch: 38 }, // key
-    { wch: 32 }, // EN live
-    { wch: 32 }, // NE live
-    { wch: 32 }, // HI live
-    { wch: 32 }, // EN sugg
-    { wch: 32 }, // NE sugg
-    { wch: 32 }, // HI sugg
+    { wch: 36 }, // EN live
+    { wch: 36 }, // NE live
+    { wch: 36 }, // EN sugg
+    { wch: 36 }, // NE sugg
     { wch: 30 }, // notes
   ];
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, sheet, 'translations');
   const date = new Date().toISOString().slice(0, 10);
-  const fileName = `dhamma-at-translations-${date}.xlsx`;
+  const fileName = `dhamma-nepal-translations-${date}.xlsx`;
 
   if (Platform.OS === 'web') {
     XLSX.writeFile(workbook, fileName);
@@ -160,15 +149,14 @@ export async function exportXlsx(db: DB): Promise<{ uri: string; fileName: strin
 }
 
 /**
- * Export the three live language JSONs (bundled + overrides merged) so
+ * Export the two live language JSONs (bundled + overrides merged) so
  * engineering can commit the result back into `src/translations/*.json`
- * at release time. Produces three separate JSON files on web; on native
- * each is written to documentDirectory and the share sheet opens.
+ * at release time.
  */
 export async function exportJsonBundle(db: DB): Promise<string[]> {
   const live = readLive(db);
   const date = new Date().toISOString().slice(0, 10);
-  const files: { name: string; content: string }[] = (['en', 'ne', 'hi'] as Lang[]).map((lang) => ({
+  const files: { name: string; content: string }[] = (['en', 'ne'] as Lang[]).map((lang) => ({
     name: `${lang}-${date}.json`,
     content: JSON.stringify(unflatten(live[lang]), null, 2),
   }));
@@ -193,8 +181,6 @@ export async function exportJsonBundle(db: DB): Promise<string[]> {
     uris.push(uri);
   }
   if (await Sharing.isAvailableAsync()) {
-    // RN sharing accepts one file at a time; share the first as a hint
-    // and let the admin pull the rest from the documents folder.
     await Sharing.shareAsync(uris[0], {
       mimeType: 'application/json',
       dialogTitle: 'Export translations as JSON',

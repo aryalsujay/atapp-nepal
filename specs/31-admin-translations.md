@@ -8,9 +8,11 @@
 
 ## 0. Source of truth
 
-No prototype mockup for this screen — it's new functionality requested 2026-05-18 to let an admin maintain the EN / NE / HI translation files in Excel outside the app, collect suggestions per locale, and approve them back into the live translation files.
+No prototype mockup for this screen — it's new functionality requested 2026-05-18 to let an admin maintain the EN / NE translation files in Excel outside the app, collect suggestions per locale, and approve them back into the live translation files.
 
-Existing translation files live in `src/translations/{en,ne}.json`. This spec adds `hi.json` (Hindi) as a peer language and a writable runtime layer so admin edits persist without an app rebuild.
+Existing translation files live in `src/translations/{en,ne}.json`. This spec adds a writable runtime layer so admin edits persist without an app rebuild.
+
+> **Hindi removed on 2026-05-18.** An earlier draft of this spec included a third `hi.json` bundle. The user rolled it back the same day — the app currently ships EN + NE only. References to "HI" below have been pruned; the override/suggestion schema still allows arbitrary `lang` strings, so re-introducing Hindi (or any other language) later is purely additive.
 
 ---
 
@@ -30,7 +32,7 @@ Existing translation files live in `src/translations/{en,ne}.json`. This spec ad
 
 Three workflows for the admin:
 
-1. **Export** the full translation set to an `.xlsx` so reviewers can edit Nepali / Hindi / English text in their own tools.
+1. **Export** the full translation set to an `.xlsx` so reviewers can edit Nepali / English text in their own tools.
 2. **Import** the reviewed `.xlsx` back into the app. Imports never overwrite the live values automatically; they land in a *suggestion* queue.
 3. **Approve / reject** each suggestion in-app. Approval writes the new text into the live translation layer immediately (no app rebuild) and the app re-renders in the new wording.
 
@@ -92,11 +94,9 @@ One sheet named `translations`. First row is the header. One row per leaf transl
 | A | `key` | RW (read-only after export) | flattened dotted path | e.g. `courses.view_and_apply`; never edit |
 | B | `EN (live)` | R | `src/translations/en.json` + overrides | reference only — ignored on import |
 | C | `NE (live)` | R | `src/translations/ne.json` + overrides | reference only — ignored on import |
-| D | `HI (live)` | R | `src/translations/hi.json` + overrides | reference only — ignored on import |
-| E | `EN suggestion` | W | `translation_suggestions(key, lang='en')` | empty cell = no suggestion |
-| F | `NE suggestion` | W | `translation_suggestions(key, lang='ne')` | empty cell = no suggestion |
-| G | `HI suggestion` | W | `translation_suggestions(key, lang='hi')` | empty cell = no suggestion |
-| H | `notes` | W | `translation_suggestions.note` | free text; persisted per key (not per language) |
+| D | `EN suggestion` | W | `translation_suggestions(key, lang='en')` | empty cell = no suggestion |
+| E | `NE suggestion` | W | `translation_suggestions(key, lang='ne')` | empty cell = no suggestion |
+| F | `notes` | W | `translation_suggestions.note` | free text; persisted per key (not per language) |
 
 A row with only live columns and no suggestions is a no-op on import. Keys present in the live JSON but absent from the sheet are not deleted (only adds/changes). Keys present in the sheet but unknown to the live JSON appear in the error banner — never silently created.
 
@@ -298,3 +298,5 @@ Each phase commits to `feature/i18n-export-import`; the branch merges to `main` 
 | Date | Author | Change |
 |---|---|---|
 | 2026-05-18 | Sujay + Claude | Initial draft. |
+| 2026-05-18 | Sujay + Claude | Removed Hindi (hi.json + HI columns + HI filter chip). App ships EN + NE only; the override/suggestion tables retain a free-form `lang` column so any third language can be added back additively. |
+| 2026-05-18 | Sujay + Claude | Renamed app from "Dhamma AT" to "Dhamma Nepal" (login title, onboarding CTA, notif templates, admin seed name, app.json name/slug/scheme). |

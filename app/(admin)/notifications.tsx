@@ -66,8 +66,8 @@ const NOTIFS: AdminNotif[] = [
     teacher: 'All Nepal ATs',
     course: 'Dhamma Shringa — Aug 10-Day',
     subj: 'Open course — Nepali-speaking AT needed',
-    en: 'Dear Teachers,\n\nDhamma Shringa has an open 10-Day course (Aug 15–26) needing a Nepali-speaking AT.\n\nPlease apply via the Dhamma AT app.\n\nSadhu 🙏',
-    np: 'प्रिय आचार्यहरू,\n\nधम्म श्रृंगमा अगस्ट १५–२६ को खुला पाठ्यक्रमलाई नेपाली भाषी आचार्य चाहिन्छ।\n\nधम्म एटी एप मार्फत आवेदन दिनुहोस्।\n\nसाधु 🙏',
+    en: 'Dear Teachers,\n\nDhamma Shringa has an open 10-Day course (Aug 15–26) needing a Nepali-speaking AT.\n\nPlease apply via the Dhamma Nepal app.\n\nSadhu 🙏',
+    np: 'प्रिय आचार्यहरू,\n\nधम्म श्रृंगमा अगस्ट १५–२६ को खुला पाठ्यक्रमलाई नेपाली भाषी आचार्य चाहिन्छ।\n\nDhamma Nepal एप मार्फत आवेदन दिनुहोस्।\n\nसाधु 🙏',
   },
 ];
 
