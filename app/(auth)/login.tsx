@@ -44,6 +44,7 @@ import { useToast } from '@/components/ui/Toast';
 import adminData from '@/data/admin.json';
 import { logger } from '@/utils/logger';
 import { verifyPassword } from '@/utils/credentials';
+import { useNotificationsStore } from '@/store/notificationsStore';
 
 type Role = 'teacher' | 'server' | 'admin';
 
@@ -203,7 +204,13 @@ export default function LoginScreen() {
         // Respect server's onboarding flag too; re-logins skip onboarding.
         await setAuth('server', serverUser.id, serverUser.isOnboarded);
         await persistCreds();
-        router.replace(serverUser.isOnboarded ? Routes.serverHome : Routes.serverOnboarding);
+        if (!serverUser.isOnboarded) {
+          router.replace(Routes.serverOnboarding);
+        } else {
+          await useNotificationsStore.getState().loadNotifications();
+          const unread = useNotificationsStore.getState().getUnreadCount(serverUser.id);
+          router.replace(unread > 0 ? Routes.serverNotifications : Routes.serverHome);
+        }
         return;
       }
 
@@ -218,10 +225,16 @@ export default function LoginScreen() {
       // to the home screen so the test-teacher flow doesn't loop.
       await setAuth('teacher', teacher.id, teacher.isOnboarded);
       await persistCreds();
-      if (teacher.isOnboarded) {
-        router.replace(Routes.teacherHome);
-      } else {
+      if (!teacher.isOnboarded) {
         router.replace(routeTo.onboardingTeacher(0));
+      } else {
+        // Enforcement (spec: bell can't be missed). If unread > 0 we
+        // surface the notifications tab BEFORE home so non-tech-savvy
+        // users physically see the pending items first. Once they read
+        // them, normal navigation returns to home.
+        await useNotificationsStore.getState().loadNotifications();
+        const unread = useNotificationsStore.getState().getUnreadCount(teacher.id);
+        router.replace(unread > 0 ? Routes.teacherNotifications : Routes.teacherHome);
       }
     } finally {
       setLoading(false);

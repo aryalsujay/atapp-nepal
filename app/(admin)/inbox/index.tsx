@@ -183,7 +183,11 @@ export default function AdminInboxScreen() {
               hitSlop={8}
             >
               <BellSvg />
-              {unreadCount > 0 && <View style={s.bellDot} />}
+              {unreadCount > 0 && (
+                <View style={s.bellBadge}>
+                  <Text style={s.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -417,6 +421,27 @@ const s = StyleSheet.create({
     backgroundColor: Colors.ur,
     borderWidth: 1.5,
     borderColor: Colors.white,
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    backgroundColor: Colors.ur,
+    borderWidth: 1.5,
+    borderColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bellBadgeText: {
+    color: Colors.white,
+    fontSize: 10,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
+    lineHeight: 12,
   },
 
   // Stats
