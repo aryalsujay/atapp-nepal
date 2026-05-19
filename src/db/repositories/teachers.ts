@@ -111,6 +111,33 @@ export function findByIdentifier(db: DB, identifier: string): TeacherDomain | nu
   ]);
   if (byCode) return rowToDomain(byCode);
 
+  // Phone match — both the stored phone and the input get the same
+  // light normalisation (strip spaces / hyphens / parens / leading `+`)
+  // so admins and teachers can type the number in any common format.
+  const normalisedInput = identifier
+    .replace(/[\s\-()]/g, '')
+    .replace(/^\+/, '')
+    .toLowerCase();
+  if (normalisedInput.length >= 7 && /^\d+$/.test(normalisedInput)) {
+    // Native SQLite supports REPLACE/IFNULL; the in-memory test shim
+    // doesn't. Wrap so a parse failure on the shim falls back to the
+    // caller's existing suffix-match path (in `teachersStore.findTeacher`)
+    // instead of throwing through the whole lookup chain.
+    try {
+      const byPhone = db.queryOne<TeacherRow>(
+        `SELECT * FROM teachers
+           WHERE LOWER(REPLACE(REPLACE(REPLACE(REPLACE(IFNULL(phone, ''), ' ', ''), '-', ''), '(', ''), ')', '')) = ?
+              OR LOWER(REPLACE(REPLACE(REPLACE(REPLACE(IFNULL(phone, ''), ' ', ''), '-', ''), '(', ''), ')', '')) = ?
+           LIMIT 1`,
+        [normalisedInput, '+' + normalisedInput],
+      );
+      if (byPhone) return rowToDomain(byPhone);
+    } catch {
+      // Shim/SQL incompat — fall through to null and let the caller's
+      // suffix-match scan handle it.
+    }
+  }
+
   return null;
 }
 
