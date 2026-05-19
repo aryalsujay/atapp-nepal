@@ -8,9 +8,10 @@
  * date/lang chips + match badge + 5 px meter + "View & Apply →".
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
+  RefreshControl,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -39,6 +40,7 @@ import { FontFamily } from '@/theme/typography';
 import { Shadows } from '@/theme/shadows';
 import { langLabel } from '@/utils/eligibility';
 import { enrichCoursesWithMatch } from '@/utils/matching';
+import { useDebounced } from '@/utils/useDebounced';
 import { travelFor } from '@/utils/travel';
 import { MatchBadge, Meter } from '@/components/ui/MatchPill';
 import type { Application, Course } from '@/types';
@@ -74,6 +76,16 @@ export default function TeacherCourses() {
 
   const courses = useCoursesStore((s) => s.courses) as Course[];
   const loadCourses = useCoursesStore((s) => s.loadCourses);
+  const syncCourses = useCoursesStore((s) => s.syncCourses);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await syncCourses();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [syncCourses]);
   const { profile, loadProfile } = useProfileStore();
   const applications = useApplicationsStore((s) => s.applications);
   const loadApplications = useApplicationsStore((s) => s.loadApplications);
@@ -132,6 +144,7 @@ export default function TeacherCourses() {
   }, [profile, teacher]);
 
   const [q, setQ] = useState('');
+  const debouncedQ = useDebounced(q, 150);
   const [typeFilter, setTypeFilter] = useState<string>('All');
   const [centerFilter, setCenterFilter] = useState<string>('All');
 
@@ -164,7 +177,7 @@ export default function TeacherCourses() {
   );
 
   const filtered = useMemo(() => {
-    const ql = q.trim().toLowerCase();
+    const ql = debouncedQ.trim().toLowerCase();
     return withTravel
       .filter((c) => {
         if (typeFilter !== 'All' && !c.type.includes(typeFilter)) return false;
@@ -182,7 +195,7 @@ export default function TeacherCourses() {
         if (m !== 0) return m;
         return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
       });
-  }, [withTravel, q, typeFilter, centerFilter]);
+  }, [withTravel, debouncedQ, typeFilter, centerFilter]);
 
   const subtitle = teacher
     ? `${teacher.region ?? 'Nepal'} ${teacher.flag ?? '🇳🇵'}`
@@ -320,6 +333,9 @@ export default function TeacherCourses() {
           contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
           showsVerticalScrollIndicator={false}
           stickyHeaderIndices={[0]}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.sf} />
+          }
         >
           {stickyHeader}
           <View style={s.dividerStrip} />
@@ -364,6 +380,9 @@ export default function TeacherCourses() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[0]}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.sf} />
+        }
         data={filtered}
         keyExtractor={(c) => String(c.id)}
         ListHeaderComponent={

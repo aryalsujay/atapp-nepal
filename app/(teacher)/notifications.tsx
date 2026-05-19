@@ -10,8 +10,9 @@
  * Per-text fontFamily ties weights to registered Plus Jakarta Sans variants.
  */
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+  RefreshControl,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -83,6 +84,16 @@ export default function TeacherNotifications() {
   const getForUser = useNotificationsStore((s) => s.getForUser);
   const markRead = useNotificationsStore((s) => s.markRead);
   const respondToInvite = useNotificationsStore((s) => s.respondToInvite);
+  const loadNotifications = useNotificationsStore((s) => s.loadNotifications);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await loadNotifications();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadNotifications]);
   // Subscribe to notifications so the screen re-renders after store mutations.
   useNotificationsStore((s) => s.notifications);
   const courses = useCoursesStore((s) => s.courses) as Course[];
@@ -289,6 +300,9 @@ export default function TeacherNotifications() {
       <ScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.sf} />
+        }
       >
         <View style={[s.headerWrap, { paddingTop: Math.max(56, insets.top + 14) }]}>
           <Text style={s.title}>{t('notifications.title')}</Text>
