@@ -2,7 +2,7 @@ import { applyOverrides, SUPPORTED_LANGS } from '@/i18n';
 import { translationsRepo } from '@/db/repositories';
 import React, { useEffect, useState } from 'react';
 import { AppState, Platform, View, ActivityIndicator } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuthStore } from '@/store/authStore';
@@ -17,6 +17,7 @@ import { ConfirmDialogProvider } from '@/components/ui/ConfirmDialog';
 import { Colors } from '@/theme/colors';
 import { SYNC_MIN_AGE_MS } from '@/config/app';
 import { registerBackgroundSync } from '@/utils/backgroundSync';
+import { registerForPushAsync, setupNotificationHandlers } from '@/utils/pushNotifications';
 import { getDb } from '@/db';
 import { runMigrations } from '@/db/migrate';
 import {
@@ -63,6 +64,8 @@ export default function RootLayout() {
   const loadNotifications = useNotificationsStore((s) => s.loadNotifications);
   const notifsLoaded = useNotificationsStore((s) => s.loaded);
   const userId = useAuthStore((s) => s.userId);
+  const role = useAuthStore((s) => s.role);
+  const router = useRouter();
   const loadApplications = useApplicationsStore((s) => s.loadApplications);
   const applicationsLoadedForUserId = useApplicationsStore((s) => s.loadedForUserId);
 
@@ -132,6 +135,23 @@ export default function RootLayout() {
     if (applicationsLoadedForUserId === userId) return;
     loadApplications(userId);
   }, [dbReady, userId, applicationsLoadedForUserId, loadApplications]);
+
+  // Register for OS push notifications once the user is known. No-op on
+  // web and when PUSH_WORKER_URL is empty (push disabled). Idempotent.
+  useEffect(() => {
+    if (!dbReady || !userId || !role || Platform.OS === 'web') return;
+    registerForPushAsync(userId, role).catch(() => {
+      /* logged inside the helper */
+    });
+  }, [dbReady, userId, role]);
+
+  // Wire foreground display + tap-to-deep-link handlers once.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const cleanup = setupNotificationHandlers(router);
+    return cleanup;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {

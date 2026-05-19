@@ -15,6 +15,7 @@ import { applicationsRepo, coursesRepo, teachersRepo } from '@/db/repositories';
 import type { Application } from '@/types';
 import { logger } from '@/utils/logger';
 import { useNotificationsStore } from './notificationsStore';
+import { sendEventToWorker } from '@/utils/pushNotifications';
 import adminData from '@/data/admin.json';
 
 interface ApplicationsState {
@@ -129,6 +130,9 @@ function emitNotification(partial: {
   } catch (err) {
     logger.warn('[applicationsStore] emitNotification failed', err);
   }
+  // Also relay via the Cloudflare Worker so the OS push lands on the
+  // recipient's other device. No-op when PUSH_WORKER_URL is empty.
+  sendEventToWorker(partial);
 }
 
 export const useApplicationsStore = create<ApplicationsState>((set, get) => ({

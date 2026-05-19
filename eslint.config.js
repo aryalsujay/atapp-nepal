@@ -23,6 +23,7 @@ module.exports = [
       'web-build/**',
       'specs/**',
       'assets/**',
+      'workers/**',
       'babel.config.js',
       'metro.config.js',
       'eslint.config.js',
