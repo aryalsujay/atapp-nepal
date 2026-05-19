@@ -17,6 +17,10 @@ export interface Notification {
   timestamp: string;
   read: boolean;
   courseId?: number;
+  /** The application this notification is about — populated for
+   *  'new_application', 'withdrawal_request', 'approval', 'rejection',
+   *  so taps can deep-link to the matching review / detail screen. */
+  applicationId?: number;
   center: string;
   course: string;
   subjectEn: string;
