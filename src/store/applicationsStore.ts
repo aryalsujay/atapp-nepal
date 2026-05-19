@@ -304,6 +304,23 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
     const created: Application = persisted
       ? domainToApplication(persisted)
       : domainToApplication(inserted);
+
+    // Notify the teacher that admin has directly assigned / invited them to
+    // this course. Teacher's notification tab will surface this as an
+    // 'invite' card with accept / decline buttons (see (teacher)/notifications).
+    const { center, course } = describeCourse(courseId);
+    emitNotification({
+      targetUserId: teacherId,
+      type: 'invite',
+      courseId,
+      applicationId: created.id,
+      center,
+      course,
+      subjectEn: `Invitation to teach — ${center}`,
+      bodyEn: `Dear Teacher,\n\nWe would like to invite you to teach ${course}. Please accept or decline at your earliest convenience.\n\nIn Dhamma,\n${center} Management`,
+      bodyNe: `प्रिय आचार्य,\n\n${course} पढाउनको लागि तपाईंलाई आमन्त्रण गर्न चाहन्छौं। कृपया स्वीकार वा अस्वीकार गर्नुहोस्।\n\nधम्ममा,\n${center} व्यवस्थापन`,
+    });
+
     set((state) => ({ applications: [...state.applications, created] }));
     return created;
   },

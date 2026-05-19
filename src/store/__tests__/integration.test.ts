@@ -194,6 +194,99 @@ describe('applicationsStore', () => {
     expect(matchingApproval).toBeDefined();
   });
 
+  it('rejection emits a rejection notification to the teacher (with applicationId)', async () => {
+    const teacherId = 'teacher-001';
+    const created = await useApplicationsStore.getState().submitApplication(103, teacherId);
+    const before = useNotificationsStore.getState().getUnreadCount(teacherId);
+
+    await useApplicationsStore.getState().updateStatus(created.id, 'rejected', 'Slot filled');
+
+    const after = useNotificationsStore.getState().getUnreadCount(teacherId);
+    expect(after).toBe(before + 1);
+    const rejection = useNotificationsStore
+      .getState()
+      .notifications.find(
+        (n) =>
+          n.targetUserId === teacherId &&
+          n.type === 'rejection' &&
+          n.courseId === 103 &&
+          n.applicationId === created.id,
+      );
+    expect(rejection).toBeDefined();
+    expect(rejection?.bodyEn).toContain('Slot filled');
+  });
+
+  it('withdrawal request emits notification to admin (with applicationId for deep-link)', async () => {
+    const teacherId = 'teacher-001';
+    const created = await useApplicationsStore.getState().submitApplication(104, teacherId);
+    // Pending → approved first (allowed transition).
+    await useApplicationsStore.getState().updateStatus(created.id, 'approved');
+
+    const before = useNotificationsStore.getState().getUnreadCount('admin-001');
+    await useApplicationsStore
+      .getState()
+      .requestWithdrawal(created.id, teacherId, 'family emergency');
+    const after = useNotificationsStore.getState().getUnreadCount('admin-001');
+    expect(after).toBe(before + 1);
+
+    const wr = useNotificationsStore
+      .getState()
+      .notifications.find(
+        (n) =>
+          n.targetUserId === 'admin-001' &&
+          n.type === 'withdrawal_request' &&
+          n.applicationId === created.id,
+      );
+    expect(wr).toBeDefined();
+    expect(wr?.bodyEn).toContain('family emergency');
+  });
+
+  it('admin assignment emits an invite notification to the teacher', async () => {
+    const teacherId = 'teacher-001';
+    const before = useNotificationsStore.getState().getUnreadCount(teacherId);
+
+    const assignment = await useApplicationsStore.getState().addAssignment(105, teacherId);
+    expect(assignment.status).toBe('approved');
+    expect(assignment.source).toBe('assigned');
+
+    const after = useNotificationsStore.getState().getUnreadCount(teacherId);
+    expect(after).toBe(before + 1);
+
+    const invite = useNotificationsStore
+      .getState()
+      .notifications.find(
+        (n) =>
+          n.targetUserId === teacherId &&
+          n.type === 'invite' &&
+          n.courseId === 105 &&
+          n.applicationId === assignment.id,
+      );
+    expect(invite).toBeDefined();
+  });
+
+  it('all notifications carry applicationId for deep-link routing', async () => {
+    const teacherId = 'teacher-001';
+    const submitted = await useApplicationsStore.getState().submitApplication(106, teacherId);
+    const approval = await useApplicationsStore
+      .getState()
+      .submitApplication(107, teacherId)
+      .then((a) =>
+        useApplicationsStore
+          .getState()
+          .updateStatus(a.id, 'approved')
+          .then(() => a),
+      );
+    const assignment = await useApplicationsStore.getState().addAssignment(108, teacherId);
+
+    const all = useNotificationsStore.getState().notifications;
+    const findFor = (type: string, courseId: number, appId: number) =>
+      all.find((n) => n.type === type && n.courseId === courseId && n.applicationId === appId);
+
+    expect(findFor('new_application', 106, submitted.id)?.applicationId).toBe(submitted.id);
+    expect(findFor('approval', 107, approval.id)?.applicationId).toBe(approval.id);
+    expect(findFor('invite', 108, assignment.id)?.applicationId).toBe(assignment.id);
+  });
+
   it('full end-to-end: create teacher -> apply -> admin bell -> approve -> teacher bell', async () => {
     // 1. Admin creates a brand-new teacher (mirrors the Add Teacher flow).
     const customTeacherId = 't-tt20m';
