@@ -10,6 +10,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  FlatList,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -193,163 +194,207 @@ export default function TeacherCourses() {
     setCenterFilter('All');
   };
 
+  const stickyHeader = (
+    <View style={s.stickyHeader}>
+      {/* Header */}
+      <View style={[s.headerWrap, { paddingTop: Math.max(56, insets.top + 14) }]}>
+        <Text style={s.title}>{t('courses.title')}</Text>
+        <Text style={s.subtitle}>{subtitle}</Text>
+        <Text style={s.caption}>
+          {filtered.length} {t('courses.seeking')}
+        </Text>
+      </View>
+
+      {/* Search bar */}
+      <View style={s.filtersWrap}>
+        <View style={s.sbar}>
+          <SearchIcon />
+          <TextInput
+            value={q}
+            onChangeText={setQ}
+            placeholder={t('courses.search')}
+            placeholderTextColor={Colors.tx3}
+            style={s.sbarInput}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {q ? (
+            <TouchableOpacity
+              onPress={() => setQ('')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={s.sbarClear}>×</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {/* Type filters */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={s.frow}
+        >
+          {TYPE_FILTERS.map((f) => {
+            const on = typeFilter === f;
+            return (
+              <TouchableOpacity
+                key={f}
+                onPress={() => setTypeFilter(f)}
+                activeOpacity={0.75}
+                style={[s.fchip, on && s.fchipOn]}
+              >
+                <Text style={[s.fchipText, on && s.fchipTextOn]}>{f}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* Centre filters */}
+        <View style={s.centerFilterRow}>
+          <Text style={s.locationGlyph}>📍</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.frowSm}
+          >
+            <TouchableOpacity
+              onPress={() => setCenterFilter('All')}
+              activeOpacity={0.75}
+              style={[s.fchipSm, centerFilter === 'All' && s.fchipOn]}
+            >
+              <Text style={[s.fchipSmText, centerFilter === 'All' && s.fchipTextOn]}>
+                {t('courses.all_types')}
+              </Text>
+            </TouchableOpacity>
+            {centerList.map((c) => {
+              const on = centerFilter === c;
+              return (
+                <TouchableOpacity
+                  key={c}
+                  onPress={() => setCenterFilter(c)}
+                  activeOpacity={0.75}
+                  style={[s.fchipSm, on && s.fchipOn]}
+                >
+                  <Text style={[s.fchipSmText, on && s.fchipTextOn]}>{shortCenterName(c)}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* View toggle */}
+        <View style={s.viewToggleRow}>
+          <ViewToggle
+            value={viewMode}
+            onChange={setViewMode}
+            cardsLabel={t('courses.view_cards')}
+            tableLabel={t('courses.view_table')}
+            compact
+          />
+        </View>
+      </View>
+    </View>
+  );
+
+  const emptyState = (
+    <>
+      <View style={s.dividerStrip} />
+      <View style={[s.card, s.emptyCard]}>
+        <Text style={s.emptyText}>{t('courses.no_results')}</Text>
+        <TouchableOpacity onPress={clearAllFilters} activeOpacity={0.7}>
+          <Text style={s.clearFiltersLink}>{t('courses.clear_filters')}</Text>
+        </TouchableOpacity>
+      </View>
+    </>
+  );
+
+  // Table mode renders the entire table inside one outer scroll container;
+  // virtualization happens column-side via the inner horizontal scroll, so
+  // we keep the regular ScrollView shell here.
+  if (viewMode === 'table') {
+    return (
+      <View style={[s.flex, { backgroundColor: Colors.cr }]}>
+        <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
+        <ScrollView
+          style={s.flex}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+          showsVerticalScrollIndicator={false}
+          stickyHeaderIndices={[0]}
+        >
+          {stickyHeader}
+          <View style={s.dividerStrip} />
+          {filtered.length === 0 ? (
+            emptyState
+          ) : (
+            <CoursesTable
+              courses={filtered}
+              applicationByCourse={applicationByCourse}
+              onRowPress={(c) => router.push(routeTo.teacherCourseDetail(c.id))}
+              labels={{
+                headerMatch: t('courses.col_match'),
+                headerType: t('courses.col_type'),
+                headerCentre: t('courses.col_centre'),
+                headerDates: t('courses.col_dates'),
+                headerLangs: t('courses.col_langs'),
+                headerDist: t('courses.col_dist'),
+                headerNeed: t('courses.col_need'),
+                headerStatus: t('courses.col_status'),
+                applyCta: t('courses.view_and_apply'),
+                needAt: (count) => t('courses.need_at', { count }),
+                statusPending: t('courses.status_pending'),
+                statusConfirmed: t('courses.status_confirmed'),
+                statusRejected: t('courses.status_rejected'),
+                statusWithdrawing: t('courses.status_withdrawing'),
+              }}
+            />
+          )}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // Card mode → virtualized FlatList. With ~240 courses this is the
+  // single biggest perf win on the screen: only ~8 cards render at a
+  // time instead of all 240.
   return (
     <View style={[s.flex, { backgroundColor: Colors.cr }]}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
-      <ScrollView
+      <FlatList
         style={s.flex}
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[0]}
-      >
-        <View style={s.stickyHeader}>
-          {/* Header */}
-          <View style={[s.headerWrap, { paddingTop: Math.max(56, insets.top + 14) }]}>
-            <Text style={s.title}>{t('courses.title')}</Text>
-            <Text style={s.subtitle}>{subtitle}</Text>
-            <Text style={s.caption}>
-              {filtered.length} {t('courses.seeking')}
-            </Text>
-          </View>
-
-          {/* Search bar */}
-          <View style={s.filtersWrap}>
-            <View style={s.sbar}>
-              <SearchIcon />
-              <TextInput
-                value={q}
-                onChangeText={setQ}
-                placeholder={t('courses.search')}
-                placeholderTextColor={Colors.tx3}
-                style={s.sbarInput}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              {q ? (
-                <TouchableOpacity
-                  onPress={() => setQ('')}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Text style={s.sbarClear}>×</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-
-            {/* Type filters */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={s.frow}
-            >
-              {TYPE_FILTERS.map((f) => {
-                const on = typeFilter === f;
-                return (
-                  <TouchableOpacity
-                    key={f}
-                    onPress={() => setTypeFilter(f)}
-                    activeOpacity={0.75}
-                    style={[s.fchip, on && s.fchipOn]}
-                  >
-                    <Text style={[s.fchipText, on && s.fchipTextOn]}>{f}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-
-            {/* Centre filters */}
-            <View style={s.centerFilterRow}>
-              <Text style={s.locationGlyph}>📍</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={s.frowSm}
-              >
-                <TouchableOpacity
-                  onPress={() => setCenterFilter('All')}
-                  activeOpacity={0.75}
-                  style={[s.fchipSm, centerFilter === 'All' && s.fchipOn]}
-                >
-                  <Text style={[s.fchipSmText, centerFilter === 'All' && s.fchipTextOn]}>
-                    {t('courses.all_types')}
-                  </Text>
-                </TouchableOpacity>
-                {centerList.map((c) => {
-                  const on = centerFilter === c;
-                  return (
-                    <TouchableOpacity
-                      key={c}
-                      onPress={() => setCenterFilter(c)}
-                      activeOpacity={0.75}
-                      style={[s.fchipSm, on && s.fchipOn]}
-                    >
-                      <Text style={[s.fchipSmText, on && s.fchipTextOn]}>{shortCenterName(c)}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-
-            {/* View toggle */}
-            <View style={s.viewToggleRow}>
-              <ViewToggle
-                value={viewMode}
-                onChange={setViewMode}
-                cardsLabel={t('courses.view_cards')}
-                tableLabel={t('courses.view_table')}
-                compact
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Card or table list */}
-        <View style={s.dividerStrip} />
-        {filtered.length === 0 ? (
-          <View style={[s.card, s.emptyCard]}>
-            <Text style={s.emptyText}>{t('courses.no_results')}</Text>
-            <TouchableOpacity onPress={clearAllFilters} activeOpacity={0.7}>
-              <Text style={s.clearFiltersLink}>{t('courses.clear_filters')}</Text>
-            </TouchableOpacity>
-          </View>
-        ) : viewMode === 'table' ? (
-          <CoursesTable
-            courses={filtered}
-            applicationByCourse={applicationByCourse}
-            onRowPress={(c) => router.push(routeTo.teacherCourseDetail(c.id))}
-            labels={{
-              headerMatch: t('courses.col_match'),
-              headerType: t('courses.col_type'),
-              headerCentre: t('courses.col_centre'),
-              headerDates: t('courses.col_dates'),
-              headerLangs: t('courses.col_langs'),
-              headerDist: t('courses.col_dist'),
-              headerNeed: t('courses.col_need'),
-              headerStatus: t('courses.col_status'),
-              applyCta: t('courses.view_and_apply'),
-              needAt: (count) => t('courses.need_at', { count }),
-              statusPending: t('courses.status_pending'),
-              statusConfirmed: t('courses.status_confirmed'),
-              statusRejected: t('courses.status_rejected'),
-              statusWithdrawing: t('courses.status_withdrawing'),
-            }}
-          />
-        ) : (
-          filtered.map((c) => (
-            <CourseCard
-              key={c.id}
-              course={c}
-              application={applicationByCourse.get(c.id)}
-              onPress={() => router.push(routeTo.teacherCourseDetail(c.id))}
-              applyLabel={t('courses.view_and_apply')}
-              needLabel={t('courses.need_at', { count: c.needCount ?? 1 })}
-              matchLabel={t('courses.match_label')}
-              t={t}
-            />
-          ))
-        )}
-      </ScrollView>
+        data={filtered}
+        keyExtractor={(c) => String(c.id)}
+        ListHeaderComponent={
+          <>
+            {stickyHeader}
+            <View style={s.dividerStrip} />
+          </>
+        }
+        ListEmptyComponent={emptyState}
+        initialNumToRender={8}
+        windowSize={9}
+        maxToRenderPerBatch={8}
+        removeClippedSubviews
+        renderItem={renderCourseItem}
+      />
     </View>
   );
+
+  function renderCourseItem({ item: c }: { item: CardCourse }) {
+    return (
+      <CourseCard
+        course={c}
+        application={applicationByCourse.get(c.id)}
+        onPress={() => router.push(routeTo.teacherCourseDetail(c.id))}
+        applyLabel={t('courses.view_and_apply')}
+        needLabel={t('courses.need_at', { count: c.needCount ?? 1 })}
+        matchLabel={t('courses.match_label')}
+        t={t}
+      />
+    );
+  }
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
