@@ -24,6 +24,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { Routes, routeTo } from '@/routes';
 import { Colors, Gradients, GradientDirection } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
+import { useDebounced } from '@/utils/useDebounced';
 import { adminApplications } from '@/data';
 import { useTeachersStore } from '@/store/teachersStore';
 import type { StoredTeacher } from '@/store/teachersStore';
@@ -128,6 +129,7 @@ export default function AdminDirectoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounced(query, 150);
   const [filter, setFilter] = useState<LangFilter>('All');
 
   const allTeachers = useTeachersStore((s) => s.allTeachers);
@@ -149,10 +151,10 @@ export default function AdminDirectoryScreen() {
     () =>
       dirRows.filter(
         (tc) =>
-          (query === '' || tc.name.toLowerCase().includes(query.toLowerCase())) &&
+          (debouncedQuery === '' || tc.name.toLowerCase().includes(debouncedQuery.toLowerCase())) &&
           (filter === 'All' || tc.langs.includes(filter)),
       ),
-    [dirRows, query, filter],
+    [dirRows, debouncedQuery, filter],
   );
 
   const openProfile = (name: string) => {

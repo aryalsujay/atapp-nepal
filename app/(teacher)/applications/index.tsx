@@ -13,8 +13,16 @@
  * Per-text fontFamily ties weights to registered Plus Jakarta Sans variants.
  */
 
-import React, { useEffect, useMemo } from 'react';
-import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -50,6 +58,16 @@ export default function TeacherApplications() {
   const userId = useAuthStore((s) => s.userId) ?? '';
   const applications = useApplicationsStore((s) => s.applications);
   const loadApplications = useApplicationsStore((s) => s.loadApplications);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = React.useCallback(async () => {
+    if (!userId) return;
+    setRefreshing(true);
+    try {
+      await loadApplications(userId);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [userId, loadApplications]);
   const loadedForUserId = useApplicationsStore((s) => s.loadedForUserId);
   const courses = useCoursesStore((s) => s.courses) as Course[];
 
@@ -92,6 +110,9 @@ export default function TeacherApplications() {
       <ScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.sf} />
+        }
       >
         {/* Header */}
         <View style={[s.headerWrap, { paddingTop: Math.max(56, insets.top + 14) }]}>
