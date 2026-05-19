@@ -79,6 +79,11 @@ export default function TeacherLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        // Suspend inactive tabs so they stop processing store updates
+        // in the background. Tab switches become instant because the
+        // screen is still mounted; only its React tree is paused.
+        freezeOnBlur: true,
+        lazy: true,
         tabBarStyle: {
           backgroundColor: Colors.white,
           borderTopColor: Colors.bd,
