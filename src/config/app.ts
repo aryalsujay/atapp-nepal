@@ -32,3 +32,16 @@ export const MATCH_HOME_THRESHOLD = 83;
  * Currently 2 hours — see spec 32-admin-course-sync.
  */
 export const SYNC_MIN_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+/**
+ * Push notifications (spec 34) — Cloudflare Worker URL + shared secret.
+ *
+ * Empty URL disables push: app continues to work in-app-only, no error
+ * banners, no failed requests. Set after deploying the Worker (see
+ * `workers/dhamma-nepal-push/README.md`).
+ *
+ * Both values are bundled with the app. The secret is acceptable to ship
+ * inside the binary for a closed-distribution AT app — see spec 34 §9.
+ */
+export const PUSH_WORKER_URL = '';
+export const PUSH_WORKER_SECRET = '';

@@ -1,0 +1,15 @@
+# Cloudflare Worker config for the Dhamma Nepal push relay.
+# See workers/dhamma-nepal-push/README.md for first-time setup.
+
+name = "dhamma-nepal-push"
+main = "src/index.ts"
+compatibility_date = "2026-05-01"
+
+# After running `wrangler kv:namespace create dhamma_nepal`, paste the
+# returned id below to bind the KV namespace to this Worker.
+[[kv_namespaces]]
+binding = "KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Secrets (set via `wrangler secret put SHARED_SECRET`):
+#   SHARED_SECRET — the same string baked into the RN app's PUSH_WORKER_SECRET.
