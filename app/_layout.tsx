@@ -1,7 +1,7 @@
 import { applyOverrides, SUPPORTED_LANGS } from '@/i18n';
 import { translationsRepo } from '@/db/repositories';
 import React, { useEffect, useState } from 'react';
-import { AppState, View, ActivityIndicator } from 'react-native';
+import { AppState, Platform, View, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -15,6 +15,8 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ConfirmDialogProvider } from '@/components/ui/ConfirmDialog';
 import { Colors } from '@/theme/colors';
+import { SYNC_MIN_AGE_MS } from '@/config/app';
+import { registerBackgroundSync } from '@/utils/backgroundSync';
 import { getDb } from '@/db';
 import { runMigrations } from '@/db/migrate';
 import {
@@ -97,6 +99,11 @@ export default function RootLayout() {
         // settings flag, so it's a no-op on subsequent boots and on new
         // installs that never had the old keys in the first place.
         await legacyMigrate(db);
+        // Schedule OS-level background sync so courses can refresh even
+        // when the app is killed. No-op on web; native only.
+        if (Platform.OS !== 'web') {
+          await registerBackgroundSync();
+        }
       } catch (err) {
         logger.error('[boot] db init failed', err);
       } finally {
@@ -135,6 +142,17 @@ export default function RootLayout() {
     return () => sub.remove();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Heartbeat — re-sync every SYNC_MIN_AGE_MS so an app left open all day
+  // still receives fresh schedule data without needing to be backgrounded.
+  useEffect(() => {
+    if (!dbReady) return;
+    const id = setInterval(() => {
+      if (shouldAutoSync()) syncCourses();
+    }, SYNC_MIN_AGE_MS);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbReady]);
 
   const hydrated = dbReady && !authLoading && teachersLoaded && coursesLoaded && notifsLoaded;
 

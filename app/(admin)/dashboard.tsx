@@ -17,6 +17,7 @@ import { useAuthStore } from '@/store/authStore';
 import { Colors, Gradients, GradientDirection } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
+import { SyncStatusCard } from '@/components/admin/SyncStatusCard';
 import { adminApplications } from '@/data';
 
 const URGENT = [
@@ -217,6 +218,9 @@ export default function AdminDashboardScreen() {
             <Text style={s.notifChevron}>›</Text>
           </TouchableOpacity>
         </View>
+
+        {/* ─── Course Sync status card ────────────────────────────── */}
+        <SyncStatusCard />
 
         {/* ─── Translations card ──────────────────────────────────── */}
         <View style={s.notifWrap}>

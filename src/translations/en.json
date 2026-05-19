@@ -501,6 +501,14 @@
       "translations_title": "Translations",
       "translations_sub": "Export to Excel, edit, and import back to update app text in EN and NE"
     },
+    "sync": {
+      "title": "Course Sync",
+      "last_synced": "Last synced · {{relative}} · {{count}} courses",
+      "never_synced": "Never synced",
+      "last_failed": "Last sync failed · will retry automatically",
+      "hint": "Auto-syncs every 2 hours",
+      "in_flight": "Syncing now…"
+    },
     "translations": {
       "title": "Translations",
       "subtitle": "Manage app translations across English and Nepali",

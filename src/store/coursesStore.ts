@@ -20,10 +20,12 @@ import type { Course } from '@/types/course';
 import { logger } from '@/utils/logger';
 
 const LAST_SYNC_KEY = 'courses.lastSyncAt';
+const LAST_SYNC_ERROR_KEY = 'courses.lastSyncError';
 
 interface CoursesState {
   courses: Course[];
   lastSyncAt: Date | null;
+  lastSyncError: string | null;
   syncing: boolean;
   loaded: boolean;
   loadCourses: () => Promise<void>;
@@ -93,6 +95,7 @@ function scrapedToCourse(scraped: ReturnType<typeof parseSchedulePage>[number]):
 export const useCoursesStore = create<CoursesState>((set, get) => ({
   courses: [],
   lastSyncAt: null,
+  lastSyncError: null,
   syncing: false,
   loaded: false,
 
@@ -101,7 +104,8 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       const db = getDb();
       const lastSyncRaw = settingsRepo.get(db, LAST_SYNC_KEY);
       const lastSyncAt = lastSyncRaw ? new Date(lastSyncRaw) : null;
-      set({ courses: coursesRepo.list(db), lastSyncAt, loaded: true });
+      const lastSyncError = settingsRepo.get(db, LAST_SYNC_ERROR_KEY);
+      set({ courses: coursesRepo.list(db), lastSyncAt, lastSyncError, loaded: true });
     } catch (err) {
       logger.warn('[coursesStore] loadCourses failed', err);
       set({ loaded: true });
@@ -135,8 +139,14 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       }
 
       if (allScraped.length === 0) {
-        set({ syncing: false });
-        return { added: 0, error: 'No courses returned from dhamma.org' };
+        const msg = 'No courses returned from dhamma.org';
+        try {
+          settingsRepo.set(getDb(), LAST_SYNC_ERROR_KEY, msg);
+        } catch {
+          /* settings write failure is non-fatal */
+        }
+        set({ syncing: false, lastSyncError: msg });
+        return { added: 0, error: msg };
       }
 
       // Dedupe by stable ID — dhamma.org occasionally lists the same logical
@@ -150,25 +160,33 @@ export const useCoursesStore = create<CoursesState>((set, get) => ({
       const now = new Date();
       const db = getDb();
 
-      // Atomic replace: sync-upsert new rows (preserves admin-set fields
-      // like coteacher / coordinator / transport / notes) + delete any rows
-      // whose IDs aren't in the fresh set. No "empty list" window because
-      // we never truncate the table first.
+      // Sync-upsert new rows (preserves admin-set fields like coteacher /
+      // coordinator / transport / notes), then delete rows whose IDs are
+      // no longer in the fresh set. `syncUpsertMany` already runs in its
+      // own SQLite transaction — we do NOT wrap it in an outer one
+      // because native SQLite forbids nested `BEGIN TRANSACTION`. The
+      // few extra writes between the upsert and the delete are not
+      // visible to other readers (single-process app), and a sync
+      // interrupted between them is corrected on the next sync.
       const freshIds = new Set(courses.map((c) => c.id));
-      db.transaction(() => {
-        coursesRepo.syncUpsertMany(db, courses);
-        const existing = coursesRepo.list(db);
-        for (const c of existing) {
-          if (!freshIds.has(c.id)) coursesRepo.deleteById(db, c.id);
-        }
-        settingsRepo.set(db, LAST_SYNC_KEY, now.toISOString());
-      });
+      coursesRepo.syncUpsertMany(db, courses);
+      const existing = coursesRepo.list(db);
+      for (const c of existing) {
+        if (!freshIds.has(c.id)) coursesRepo.deleteById(db, c.id);
+      }
+      settingsRepo.set(db, LAST_SYNC_KEY, now.toISOString());
+      settingsRepo.set(db, LAST_SYNC_ERROR_KEY, '');
 
-      set({ courses, lastSyncAt: now, syncing: false });
+      set({ courses, lastSyncAt: now, lastSyncError: null, syncing: false });
       return { added: courses.length };
     } catch (err) {
-      set({ syncing: false });
       const message = err instanceof Error ? err.message : 'Sync failed';
+      try {
+        settingsRepo.set(getDb(), LAST_SYNC_ERROR_KEY, message);
+      } catch {
+        /* settings write failure is non-fatal */
+      }
+      set({ syncing: false, lastSyncError: message });
       logger.warn('[coursesStore] syncCourses failed', err);
       return { added: 0, error: message };
     }
