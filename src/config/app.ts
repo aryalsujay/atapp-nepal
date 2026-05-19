@@ -43,5 +43,5 @@ export const SYNC_MIN_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours
  * Both values are bundled with the app. The secret is acceptable to ship
  * inside the binary for a closed-distribution AT app — see spec 34 §9.
  */
-export const PUSH_WORKER_URL = '';
-export const PUSH_WORKER_SECRET = '';
+export const PUSH_WORKER_URL = 'https://dhamma-nepal-push.aryalsujay.workers.dev';
+export const PUSH_WORKER_SECRET = '5d4618bbffa5feeb2adbdcc069dabe2a';
