@@ -1,4 +1,48 @@
 {
+  "confirm": {
+    "apply_course": {
+      "title": "Apply to this course?",
+      "message": "You'll be added to the queue for {{course}}. Admin will review your application and notify you.",
+      "yes": "Yes, apply",
+      "no": "Cancel"
+    },
+    "accept_invite": {
+      "title": "Accept this invitation?",
+      "message": "You'll be committed to teach {{course}}. Admin will finalize the assignment.",
+      "yes": "Yes, accept",
+      "no": "Cancel"
+    },
+    "discard_changes": {
+      "title": "Discard your changes?",
+      "message": "Your unsaved edits will be lost.",
+      "yes": "Discard",
+      "no": "Keep editing"
+    },
+    "admin_approve": {
+      "title": "Approve application?",
+      "message": "{{teacher}} will be confirmed for {{course}} and notified immediately.",
+      "yes": "Approve",
+      "no": "Cancel"
+    },
+    "admin_reject": {
+      "title": "Reject application?",
+      "message": "{{teacher}} will be notified that their application was not selected.",
+      "yes": "Reject",
+      "no": "Cancel"
+    },
+    "translation_approve": {
+      "title": "Apply this translation?",
+      "message": "The app text updates immediately for all users.",
+      "yes": "Apply",
+      "no": "Cancel"
+    },
+    "apply_service": {
+      "title": "Apply for service?",
+      "message": "You'll be added to the server queue for {{course}}. Admin will review your application.",
+      "yes": "Yes, apply",
+      "no": "Cancel"
+    }
+  },
   "common": {
     "back": "Back",
     "continue": "Continue",

@@ -25,6 +25,7 @@ import { useProfileStore } from '@/store/profileStore';
 import type { Course } from '@/types';
 import { useTeachersStore } from '@/store/teachersStore';
 import { useApplicationsStore } from '@/store/applicationsStore';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { Colors } from '@/theme/colors';
 import { langLabel } from '@/utils/eligibility';
 import { enrichCoursesWithMatch } from '@/utils/matching';
@@ -44,6 +45,7 @@ export default function TeacherCourseDetail() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const confirm = useConfirm();
 
   const userId = useAuthStore((s) => s.userId) ?? '';
   const findTeacher = useTeachersStore((s) => s.findTeacher);
@@ -145,15 +147,25 @@ export default function TeacherCourseDetail() {
     { label: `🎓 ${t('courseDetail.field_type')}`, value: course.type },
   ];
 
-  const onApply = async () => {
+  const onApply = () => {
     if (!userId || submitting || isApplied) return;
-    setSubmitting(true);
-    try {
-      await submitApplication(course.id, userId);
-      setSubmitted(true);
-    } finally {
-      setSubmitting(false);
-    }
+    confirm({
+      title: t('confirm.apply_course.title'),
+      message: t('confirm.apply_course.message', {
+        course: `${course.center} — ${course.type}`,
+      }),
+      confirmText: t('confirm.apply_course.yes'),
+      cancelText: t('confirm.apply_course.no'),
+      onConfirm: async () => {
+        setSubmitting(true);
+        try {
+          await submitApplication(course.id, userId);
+          setSubmitted(true);
+        } finally {
+          setSubmitting(false);
+        }
+      },
+    });
   };
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace(Routes.teacherCourses));

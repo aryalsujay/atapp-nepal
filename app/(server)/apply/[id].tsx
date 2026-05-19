@@ -25,6 +25,7 @@ import Svg, { Path } from 'react-native-svg';
 import { Routes } from '@/routes';
 import { Colors } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { LotusHero } from '@/components/ui/HeroDecorations';
 import { SERVICE_AREAS } from '@/data/serviceAreas';
 import { serverCourses } from '@/data';
@@ -41,6 +42,7 @@ export default function ServerApplyScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const router = useRouter();
+  const confirm = useConfirm();
   const insets = useSafeAreaInsets();
 
   const numericId = Number(id);
@@ -336,7 +338,18 @@ export default function ServerApplyScreen() {
         {/* ─── Submit ─────────────────────────────────────────────── */}
         <View style={s.submitWrap}>
           {canSubmit ? (
-            <TouchableOpacity activeOpacity={0.85} onPress={() => setDone(true)}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() =>
+                confirm({
+                  title: t('confirm.apply_service.title'),
+                  message: t('confirm.apply_service.message', { course: c.center }),
+                  confirmText: t('confirm.apply_service.yes'),
+                  cancelText: t('confirm.apply_service.no'),
+                  onConfirm: () => setDone(true),
+                })
+              }
+            >
               <LinearGradient
                 colors={SUBMIT_GRAD}
                 start={{ x: 0, y: 0 }}
