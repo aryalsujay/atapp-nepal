@@ -94,6 +94,8 @@ export default function AdminLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        freezeOnBlur: true,
+        lazy: true,
         tabBarStyle: {
           height: 64,
           backgroundColor: 'rgba(255,255,255,0.97)',

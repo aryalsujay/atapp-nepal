@@ -101,6 +101,8 @@ export default function ServerLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        freezeOnBlur: true,
+        lazy: true,
         tabBarStyle: {
           height: 66,
           backgroundColor: 'rgba(255,255,255,0.97)',
