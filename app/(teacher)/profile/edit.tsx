@@ -20,7 +20,8 @@ import {
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
+import type { EventArg, NavigationAction } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -41,6 +42,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function TeacherEditProfile() {
   const { t } = useTranslation();
   const router = useRouter();
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const confirm = useConfirm();
   const toast = useToast();
@@ -70,6 +72,28 @@ export default function TeacherEditProfile() {
     setNote(profile.personalNote ?? '');
     setDirty(false);
   }, [profile]);
+
+  // Guard against accidentally leaving with unsaved edits — covers the
+  // hardware back button, iOS swipe-back gesture, and any other path
+  // that isn't our own Cancel / Save button. The Cancel button already
+  // shows the same dialog; this catches every other exit.
+  useEffect(() => {
+    const handler = (e: EventArg<'beforeRemove', true, { action: NavigationAction }>) => {
+      if (!dirty) return;
+      // Stop the navigation, ask the user, then re-dispatch if they confirm.
+      e.preventDefault();
+      confirm({
+        title: t('confirm.discard_changes.title'),
+        message: t('confirm.discard_changes.message'),
+        confirmText: t('confirm.discard_changes.yes'),
+        cancelText: t('confirm.discard_changes.no'),
+        destructive: true,
+        onConfirm: () => navigation.dispatch(e.data.action),
+      });
+    };
+    const sub = navigation.addListener('beforeRemove', handler);
+    return sub;
+  }, [navigation, dirty, confirm, t]);
 
   const emailValid = email === '' || EMAIL_RE.test(email);
   const showEmailError = emailTouched && !emailValid;
@@ -112,17 +136,9 @@ export default function TeacherEditProfile() {
   };
 
   const onCancel = () => {
-    if (!dirty) {
-      router.replace(Routes.teacherProfile);
-      return;
-    }
-    confirm({
-      title: t('editProfile.discard_title'),
-      message: t('editProfile.discard_message'),
-      confirmText: t('editProfile.discard_confirm'),
-      destructive: true,
-      onConfirm: () => router.replace(Routes.teacherProfile),
-    });
+    // The `beforeRemove` listener above intercepts the navigation when
+    // dirty and shows the discard-changes prompt; no need to gate here.
+    router.replace(Routes.teacherProfile);
   };
 
   const onSave = async () => {
