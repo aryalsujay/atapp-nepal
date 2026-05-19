@@ -159,6 +159,8 @@ export default function AdminLayout() {
       <Tabs.Screen name="server/inbox" options={{ href: null }} />
       <Tabs.Screen name="centres/index" options={{ href: null }} />
       <Tabs.Screen name="centres/[id]" options={{ href: null }} />
+      <Tabs.Screen name="directory/add" options={{ href: null }} />
+      <Tabs.Screen name="directory/[id]" options={{ href: null }} />
       <Tabs.Screen name="translations/index" options={{ href: null }} />
       <Tabs.Screen name="translations/import" options={{ href: null }} />
       <Tabs.Screen name="translations/review" options={{ href: null }} />

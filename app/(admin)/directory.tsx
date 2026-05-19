@@ -21,10 +21,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle, Path } from 'react-native-svg';
 
-import { routeTo } from '@/routes';
+import { Routes, routeTo } from '@/routes';
 import { Colors, Gradients, GradientDirection } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { adminApplications } from '@/data';
+import { useTeachersStore } from '@/store/teachersStore';
+import type { StoredTeacher } from '@/store/teachersStore';
 
 type LangFilter = 'All' | 'Nepali' | 'English' | 'Hindi' | 'German';
 const FILTERS: LangFilter[] = ['All', 'Nepali', 'English', 'Hindi', 'German'];
@@ -103,6 +105,24 @@ const TEACHERS: DirectoryTeacher[] = [
   },
 ];
 
+function toDirectoryRow(t: StoredTeacher): DirectoryTeacher {
+  const langs = Object.keys(t.languages ?? {});
+  const types =
+    (t.authorizations ?? [])
+      .map((a) => a.replace(/ Course$/, '').replace('Satipatthana Sutta', 'Satip.'))
+      .join(', ') || '—';
+  return {
+    name: t.name,
+    gender: t.gender,
+    langs: langs.length ? langs : ['—'],
+    regions: t.preferredRegions ?? [],
+    types,
+    total: t.totalCourses ?? 0,
+    avail: true,
+    flag: t.flag || '🇳🇵',
+  };
+}
+
 export default function AdminDirectoryScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -110,17 +130,41 @@ export default function AdminDirectoryScreen() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<LangFilter>('All');
 
+  const allTeachers = useTeachersStore((s) => s.allTeachers);
+  const loadTeachers = useTeachersStore((s) => s.loadTeachers);
+  React.useEffect(() => {
+    if (allTeachers.length === 0) loadTeachers();
+  }, [allTeachers.length, loadTeachers]);
+
+  const dirRows: DirectoryTeacher[] = useMemo(() => {
+    const fromStore = allTeachers
+      .filter((t) => (t.role ?? 'teacher') === 'teacher')
+      .map(toDirectoryRow);
+    // Fall back to the hardcoded sample data only when the store is empty
+    // (e.g. very first launch before any seeds have run).
+    return fromStore.length ? fromStore : TEACHERS;
+  }, [allTeachers]);
+
   const filtered = useMemo(
     () =>
-      TEACHERS.filter(
+      dirRows.filter(
         (tc) =>
           (query === '' || tc.name.toLowerCase().includes(query.toLowerCase())) &&
           (filter === 'All' || tc.langs.includes(filter)),
       ),
-    [query, filter],
+    [dirRows, query, filter],
   );
 
   const openProfile = (name: string) => {
+    // Resolve the directory row's display name back to a teacher record in
+    // the store. We match by exact name first; if nothing matches (e.g.
+    // the row came from the hardcoded sample TEACHERS list), fall back to
+    // the legacy application-review route so the screen still resolves.
+    const t = allTeachers.find((x) => x.name === name);
+    if (t) {
+      router.push(routeTo.adminTeacherDetail(t.id));
+      return;
+    }
     const match = adminApplications.find((a) => a.name === name) ?? adminApplications[0];
     router.push(routeTo.adminApplicationReview(match.id));
   };
@@ -138,11 +182,11 @@ export default function AdminDirectoryScreen() {
           <View style={s.headerTopRow}>
             <View style={{ flex: 1, paddingRight: 12 }}>
               <Text style={s.title}>{t('admin.directory.title')}</Text>
-              <Text style={s.subtitle}>138 active assistant teachers</Text>
+              <Text style={s.subtitle}>{dirRows.length} active assistant teachers</Text>
             </View>
             <TouchableOpacity
               activeOpacity={0.85}
-              onPress={() => Alert.alert(t('common.coming_soon'))}
+              onPress={() => router.push(Routes.adminDirectoryAdd)}
             >
               <LinearGradient
                 colors={Gradients.primaryCta}

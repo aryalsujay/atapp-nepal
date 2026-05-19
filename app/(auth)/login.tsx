@@ -43,6 +43,7 @@ import { FadeInView } from '@/components/ui/FadeInView';
 import { useToast } from '@/components/ui/Toast';
 import adminData from '@/data/admin.json';
 import { logger } from '@/utils/logger';
+import { verifyPassword } from '@/utils/credentials';
 
 type Role = 'teacher' | 'server' | 'admin';
 
@@ -190,7 +191,11 @@ export default function LoginScreen() {
 
       if (mode === 'server') {
         const serverUser =
-          found?.passwordHash === password && found.role === 'server' ? found : null;
+          found?.passwordHash &&
+          verifyPassword(password, found.passwordHash) &&
+          found.role === 'server'
+            ? found
+            : null;
         if (!serverUser) {
           toast.error(t('login.error_invalid_server'), t('login.error_invalid_title'));
           return;
@@ -202,7 +207,8 @@ export default function LoginScreen() {
         return;
       }
 
-      const teacher = found?.passwordHash === password ? found : null;
+      const teacher =
+        found?.passwordHash && verifyPassword(password, found.passwordHash) ? found : null;
       if (!teacher) {
         toast.error(t('login.error_invalid_teacher'), t('login.error_invalid_title'));
         return;

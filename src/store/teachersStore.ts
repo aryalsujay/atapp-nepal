@@ -49,6 +49,7 @@ interface TeachersState {
   loaded: boolean;
   loadTeachers: () => Promise<void>;
   addTeacher: (teacher: StoredTeacher) => Promise<void>;
+  deleteTeacher: (id: string) => Promise<void>;
   findTeacher: (identifier: string) => StoredTeacher | undefined;
 }
 
@@ -87,7 +88,7 @@ function toStored(t: ReturnType<typeof teachersRepo.list>[number]): StoredTeache
   };
 }
 
-export const useTeachersStore = create<TeachersState>((set) => ({
+export const useTeachersStore = create<TeachersState>((set, get) => ({
   allTeachers: [],
   loaded: false,
 
@@ -134,6 +135,15 @@ export const useTeachersStore = create<TeachersState>((set) => ({
       set({ allTeachers: all });
     } catch (err) {
       logger.warn('[teachersStore] addTeacher failed', err);
+    }
+  },
+
+  deleteTeacher: async (id) => {
+    try {
+      teachersRepo.deleteById(getDb(), id);
+      set({ allTeachers: get().allTeachers.filter((t) => t.id !== id) });
+    } catch (err) {
+      logger.warn('[teachersStore] deleteTeacher failed', err);
     }
   },
 

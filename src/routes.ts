@@ -44,6 +44,7 @@ export const Routes = {
   adminCentres: '/(admin)/centres',
   adminServerInbox: '/(admin)/server/inbox',
   adminServerBoard: '/(admin)/server/board',
+  adminDirectoryAdd: '/(admin)/directory/add',
   adminTranslations: '/(admin)/translations',
   adminTranslationsImport: '/(admin)/translations/import',
   adminTranslationsReview: '/(admin)/translations/review',
@@ -58,6 +59,7 @@ export type RoutePath = (typeof Routes)[RouteKey];
  */
 export const routeTo = {
   // Teacher
+  adminTeacherDetail: (id: string) => `/(admin)/directory/${id}` as const,
   teacherCourseDetail: (id: string | number) => `/(teacher)/courses/${id}` as const,
   teacherApplicationBrief: (id: string | number) => `/(teacher)/applications/brief/${id}` as const,
 

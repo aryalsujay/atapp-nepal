@@ -17,6 +17,9 @@ import { Colors, Gradients, GradientDirection } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { adminApplications, type AdminApplication } from '@/data';
 import { useAdminApplicationsStore } from '@/store/adminApplicationsStore';
+import { useApplicationsStore } from '@/store/applicationsStore';
+import { useTeachersStore } from '@/store/teachersStore';
+import { useCoursesStore } from '@/store/coursesStore';
 
 type Tab = 'pending' | 'approved' | 'rejected';
 const TABS: Tab[] = ['pending', 'approved', 'rejected'];
@@ -39,26 +42,117 @@ export default function AdminInboxScreen() {
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<Tab>('pending');
   const statuses = useAdminApplicationsStore((s) => s.statuses);
-  const approve = useAdminApplicationsStore((s) => s.approve);
-  const reject = useAdminApplicationsStore((s) => s.reject);
+  const approveDemo = useAdminApplicationsStore((s) => s.approve);
+  const rejectDemo = useAdminApplicationsStore((s) => s.reject);
+
+  // Live data: applications submitted in-app by real teachers via
+  // `applicationsStore.submitApplication`. Join with the teachers + courses
+  // stores so we can render the same AdminApplication-shaped row as the
+  // hardcoded demo data.
+  const liveApps = useApplicationsStore((s) => s.applications);
+  const loadAllApplications = useApplicationsStore((s) => s.loadAllApplications);
+  const updateStatus = useApplicationsStore((s) => s.updateStatus);
+  const allTeachers = useTeachersStore((s) => s.allTeachers);
+  const courses = useCoursesStore((s) => s.courses);
+
+  React.useEffect(() => {
+    loadAllApplications();
+  }, [loadAllApplications]);
+
+  // Convert each live application into the AdminApplication shape so the
+  // existing card renderer works unchanged. We tag live rows with a
+  // boolean `__live` and pass it on through the AdminApplication
+  // structure via a parallel Map so the action handlers know which path
+  // (DB vs in-memory demo) to use.
+  const { liveRows, liveIdSet } = useMemo(() => {
+    const rows: AdminApplication[] = [];
+    const ids = new Set<number>();
+    for (const a of liveApps) {
+      const teacher = allTeachers.find((t) => t.id === a.teacherId);
+      const course = courses.find((c) => c.id === a.courseId);
+      if (!teacher || !course) continue;
+      const courseLabel = `${course.center} — ${course.type}${course.dates ? `, ${course.dates}` : ''}`;
+      const langs = Object.entries(teacher.languages ?? {})
+        .filter(([, lvl]) => lvl === 'primary' || lvl === 'secondary')
+        .map(([name]) => name);
+      rows.push({
+        id: a.id,
+        name: teacher.name,
+        gender: teacher.gender,
+        course: courseLabel,
+        applied: a.appliedDate ?? '—',
+        source: 'app',
+        statusBefore: '—',
+        match: 75,
+        langs: langs.length ? langs : ['—'],
+        langMatch: langs[0] ?? '—',
+        regions: teacher.preferredRegions ?? [],
+        recentCourses: '',
+        lastCourse: '',
+        applicationCount: teacher.totalCourses ?? 0,
+        urgent: false,
+        eligibility: 'OK',
+        courses: teacher.totalCourses ?? 0,
+      } as unknown as AdminApplication);
+      ids.add(a.id);
+    }
+    return { liveRows: rows, liveIdSet: ids };
+  }, [liveApps, allTeachers, courses]);
+
+  // Merge: live rows first (so admin sees them at the top), then demo rows
+  // whose id doesn't collide with any live id. Demo rows continue to use
+  // adminApplicationsStore for status; live rows use the DB-backed status
+  // on the application row itself.
+  const merged = useMemo<{ row: AdminApplication; live: boolean; status: Tab }[]>(() => {
+    const liveStatuses = new Map<number, Tab>();
+    for (const a of liveApps) {
+      const st =
+        a.status === 'approved' ? 'approved' : a.status === 'rejected' ? 'rejected' : 'pending';
+      liveStatuses.set(a.id, st);
+    }
+    const out: { row: AdminApplication; live: boolean; status: Tab }[] = [];
+    for (const row of liveRows)
+      out.push({ row, live: true, status: liveStatuses.get(row.id) ?? 'pending' });
+    for (const row of adminApplications) {
+      if (liveIdSet.has(row.id)) continue;
+      out.push({ row, live: false, status: (statuses[row.id] ?? 'pending') as Tab });
+    }
+    return out;
+  }, [liveRows, liveIdSet, liveApps, statuses]);
 
   const filtered: AdminApplication[] = useMemo(
-    () => adminApplications.filter((a) => (statuses[a.id] ?? 'pending') === tab),
-    [tab, statuses],
+    () => merged.filter((m) => m.status === tab).map((m) => m.row),
+    [merged, tab],
   );
+
+  const liveMap = useMemo(() => new Map(merged.map((m) => [m.row.id, m.live])), [merged]);
+
+  const approve = (id: number) => {
+    if (liveMap.get(id)) {
+      updateStatus(id, 'approved');
+    } else {
+      approveDemo(id);
+    }
+  };
+  const reject = (id: number) => {
+    if (liveMap.get(id)) {
+      updateStatus(id, 'rejected');
+    } else {
+      rejectDemo(id);
+    }
+  };
 
   const counts = useMemo(() => {
     let pending = 0;
     let approved = 0;
     let rejected = 0;
-    for (const a of adminApplications) {
-      const st = statuses[a.id] ?? 'pending';
-      if (st === 'approved') approved += 1;
-      else if (st === 'rejected') rejected += 1;
+    for (const m of merged) {
+      if (m.status === 'approved') approved += 1;
+      else if (m.status === 'rejected') rejected += 1;
       else pending += 1;
     }
     return { pending, approved, rejected };
-  }, [statuses]);
+  }, [merged]);
 
   return (
     <View style={[s.flex, { backgroundColor: Colors.cr }]}>
