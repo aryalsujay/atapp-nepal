@@ -94,10 +94,20 @@ export default function TeacherNotifications() {
   const unread = notifs.filter((n) => !n.read).length;
 
   const openNotif = (n: Notification) => {
+    if (!n.read) markRead(n.id);
+
+    // Deep-link non-invite notifications to the relevant course-detail
+    // screen so the teacher sees the live application status, dates,
+    // travel info, etc. Invites stay inline because they have an
+    // accept / decline action that lives in this screen.
+    if (n.type !== 'invite' && n.courseId) {
+      router.push(routeTo.teacherCourseDetail(n.courseId));
+      return;
+    }
+
     setSelected(n);
     setRejecting(false);
     setRejectReason('');
-    if (!n.read) markRead(n.id);
   };
 
   const closeDetail = () => {
