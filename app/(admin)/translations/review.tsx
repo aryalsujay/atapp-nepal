@@ -17,6 +17,7 @@ import { Colors, Gradients, GradientDirection } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { Shadows } from '@/theme/shadows';
 import { useAuthStore } from '@/store/authStore';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { useTranslationsStore } from '@/store/translationsStore';
 import { readLive, type Lang } from '@/utils/i18nExport';
 import { getDb } from '@/db';
@@ -34,6 +35,17 @@ export default function AdminTranslationsReview() {
   const loadSuggestions = useTranslationsStore((s) => s.loadSuggestions);
   const approveSuggestion = useTranslationsStore((s) => s.approveSuggestion);
   const rejectSuggestion = useTranslationsStore((s) => s.rejectSuggestion);
+  const confirm = useConfirm();
+
+  const promptApprove = (key: string, lang: 'en' | 'ne') => {
+    confirm({
+      title: t('confirm.translation_approve.title'),
+      message: t('confirm.translation_approve.message'),
+      confirmText: t('confirm.translation_approve.yes'),
+      cancelText: t('confirm.translation_approve.no'),
+      onConfirm: () => approveSuggestion(key, lang, adminId),
+    });
+  };
 
   const [filter, setFilter] = useState<LangFilter>('all');
 
@@ -83,7 +95,7 @@ export default function AdminTranslationsReview() {
           <SuggestionCard
             item={item}
             liveValue={live[item.lang][item.key] ?? ''}
-            onApprove={() => approveSuggestion(item.key, item.lang, adminId)}
+            onApprove={() => promptApprove(item.key, item.lang)}
             onReject={() => rejectSuggestion(item.key, item.lang)}
             approveLabel={t('admin.translations.approve')}
             rejectLabel={t('admin.translations.reject')}

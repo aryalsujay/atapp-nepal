@@ -22,6 +22,7 @@ import { useTeachersStore } from '@/store/teachersStore';
 import { useCoursesStore } from '@/store/coursesStore';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationsStore } from '@/store/notificationsStore';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 
 type Tab = 'pending' | 'approved' | 'rejected';
 const TABS: Tab[] = ['pending', 'approved', 'rejected'];
@@ -58,6 +59,7 @@ export default function AdminInboxScreen() {
   const courses = useCoursesStore((s) => s.courses);
   const userId = useAuthStore((s) => s.userId) ?? '';
   const unreadCount = useNotificationsStore((s) => s.getUnreadCount(userId));
+  const confirm = useConfirm();
   const loadNotifications = useNotificationsStore((s) => s.loadNotifications);
   React.useEffect(() => {
     loadNotifications();
@@ -135,19 +137,40 @@ export default function AdminInboxScreen() {
 
   const liveMap = useMemo(() => new Map(merged.map((m) => [m.row.id, m.live])), [merged]);
 
+  const rowById = useMemo(() => new Map(merged.map((m) => [m.row.id, m.row])), [merged]);
+
   const approve = (id: number) => {
-    if (liveMap.get(id)) {
-      updateStatus(id, 'approved');
-    } else {
-      approveDemo(id);
-    }
+    const row = rowById.get(id);
+    confirm({
+      title: t('confirm.admin_approve.title'),
+      message: t('confirm.admin_approve.message', {
+        teacher: row?.name ?? '',
+        course: row?.course ?? '',
+      }),
+      confirmText: t('confirm.admin_approve.yes'),
+      cancelText: t('confirm.admin_approve.no'),
+      onConfirm: () => {
+        if (liveMap.get(id)) updateStatus(id, 'approved');
+        else approveDemo(id);
+      },
+    });
   };
   const reject = (id: number) => {
-    if (liveMap.get(id)) {
-      updateStatus(id, 'rejected');
-    } else {
-      rejectDemo(id);
-    }
+    const row = rowById.get(id);
+    confirm({
+      title: t('confirm.admin_reject.title'),
+      message: t('confirm.admin_reject.message', {
+        teacher: row?.name ?? '',
+        course: row?.course ?? '',
+      }),
+      confirmText: t('confirm.admin_reject.yes'),
+      cancelText: t('confirm.admin_reject.no'),
+      destructive: true,
+      onConfirm: () => {
+        if (liveMap.get(id)) updateStatus(id, 'rejected');
+        else rejectDemo(id);
+      },
+    });
   };
 
   const counts = useMemo(() => {

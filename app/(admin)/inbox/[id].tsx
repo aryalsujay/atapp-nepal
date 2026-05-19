@@ -26,6 +26,7 @@ import { FontFamily } from '@/theme/typography';
 import { LotusHero } from '@/components/ui/HeroDecorations';
 import { adminApplications, type AdminApplication } from '@/data';
 import { useAdminApplicationsStore } from '@/store/adminApplicationsStore';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { useApplicationsStore } from '@/store/applicationsStore';
 import { useTeachersStore } from '@/store/teachersStore';
 import { useCoursesStore } from '@/store/coursesStore';
@@ -92,8 +93,34 @@ export default function AdminReviewScreen() {
   const approveDemo = useAdminApplicationsStore((s) => s.approve);
   const rejectDemo = useAdminApplicationsStore((s) => s.reject);
   const statusFor = useAdminApplicationsStore((s) => s.statusFor);
-  const approve = (id: number) => (isLive ? updateStatus(id, 'approved') : approveDemo(id));
-  const reject = (id: number) => (isLive ? updateStatus(id, 'rejected') : rejectDemo(id));
+  const confirm = useConfirm();
+  const approve = (id: number) => {
+    confirm({
+      title: t('confirm.admin_approve.title'),
+      message: t('confirm.admin_approve.message', { teacher: a.name, course: a.course }),
+      confirmText: t('confirm.admin_approve.yes'),
+      cancelText: t('confirm.admin_approve.no'),
+      onConfirm: () => {
+        if (isLive) updateStatus(id, 'approved');
+        else approveDemo(id);
+        setDec('approved');
+      },
+    });
+  };
+  const reject = (id: number) => {
+    confirm({
+      title: t('confirm.admin_reject.title'),
+      message: t('confirm.admin_reject.message', { teacher: a.name, course: a.course }),
+      confirmText: t('confirm.admin_reject.yes'),
+      cancelText: t('confirm.admin_reject.no'),
+      destructive: true,
+      onConfirm: () => {
+        if (isLive) updateStatus(id, 'rejected');
+        else rejectDemo(id);
+        setDec('rejected');
+      },
+    });
+  };
   const existingStatus = isLive
     ? liveApp!.status === 'approved'
       ? 'approved'
@@ -271,13 +298,7 @@ export default function AdminReviewScreen() {
         {/* ─── Decision area ────────────────────────────────────── */}
         {dec === null ? (
           <View style={s.decisionWrap}>
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() => {
-                approve(a.id);
-                setDec('approved');
-              }}
-            >
+            <TouchableOpacity activeOpacity={0.85} onPress={() => approve(a.id)}>
               <LinearGradient
                 colors={Gradients.forestCta}
                 start={GradientDirection.button.start}
@@ -287,14 +308,7 @@ export default function AdminReviewScreen() {
                 <Text style={s.approveBtnText}>{t('admin.review.approve_btn')}</Text>
               </LinearGradient>
             </TouchableOpacity>
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() => {
-                reject(a.id);
-                setDec('rejected');
-              }}
-              style={s.rejectBtn}
-            >
+            <TouchableOpacity activeOpacity={0.85} onPress={() => reject(a.id)} style={s.rejectBtn}>
               <Text style={s.rejectBtnText}>{t('admin.review.reject_btn')}</Text>
             </TouchableOpacity>
           </View>

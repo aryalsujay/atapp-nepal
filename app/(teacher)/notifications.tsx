@@ -32,6 +32,7 @@ import { useCoursesStore } from '@/store/coursesStore';
 import { useNotificationsStore, formatNotifTime } from '@/store/notificationsStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useToast } from '@/components/ui/Toast';
+import { useConfirm } from '@/components/ui/ConfirmDialog';
 import { Colors } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { Shadows } from '@/theme/shadows';
@@ -76,6 +77,7 @@ export default function TeacherNotifications() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const confirm = useConfirm();
 
   const userId = useAuthStore((s) => s.userId) ?? '';
   const getForUser = useNotificationsStore((s) => s.getForUser);
@@ -116,10 +118,18 @@ export default function TeacherNotifications() {
     setRejectReason('');
   };
 
-  const onAccept = async (n: Notification) => {
-    await respondToInvite(n.id, 'accepted');
-    closeDetail();
-    toast.success(t('notifications.toast_accepted'));
+  const onAccept = (n: Notification) => {
+    confirm({
+      title: t('confirm.accept_invite.title'),
+      message: t('confirm.accept_invite.message', { course: n.course }),
+      confirmText: t('confirm.accept_invite.yes'),
+      cancelText: t('confirm.accept_invite.no'),
+      onConfirm: async () => {
+        await respondToInvite(n.id, 'accepted');
+        closeDetail();
+        toast.success(t('notifications.toast_accepted'));
+      },
+    });
   };
 
   const onConfirmDecline = async (n: Notification) => {
