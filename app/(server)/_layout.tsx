@@ -37,7 +37,7 @@ function BellTab({ focused }: TabIconProps) {
       <BellIcon size={22} active={focused} accentColor={SV_ACCENT} />
       {unread > 0 && (
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{unread}</Text>
+          <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
         </View>
       )}
     </View>

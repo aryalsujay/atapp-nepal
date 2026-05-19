@@ -1,7 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { View, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Colors } from '@/theme/colors';
+import { FontFamily } from '@/theme/typography';
 import { HomeIcon, ListIcon, InboxIcon, PersonIcon, BellIcon } from '@/components/ui/TabIcons';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationsStore } from '@/store/notificationsStore';
@@ -33,7 +34,11 @@ function BellTab({ focused }: TabIconProps) {
   return (
     <View style={[styles.icon, focused && { backgroundColor: Colors.sfl }]}>
       <BellIcon size={22} active={focused} accentColor={Colors.sf} />
-      {unread > 0 && <View style={styles.unreadDot} />}
+      {unread > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -46,16 +51,26 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 12,
   },
-  unreadDot: {
+  badge: {
     position: 'absolute',
-    top: 4,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: 2,
+    right: 4,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
     backgroundColor: Colors.ur,
     borderWidth: 1.5,
     borderColor: Colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: Colors.white,
+    fontSize: 10,
+    fontWeight: '800',
+    fontFamily: FontFamily.sansExtraBold,
+    lineHeight: 12,
   },
 });
 

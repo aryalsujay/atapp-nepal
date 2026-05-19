@@ -2,12 +2,13 @@ import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { Routes, routeTo } from '@/routes';
 import { useAuthStore } from '@/store/authStore';
+import { useNotificationsStore } from '@/store/notificationsStore';
 import { View, ActivityIndicator } from 'react-native';
 import { Colors } from '@/theme/colors';
 
 export default function Index() {
   const router = useRouter();
-  const { role, isOnboarded, isLoading } = useAuthStore();
+  const { role, userId, isOnboarded, isLoading } = useAuthStore();
 
   useEffect(() => {
     if (isLoading) return;
@@ -22,8 +23,26 @@ export default function Index() {
       return;
     }
 
+    // Land non-admin users on their notifications tab when they have
+    // unread items so non-tech-savvy users can't miss approvals,
+    // rejections, or invites. Admins still land on the dashboard since
+    // they have the bell badge at the top of every screen.
+    const checkUnreadAndRoute = async (
+      userIdLocal: string,
+      notifRoute: string,
+      defaultRoute: string,
+    ) => {
+      try {
+        await useNotificationsStore.getState().loadNotifications();
+        const unread = useNotificationsStore.getState().getUnreadCount(userIdLocal);
+        router.replace(unread > 0 ? notifRoute : defaultRoute);
+      } catch {
+        router.replace(defaultRoute);
+      }
+    };
+
     if (role === 'teacher') {
-      router.replace(Routes.teacherHome);
+      checkUnreadAndRoute(userId ?? '', Routes.teacherNotifications, Routes.teacherHome);
       return;
     }
 
@@ -36,12 +55,12 @@ export default function Index() {
       if (!isOnboarded) {
         router.replace(Routes.serverOnboarding);
       } else {
-        router.replace(Routes.serverHome);
+        checkUnreadAndRoute(userId ?? '', Routes.serverNotifications, Routes.serverHome);
       }
       return;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [role, isOnboarded, isLoading]);
+  }, [role, userId, isOnboarded, isLoading]);
 
   return (
     <View
