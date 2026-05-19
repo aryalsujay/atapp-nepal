@@ -24,8 +24,11 @@ import { Routes } from '@/routes';
 import { Colors, Gradients, GradientDirection } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { LotusHero } from '@/components/ui/HeroDecorations';
-import { adminApplications } from '@/data';
+import { adminApplications, type AdminApplication } from '@/data';
 import { useAdminApplicationsStore } from '@/store/adminApplicationsStore';
+import { useApplicationsStore } from '@/store/applicationsStore';
+import { useTeachersStore } from '@/store/teachersStore';
+import { useCoursesStore } from '@/store/coursesStore';
 
 type Decision = 'approved' | 'rejected' | null;
 
@@ -38,11 +41,66 @@ export default function AdminReviewScreen() {
   const insets = useSafeAreaInsets();
 
   const numericId = Number(id);
-  const a = adminApplications.find((x) => x.id === numericId) ?? adminApplications[0];
-  const approve = useAdminApplicationsStore((s) => s.approve);
-  const reject = useAdminApplicationsStore((s) => s.reject);
+
+  // Live application path — populated by `applicationsStore.submitApplication`
+  // (real teacher submitting in-app). If this id resolves to a live row,
+  // synthesize an AdminApplication-shaped view object and route approve /
+  // reject through the DB-backed `updateStatus` instead of the in-memory
+  // demo store.
+  const liveApps = useApplicationsStore((s) => s.applications);
+  const loadAllApplications = useApplicationsStore((s) => s.loadAllApplications);
+  const updateStatus = useApplicationsStore((s) => s.updateStatus);
+  const allTeachers = useTeachersStore((s) => s.allTeachers);
+  const courses = useCoursesStore((s) => s.courses);
+  React.useEffect(() => {
+    loadAllApplications();
+  }, [loadAllApplications]);
+
+  const liveApp = liveApps.find((x) => x.id === numericId);
+  const liveTeacher = liveApp ? allTeachers.find((t) => t.id === liveApp.teacherId) : null;
+  const liveCourse = liveApp ? courses.find((c) => c.id === liveApp.courseId) : null;
+  const isLive = !!(liveApp && liveTeacher);
+
+  const demo = adminApplications.find((x) => x.id === numericId) ?? adminApplications[0];
+
+  const a: AdminApplication = isLive
+    ? ({
+        id: liveApp!.id,
+        name: liveTeacher!.name,
+        gender: liveTeacher!.gender,
+        course: liveCourse
+          ? `${liveCourse.center} — ${liveCourse.type}${liveCourse.dates ? `, ${liveCourse.dates}` : ''}`
+          : `Course #${liveApp!.courseId}`,
+        applied: liveApp!.appliedDate ?? '—',
+        source: 'app',
+        statusBefore: '—',
+        match: 75,
+        langs: Object.keys(liveTeacher!.languages ?? {}).length
+          ? Object.keys(liveTeacher!.languages ?? {})
+          : ['—'],
+        langMatch: Object.keys(liveTeacher!.languages ?? {})[0] ?? '—',
+        regions: liveTeacher!.preferredRegions ?? [],
+        recentCourses: '',
+        lastCourse: '',
+        applicationCount: liveTeacher!.totalCourses ?? 0,
+        urgent: false,
+        eligibility: 'OK',
+        courses: liveTeacher!.totalCourses ?? 0,
+      } as unknown as AdminApplication)
+    : demo;
+
+  const approveDemo = useAdminApplicationsStore((s) => s.approve);
+  const rejectDemo = useAdminApplicationsStore((s) => s.reject);
   const statusFor = useAdminApplicationsStore((s) => s.statusFor);
-  const existingStatus = statusFor(a.id);
+  const approve = (id: number) => (isLive ? updateStatus(id, 'approved') : approveDemo(id));
+  const reject = (id: number) => (isLive ? updateStatus(id, 'rejected') : rejectDemo(id));
+  const existingStatus = isLive
+    ? liveApp!.status === 'approved'
+      ? 'approved'
+      : liveApp!.status === 'rejected'
+        ? 'rejected'
+        : 'pending'
+    : statusFor(a.id);
   const [dec, setDec] = useState<Decision>(existingStatus !== 'pending' ? existingStatus : null);
 
   const checks = [

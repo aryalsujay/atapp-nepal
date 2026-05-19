@@ -15,9 +15,11 @@ import {
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import { routeTo } from '@/routes';
 import { Colors, Gradients, GradientDirection } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { useAuthStore } from '@/store/authStore';
@@ -64,6 +66,7 @@ function typeKey(t: NotificationType): NotifType {
 export default function AdminNotificationsScreen() {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const lang = i18n.language;
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
@@ -87,10 +90,19 @@ export default function AdminNotificationsScreen() {
     [userId, getForUser, useNotificationsStore.getState().notifications.length],
   );
 
-  const toggleExpand = (id: number) => {
-    const willExpand = expandedId !== id;
-    setExpandedId(willExpand ? id : null);
-    if (willExpand) markRead(id);
+  const onTap = (n: ReturnType<typeof getForUser>[number]) => {
+    // Always mark read on tap.
+    if (!n.read) markRead(n.id);
+    // Deep-link for actionable notifications. `new_application` and
+    // `withdrawal_request` both belong to a specific application — route
+    // straight to the review screen where admin can approve / reject /
+    // request clarification.
+    if ((n.type === 'new_application' || n.type === 'withdrawal_request') && n.applicationId) {
+      router.push(routeTo.adminApplicationReview(n.applicationId));
+      return;
+    }
+    // Otherwise expand the body inline.
+    setExpandedId(expandedId === n.id ? null : n.id);
   };
 
   return (
@@ -125,7 +137,7 @@ export default function AdminNotificationsScreen() {
             <TouchableOpacity
               key={n.id}
               activeOpacity={0.85}
-              onPress={() => toggleExpand(n.id)}
+              onPress={() => onTap(n)}
               style={[
                 s.card,
                 {

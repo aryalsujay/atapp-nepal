@@ -117,6 +117,7 @@ function emitNotification(partial: {
   targetUserId: string;
   type: import('@/types').NotificationType;
   courseId?: number;
+  applicationId?: number;
   center: string;
   course: string;
   subjectEn: string;
@@ -178,6 +179,7 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
       targetUserId: adminData.id,
       type: 'new_application',
       courseId,
+      applicationId: created.id,
       center,
       course,
       subjectEn: `New application — ${teacherName}`,
@@ -212,6 +214,7 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
       targetUserId: adminData.id,
       type: 'withdrawal_request',
       courseId: target.courseId,
+      applicationId,
       center,
       course,
       subjectEn: `Withdrawal request — ${teacherName}`,
@@ -260,6 +263,7 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
         targetUserId: target.teacherId,
         type: approved ? 'approval' : 'rejection',
         courseId: target.courseId,
+        applicationId,
         center,
         course,
         subjectEn: approved ? `You have been assigned to teach` : `Application update — ${center}`,
