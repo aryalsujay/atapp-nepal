@@ -18,6 +18,7 @@ import { useAuthStore } from '../authStore';
 import { useApplicationsStore } from '../applicationsStore';
 import { useHallsStore } from '../hallsStore';
 import { useCoursesStore } from '../coursesStore';
+import { useNotificationsStore } from '../notificationsStore';
 
 function bootDb() {
   resetDbForTests();
@@ -158,6 +159,112 @@ describe('applicationsStore', () => {
     await useApplicationsStore.getState().updateStatus(created.id, 'approved');
     const after = useApplicationsStore.getState().applications.find((a) => a.id === created.id);
     expect(after?.status).toBe('approved');
+  });
+
+  it('emits a notification to admin when a teacher applies', async () => {
+    await useNotificationsStore.getState().loadNotifications();
+    const initial = useNotificationsStore.getState().getUnreadCount('admin-001');
+
+    await useApplicationsStore.getState().submitApplication(101, 'teacher-001');
+
+    const after = useNotificationsStore.getState().getUnreadCount('admin-001');
+    expect(after).toBe(initial + 1);
+
+    const newest = useNotificationsStore.getState().notifications[0];
+    expect(newest.targetUserId).toBe('admin-001');
+    expect(newest.type).toBe('new_application');
+    expect(newest.read).toBe(false);
+  });
+
+  it('emits an approval notification to the teacher when admin approves', async () => {
+    const teacherId = 'teacher-001';
+    const created = await useApplicationsStore.getState().submitApplication(102, teacherId);
+    const beforeTeacher = useNotificationsStore.getState().getUnreadCount(teacherId);
+
+    await useApplicationsStore.getState().updateStatus(created.id, 'approved');
+
+    const afterTeacher = useNotificationsStore.getState().getUnreadCount(teacherId);
+    expect(afterTeacher).toBe(beforeTeacher + 1);
+
+    const matchingApproval = useNotificationsStore
+      .getState()
+      .notifications.find(
+        (n) => n.targetUserId === teacherId && n.type === 'approval' && n.courseId === 102,
+      );
+    expect(matchingApproval).toBeDefined();
+  });
+
+  it('full end-to-end: create teacher -> apply -> admin bell -> approve -> teacher bell', async () => {
+    // 1. Admin creates a brand-new teacher (mirrors the Add Teacher flow).
+    const customTeacherId = 't-tt20m';
+    await useTeachersStore.getState().addTeacher({
+      id: customTeacherId,
+      name: 'tt20.m Test',
+      gender: 'M',
+      email: 'tt20m@dhamma.org',
+      phone: '+977 9812345678',
+      inviteCode: '',
+      passwordHash: 'demo',
+      region: 'Nepal',
+      flag: '🇳🇵',
+      authorizedSince: 2024,
+      totalCourses: 0,
+      centersServed: 0,
+      coursesThisYear: 0,
+      authorizations: ['10-Day'],
+      languages: { Nepali: 'primary' },
+      preferredRegions: ['Kathmandu Valley'],
+      availableMonths: [],
+      festivalMonths: [],
+      personalNote: '',
+      teachingHistory: [],
+      role: 'teacher',
+      isOnboarded: true,
+    });
+
+    // 2. The new teacher logs in. setAuth flips userId to their id.
+    await useAuthStore.getState().setAuth('teacher', customTeacherId, true);
+    expect(useAuthStore.getState().userId).toBe(customTeacherId);
+
+    // 3. Teacher applies to a course.
+    await useNotificationsStore.getState().loadNotifications();
+    const adminUnreadBefore = useNotificationsStore.getState().getUnreadCount('admin-001');
+    const created = await useApplicationsStore.getState().submitApplication(201, customTeacherId);
+    expect(created.status).toBe('pending');
+
+    // 4. Admin's notification queue picked it up — bell should show.
+    const adminUnreadAfter = useNotificationsStore.getState().getUnreadCount('admin-001');
+    expect(adminUnreadAfter).toBe(adminUnreadBefore + 1);
+    const adminNotif = useNotificationsStore
+      .getState()
+      .notifications.find(
+        (n) => n.targetUserId === 'admin-001' && n.type === 'new_application' && n.courseId === 201,
+      );
+    expect(adminNotif).toBeDefined();
+    expect(adminNotif?.subjectEn).toContain('tt20.m Test');
+
+    // 5. Switch auth to admin.
+    await useAuthStore.getState().setAuth('admin', 'admin-001', true);
+    expect(useAuthStore.getState().userId).toBe('admin-001');
+    expect(useNotificationsStore.getState().getUnreadCount('admin-001')).toBeGreaterThan(0);
+
+    // 6. Admin approves.
+    const teacherUnreadBefore = useNotificationsStore.getState().getUnreadCount(customTeacherId);
+    await useApplicationsStore.getState().updateStatus(created.id, 'approved');
+
+    // 7. Teacher's queue gets the approval notification.
+    const teacherUnreadAfter = useNotificationsStore.getState().getUnreadCount(customTeacherId);
+    expect(teacherUnreadAfter).toBe(teacherUnreadBefore + 1);
+    const teacherNotif = useNotificationsStore
+      .getState()
+      .notifications.find(
+        (n) => n.targetUserId === customTeacherId && n.type === 'approval' && n.courseId === 201,
+      );
+    expect(teacherNotif).toBeDefined();
+
+    // 8. Switch back to teacher — their bell should now show.
+    await useAuthStore.getState().setAuth('teacher', customTeacherId, true);
+    expect(useNotificationsStore.getState().getUnreadCount(customTeacherId)).toBeGreaterThan(0);
   });
 });
 

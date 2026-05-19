@@ -200,10 +200,10 @@ export default function LoginScreen() {
           toast.error(t('login.error_invalid_server'), t('login.error_invalid_title'));
           return;
         }
-        // Demo mode: always route through onboarding so the flow is visible.
-        await setAuth('server', serverUser.id, false);
+        // Respect server's onboarding flag too; re-logins skip onboarding.
+        await setAuth('server', serverUser.id, serverUser.isOnboarded);
         await persistCreds();
-        router.replace(Routes.serverOnboarding);
+        router.replace(serverUser.isOnboarded ? Routes.serverHome : Routes.serverOnboarding);
         return;
       }
 
@@ -213,10 +213,16 @@ export default function LoginScreen() {
         toast.error(t('login.error_invalid_teacher'), t('login.error_invalid_title'));
         return;
       }
-      // Demo mode: always route through onboarding so the flow is visible.
-      await setAuth('teacher', teacher.id, false);
+      // Respect the teacher's existing `isOnboarded` flag — only route
+      // through onboarding for first-time logins. Re-logins go straight
+      // to the home screen so the test-teacher flow doesn't loop.
+      await setAuth('teacher', teacher.id, teacher.isOnboarded);
       await persistCreds();
-      router.replace(routeTo.onboardingTeacher(0));
+      if (teacher.isOnboarded) {
+        router.replace(Routes.teacherHome);
+      } else {
+        router.replace(routeTo.onboardingTeacher(0));
+      }
     } finally {
       setLoading(false);
     }

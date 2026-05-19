@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { Colors } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { HomeIcon, LotusIcon, InboxIcon, BellIcon, PersonIcon } from '@/components/ui/TabIcons';
+import { useAuthStore } from '@/store/authStore';
+import { useNotificationsStore } from '@/store/notificationsStore';
 
 const SV_ACCENT = '#9B6B14';
 const SV_INACTIVE = '#AFA090';
@@ -28,7 +30,8 @@ const InboxTab = makeTabIcon(InboxIcon);
 const PersonTab = makeTabIcon(PersonIcon);
 
 function BellTab({ focused }: TabIconProps) {
-  const unread = 0;
+  const userId = useAuthStore((s) => s.userId) ?? '';
+  const unread = useNotificationsStore((s) => s.getUnreadCount(userId));
   return (
     <View style={styles.icon}>
       <BellIcon size={22} active={focused} accentColor={SV_ACCENT} />

@@ -20,6 +20,8 @@ import { useAdminApplicationsStore } from '@/store/adminApplicationsStore';
 import { useApplicationsStore } from '@/store/applicationsStore';
 import { useTeachersStore } from '@/store/teachersStore';
 import { useCoursesStore } from '@/store/coursesStore';
+import { useAuthStore } from '@/store/authStore';
+import { useNotificationsStore } from '@/store/notificationsStore';
 
 type Tab = 'pending' | 'approved' | 'rejected';
 const TABS: Tab[] = ['pending', 'approved', 'rejected'];
@@ -54,6 +56,12 @@ export default function AdminInboxScreen() {
   const updateStatus = useApplicationsStore((s) => s.updateStatus);
   const allTeachers = useTeachersStore((s) => s.allTeachers);
   const courses = useCoursesStore((s) => s.courses);
+  const userId = useAuthStore((s) => s.userId) ?? '';
+  const unreadCount = useNotificationsStore((s) => s.getUnreadCount(userId));
+  const loadNotifications = useNotificationsStore((s) => s.loadNotifications);
+  React.useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications, userId]);
 
   React.useEffect(() => {
     loadAllApplications();
@@ -175,7 +183,7 @@ export default function AdminInboxScreen() {
               hitSlop={8}
             >
               <BellSvg />
-              <View style={s.bellDot} />
+              {unreadCount > 0 && <View style={s.bellDot} />}
             </TouchableOpacity>
           </View>
 

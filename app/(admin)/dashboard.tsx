@@ -14,6 +14,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { Routes, routeTo } from '@/routes';
 import { useAuthStore } from '@/store/authStore';
+import { useNotificationsStore } from '@/store/notificationsStore';
 import { Colors, Gradients, GradientDirection } from '@/theme/colors';
 import { FontFamily } from '@/theme/typography';
 import { LotusHero, MountainSilhouette } from '@/components/ui/HeroDecorations';
@@ -56,6 +57,12 @@ export default function AdminDashboardScreen() {
   const insets = useSafeAreaInsets();
   const lang = i18n.language;
   const signOut = useAuthStore((s) => s.signOut);
+  const userId = useAuthStore((s) => s.userId) ?? '';
+  const unreadCount = useNotificationsStore((s) => s.getUnreadCount(userId));
+  const loadNotifications = useNotificationsStore((s) => s.loadNotifications);
+  React.useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications, userId]);
   const [showCoTeacher, setShowCoTeacher] = useState(true);
 
   const recent = adminApplications.slice(0, 2);
@@ -104,7 +111,7 @@ export default function AdminDashboardScreen() {
                   strokeLinecap="round"
                 />
               </Svg>
-              <View style={s.bellDot} />
+              {unreadCount > 0 && <View style={s.bellDot} />}
             </TouchableOpacity>
           </View>
 

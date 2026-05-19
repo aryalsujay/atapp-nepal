@@ -11,10 +11,11 @@
 import { create } from 'zustand';
 
 import { getDb } from '@/db';
-import { applicationsRepo } from '@/db/repositories';
+import { applicationsRepo, coursesRepo, teachersRepo } from '@/db/repositories';
 import type { Application } from '@/types';
 import { logger } from '@/utils/logger';
 import { useNotificationsStore } from './notificationsStore';
+import adminData from '@/data/admin.json';
 
 interface ApplicationsState {
   applications: Application[];
@@ -84,6 +85,51 @@ function recomputeQueue(courseId: number): void {
   });
 }
 
+/**
+ * Look up the centre + course-label strings we need to populate a
+ * Notification row. Tolerant of missing data — returns sensible
+ * fallbacks so a notification still gets emitted even if a sync stripped
+ * the course mid-flight.
+ */
+function describeCourse(courseId: number): { center: string; course: string } {
+  try {
+    const c = coursesRepo.findById(getDb(), courseId);
+    if (!c) return { center: 'Centre', course: `Course #${courseId}` };
+    return {
+      center: c.center,
+      course: `${c.center} — ${c.type}${c.dates ? `, ${c.dates}` : ''}`,
+    };
+  } catch {
+    return { center: 'Centre', course: `Course #${courseId}` };
+  }
+}
+
+function describeTeacher(teacherId: string): { name: string } {
+  try {
+    const t = teachersRepo.findById(getDb(), teacherId);
+    return { name: t?.name ?? 'A teacher' };
+  } catch {
+    return { name: 'A teacher' };
+  }
+}
+
+function emitNotification(partial: {
+  targetUserId: string;
+  type: import('@/types').NotificationType;
+  courseId?: number;
+  center: string;
+  course: string;
+  subjectEn: string;
+  bodyEn: string;
+  bodyNe: string;
+}) {
+  try {
+    useNotificationsStore.getState().addNotification(partial);
+  } catch (err) {
+    logger.warn('[applicationsStore] emitNotification failed', err);
+  }
+}
+
 export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
   applications: [],
   loaded: false,
@@ -124,6 +170,21 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
     const created: Application = persisted
       ? domainToApplication(persisted)
       : domainToApplication(inserted);
+
+    // Notify admin that a new application has landed in the inbox.
+    const { center, course } = describeCourse(courseId);
+    const { name: teacherName } = describeTeacher(userId);
+    emitNotification({
+      targetUserId: adminData.id,
+      type: 'new_application',
+      courseId,
+      center,
+      course,
+      subjectEn: `New application — ${teacherName}`,
+      bodyEn: `${teacherName} has applied to ${course}. Review the application in the inbox to approve or reject.`,
+      bodyNe: `${teacherName} ले ${course} मा आवेदन दिनुभएको छ। समीक्षा गर्न इनबक्स खोल्नुहोस्।`,
+    });
+
     set({
       applications: applicationsRepo.listByTeacher(db, userId).map(domainToApplication),
     });
@@ -143,6 +204,21 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
       status: 'withdrawal_requested',
       withdrawalNote: note ?? null,
     });
+
+    // Notify admin that a teacher wants to withdraw an approved/pending app.
+    const { center, course } = describeCourse(target.courseId);
+    const { name: teacherName } = describeTeacher(target.teacherId);
+    emitNotification({
+      targetUserId: adminData.id,
+      type: 'withdrawal_request',
+      courseId: target.courseId,
+      center,
+      course,
+      subjectEn: `Withdrawal request — ${teacherName}`,
+      bodyEn: `${teacherName} has requested to withdraw from ${course}.${note ? `\n\nNote: ${note}` : ''}`,
+      bodyNe: `${teacherName} ले ${course} बाट फिर्ता हुने अनुरोध गर्नुभएको छ।${note ? `\n\nटिप्पणी: ${note}` : ''}`,
+    });
+
     set((state) => ({
       applications: state.applications.map((a) =>
         a.id === applicationId
@@ -175,6 +251,26 @@ export const useApplicationsStore = create<ApplicationsState>((set, get) => ({
       rejectionReason: reason ?? null,
     });
     recomputeQueue(target.courseId);
+
+    // Notify the teacher when admin approves / rejects / requests withdrawal.
+    if (status === 'approved' || status === 'rejected') {
+      const { center, course } = describeCourse(target.courseId);
+      const approved = status === 'approved';
+      emitNotification({
+        targetUserId: target.teacherId,
+        type: approved ? 'approval' : 'rejection',
+        courseId: target.courseId,
+        center,
+        course,
+        subjectEn: approved ? `You have been assigned to teach` : `Application update — ${center}`,
+        bodyEn: approved
+          ? `Dear Teacher,\n\nWith great joy we confirm your assignment to teach the course at ${course}.\n\nSadhu! 🙏`
+          : `Dear Teacher,\n\n${reason ? `Reason: ${reason}\n\n` : ''}Thank you for applying to ${course}. Unfortunately your application was not selected this round.\n\nWe hope to see you on a future course.`,
+        bodyNe: approved
+          ? `प्रिय आचार्य,\n\n${course} शिविरमा शिक्षणको नियुक्ति पुष्टि गर्दा हामी हर्षित छौं।\n\nसाधु! 🙏`
+          : `प्रिय आचार्य,\n\n${reason ? `कारण: ${reason}\n\n` : ''}${course} शिविरका लागि आवेदन गर्नुभएकोमा धन्यवाद। दुर्भाग्यवश यस पटक चयन हुन सकेन।`,
+      });
+    }
     // Refresh the slice we currently hold (per-user OR all).
     const all = applicationsRepo.list(db).map(domainToApplication);
     set((state) => {
