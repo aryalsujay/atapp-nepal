@@ -10,6 +10,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Notification } from '@/types';
+import { logger } from '@/utils/logger';
 
 interface NotificationsState {
   notifications: Notification[];
@@ -188,8 +189,12 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       read: false,
     };
     const updated = [newNotif, ...all];
-    await saveAll(updated);
+    // Optimistic: flip state immediately so the bell + lists re-render
+    // even when callers fire-and-forget (e.g. `emitNotification` in
+    // applicationsStore.submitApplication). Persistence happens in the
+    // background.
     set({ notifications: updated });
+    saveAll(updated).catch((err) => logger.warn('[notificationsStore] persist failed', err));
     return newNotif;
   },
 

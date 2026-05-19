@@ -6,7 +6,9 @@ export type NotificationType =
   | 'reminder'
   | 'update'
   | 'approval'
-  | 'rejection';
+  | 'rejection'
+  | 'new_application'
+  | 'withdrawal_request';
 
 export interface Notification {
   id: number;

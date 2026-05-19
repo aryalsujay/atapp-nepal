@@ -3,6 +3,8 @@ import { Tabs } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
 import { Colors } from '@/theme/colors';
 import { HomeIcon, ListIcon, InboxIcon, PersonIcon, BellIcon } from '@/components/ui/TabIcons';
+import { useAuthStore } from '@/store/authStore';
+import { useNotificationsStore } from '@/store/notificationsStore';
 
 interface TabIconProps {
   focused: boolean;
@@ -25,7 +27,16 @@ const HomeTab = makeTabIcon(HomeIcon, Colors.sf, Colors.sfl);
 const ListTab = makeTabIcon(ListIcon, Colors.sf, Colors.sfl);
 const InboxTab = makeTabIcon(InboxIcon, Colors.sf, Colors.sfl);
 const PersonTab = makeTabIcon(PersonIcon, Colors.sf, Colors.sfl);
-const BellTab = makeTabIcon(BellIcon, Colors.sf, Colors.sfl);
+function BellTab({ focused }: TabIconProps) {
+  const userId = useAuthStore((s) => s.userId) ?? '';
+  const unread = useNotificationsStore((s) => s.getUnreadCount(userId));
+  return (
+    <View style={[styles.icon, focused && { backgroundColor: Colors.sfl }]}>
+      <BellIcon size={22} active={focused} accentColor={Colors.sf} />
+      {unread > 0 && <View style={styles.unreadDot} />}
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   icon: {
@@ -34,6 +45,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
+  },
+  unreadDot: {
+    position: 'absolute',
+    top: 4,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.ur,
+    borderWidth: 1.5,
+    borderColor: Colors.white,
   },
 });
 

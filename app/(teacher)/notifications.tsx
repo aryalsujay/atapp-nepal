@@ -48,6 +48,8 @@ const ACCENT: Record<NotificationType, string> = {
   update: Colors.bl,
   approval: Colors.fo,
   rejection: Colors.ur,
+  new_application: Colors.bl,
+  withdrawal_request: REMINDER_GOLD,
 };
 
 const ICON: Record<NotificationType, string> = {
@@ -57,6 +59,8 @@ const ICON: Record<NotificationType, string> = {
   update: '🔄',
   approval: '✓',
   rejection: '✗',
+  new_application: '📨',
+  withdrawal_request: '↩︎',
 };
 
 const accent = (type: NotificationType) => ACCENT[type] ?? Colors.tx3;
